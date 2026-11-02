@@ -39,7 +39,7 @@ export function CrosshairHUD() {
                 VIRTUAL LASER LAB 3D
               </h1>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-lab-cyan/15 text-lab-cyan border border-lab-cyan/30">
-                Phase 2 Live
+                Phase 3 Live
               </span>
             </div>
             <p className="text-xs text-lab-muted">
