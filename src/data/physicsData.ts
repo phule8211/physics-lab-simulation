@@ -654,5 +654,150 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
       ],
     },
   },
+
+  COATING_STATION: {
+    id: 'COATING_STATION',
+    title: 'Buồng Phủ Sơn Tĩnh Điện & Sấy UV Bề Mặt',
+    englishTitle: 'Electrostatic Spray Coating & UV Curing Finishing Booth',
+    subtitle: 'Hệ thống xử lý bề mặt, phủ màng bảo vệ và đóng rắn quang học cho thành phẩm sau gia công laser',
+    inventorInfo: 'Công nghệ sơn tĩnh điện phát minh bởi Harold Ransburg (1940), kết hợp sấy quang hóa UV hiện đại',
+    wavelengthBadge: 'Sơn Phủ & Sấy UV (365 - 395 nm)',
+    categoryBadge: 'Xử lý bề mặt & Đóng rắn quang học (Surface Finishing)',
+    accentColor: '#38bdf8',
+
+    principles: {
+      coreConcept:
+        'Sử dụng lực hút tĩnh điện Coulomb giữa các hạt sương sơn mang điện tích âm và chi tiết phôi nối đất (Ground) để tạo lớp màng bọc phân bố đồng đều hoàn hảo mọi góc khuất, sau đó kích hoạt phản ứng quang trùng hợp (Photo-polymerization) bằng tia UV 395nm để đóng rắn màng sơn thành khối polyme bền vững chỉ trong vài giây.',
+      gasMixtureOrMedium: {
+        title: 'Thành phần hệ sơn & Khí nén mang hạt',
+        items: [
+          { name: 'Oligomer & Monomer đóng rắn quang học', role: 'Chuỗi mạch polyme cơ sở tạo độ cứng, độ bóng và độ bền va đập', percentage: '60 - 75%' },
+          { name: 'Chất kích hoạt quang (Photoinitiators)', role: 'Hấp thụ photon UV tạo gốc tự do (free radicals) khơi mào phản ứng trùng hợp tức thì', percentage: '3 - 8%' },
+          { name: 'Hạt nhũ & Bột màu nano (Pigments)', role: 'Tạo màu sắc, độ tương phản thẩm mỹ và hiệu ứng ánh kim kim loại', percentage: '15 - 25%' },
+          { name: 'Khí nén khô lọc dầu (Compressed Dry Air)', role: 'Môi chất phun sương áp suất 2 - 4 bar tạo hạt sương micro-droplet mịn', percentage: 'Áp suất làm việc' },
+        ],
+      },
+      energyCycleSteps: [
+        {
+          step: 1,
+          name: 'Phun sương tĩnh điện & Hiệu ứng bao bọc (Electrostatic Wrap-Around)',
+          description:
+            'Đầu béc súng phun tích điện áp âm (-30kV đến -60kV) vào các hạt sơn khi thoát ra khỏi vòi. Theo định luật Coulomb, các hạt sơn bị hút mãnh liệt về phía phôi nối đất, len lỏi vào cả các rãnh cắt laser và mặt sau mà không bị thất thoát ra không khí.',
+          formula: 'F = k \\cdot \\frac{|q_1 q_2|}{r^2} \\quad (\\text{Lực hút tĩnh điện Coulomb})',
+        },
+        {
+          step: 2,
+          name: 'Lực căng bề mặt & Thấm ướt rãnh cắt (Phương trình Young-Dupré)',
+          description:
+            'Màng sơn ướt trải đều trên bề mặt phôi nhờ năng lượng tự do bề mặt. Độ thấm ướt tối ưu giúp sơn điền đầy các vi rãnh cắt nhiệt của laser CO2 hoặc vi nứt oxit của laser Fiber mà không để lại bọt khí.',
+          formula: '\\gamma_{SG} = \\gamma_{SL} + \\gamma_{LG} \\cdot \\cos\\theta \\quad (\\theta < 30^\\circ \\text{ thấm ướt hoàn hảo})',
+        },
+        {
+          step: 3,
+          name: 'Đóng rắn tức thì bằng tia cực tím (UV Photo-Polymerization)',
+          description:
+            'Photon tử ngoại có năng lượng cao E = h*nu bẻ gãy liên kết trong chất kích hoạt quang, tạo các gốc tự do kích hoạt phản ứng trùng hợp chuỗi monome thành mạng lưới polyme liên kết chéo 3 chiều. Màng sơn khô cứng hoàn toàn chỉ sau 3-5 giây mà không làm nóng cong vênh phôi.',
+          formula: 'E = h \\cdot \\nu = \\frac{h \\cdot c}{\\lambda} \\quad (\\lambda = 395\\,\\text{nm})',
+        },
+      ],
+      wavelengthDetails:
+        'Hệ thống sấy sử dụng dải LED UV bước sóng 395nm (UVA) công suất 120W kết hợp đèn sưởi hồng ngoại sấy nhiệt bề mặt 2.5 µm, giúp sơn khô kiệt từ trong ra ngoài mà không sinh khí bọt rộp.',
+    },
+
+    components: [
+      {
+        category: '1. Buồng Phun & Thu Hồi Bụi Màng Nước (Water Curtain Booth)',
+        parts: [
+          {
+            name: 'Vách màng nước inox tuần hoàn',
+            englishName: 'Stainless Steel Water Wash Cascade',
+            description: 'Dòng nước chảy liên tục trên mặt vách cuốn trôi mọi bụi sơn thừa xuống bể lắng, ngăn bụi sơn phát tán ra môi trường xưởng.',
+            materialOrSpec: 'Inox 304 dập nguyên khối, bơm tuần hoàn 1.5 kW',
+          },
+          {
+            name: 'Quạt hút hướng trục phòng nổ',
+            englishName: 'Explosion-Proof Axial Exhaust Blower',
+            description: 'Hút khí và hơi dung môi hữu cơ dễ bay hơi (VOC) với lưu lượng 4500 m³/h, đảm bảo áp suất âm trong buồng sơn.',
+            materialOrSpec: 'Động cơ đạt chuẩn phòng nổ ATEX / Ex d IIB T4',
+          },
+        ],
+      },
+      {
+        category: '2. Bàn Xoay Tự Động & Béc Phun Tĩnh Điện (Coating Mechanics)',
+        parts: [
+          {
+            name: 'Bàn xoay phôi 360° có nan đỡ',
+            englishName: 'Motorized 360° Turntable Platform',
+            description: 'Đĩa xoay thép không gỉ đường kính 600mm dẫn động bởi động cơ bước, giúp phun đều 4 mặt phôi mà không cần chạm tay vào chi tiết.',
+            materialOrSpec: 'Tốc độ quay 5 - 25 vòng/phút, tải trọng 40 kg',
+          },
+          {
+            name: 'Súng phun sơn khí nén cao cấp HVLP',
+            englishName: 'HVLP Electrostatic Spray Gun',
+            description: 'Công nghệ áp lực thấp lưu lượng cao (High Volume Low Pressure) giúp tiết kiệm 35% sơn và tạo dải hạt sương nano siêu mịn.',
+            materialOrSpec: 'Béc kim phun hợp kim Vonfram 1.2 mm, áp suất 2.5 bar',
+          },
+        ],
+      },
+      {
+        category: '3. Dàn Sấy Quang Hóa UV & Hồng Ngoại (Curing Array)',
+        parts: [
+          {
+            name: 'Dàn đèn LED UV Curing công suất cao',
+            englishName: 'High-Power UV LED Curing Array',
+            description: 'Dàn LED phát xạ cực đại tại 395nm kích hoạt đóng rắn màng sơn trong 3-5 giây với tuổi thọ > 25,000 giờ.',
+            materialOrSpec: 'Cường độ bức xạ 16 W/cm² ở khoảng cách 150 mm',
+          },
+          {
+            name: 'Cảm biến đo độ dày màng sơn kỹ thuật số',
+            englishName: 'Digital Dry Film Thickness (DFT) Gauge',
+            description: 'Đo lường thời gian thực độ dày lớp sơn từ tính và siêu âm để kiểm tra chất lượng đạt chuẩn công nghiệp.',
+            materialOrSpec: 'Dải đo 0 - 200 µm, độ chính xác ± 1 µm',
+          },
+        ],
+      },
+    ],
+
+    classifications: [
+      {
+        type: '1. Sơn Phủ Bóng & Lót Polyurethane (Liquid Clear Coating)',
+        features: 'Màng sơn trong suốt gốc PU 2 thành phần tạo độ bóng sâu như gương (98 GU) và tôn vinh vân gỗ, acrylic.',
+        pros: ['Độ bóng gương cao cấp', 'Chống ố vàng tia cực tím', 'Bám dính tuyệt hảo trên mọi vật liệu phi kim'],
+        cons: ['Cần thời gian lắng màng 1-2 phút trước khi sấy UV'],
+      },
+      {
+        type: '2. Sơn Tĩnh Điện Bột Khô (Powder Coating)',
+        features: 'Hạt polyme nhiệt dẻo tích điện bám đều trên kim loại (thép, nhôm) và nung chảy thành lớp bảo vệ cực bền.',
+        pros: ['Chống va đập và trầy xước cơ học cực tốt', '100% không chứa dung môi độc hại (Zero-VOC)', 'Độ bền ngoài trời trên 10 năm'],
+        cons: ['Chỉ áp dụng hiệu quả cho vật liệu dẫn điện hoặc chịu nhiệt > 180°C'],
+      },
+      {
+        type: '3. Màng Phủ Gốm Nano Kỵ Nước (Hydrophobic Ceramic Coating)',
+        features: 'Màng phủ nano silica/silane mỏng < 1 µm tạo hiệu ứng lá sen kỵ nước và chống bám vân tay.',
+        pros: ['Không làm thay đổi kích thước quang học chi tiết', 'Góc tiếp xúc nước > 115°', 'Rất phù hợp cho Silicon Wafer bán dẫn và Kính'],
+        cons: ['Chi phí hóa chất nano cao hơn sơn thông thường'],
+      },
+    ],
+
+    materialsAndSafety: {
+      recommendedMaterials: [
+        'Mẫu gỗ sau cắt laser CO2 (tôn vân và chống ẩm mốc)',
+        'Mẫu mica Acrylic (tăng độ bóng gương chống xước bề mặt)',
+        'Chi tiết thép, nhôm sau khắc laser Fiber (sơn tĩnh điện chống ăn mòn)',
+        'Silicon Wafer và kính (phủ nano kỵ nước bảo vệ quang học)',
+      ],
+      restrictedMaterials: [
+        'Không phun sơn lên chi tiết chưa làm sạch bụi tro cacbon sau khi cắt laser',
+        'Không sử dụng các loại sơn chứa chì hoặc dung môi benzen độc hại bị cấm',
+      ],
+      safetyClass: 'Khu vực phòng sơn chống cháy nổ & An toàn áp suất âm',
+      safetyProtocols: [
+        'Bắt buộc bật quạt hút thông gió màng nước trước khi mở van súng phun sơn.',
+        'Tuyệt đối không hút thuốc hoặc tạo tia lửa điện bên trong buồng phun sơn.',
+        'Đeo kính bảo hộ UV khi dàn đèn sấy quang hóa đang hoạt động để tránh tổn thương giác mạc.',
+        'Vệ sinh béc phun súng sơn định kỳ bằng dung môi chuyên dụng sau mỗi ca làm việc.',
+      ],
+    },
+  },
 };
 

@@ -282,6 +282,60 @@ class SoundSystem {
       }, 350);
     }
   }
+
+  private sprayGain: GainNode | null = null;
+  private spraySource: AudioBufferSourceNode | null = null;
+
+  public startSpraySound() {
+    if (!useLabStore.getState().soundEnabled) return;
+    this.initCtx();
+    if (!this.ctx || this.spraySource) return;
+
+    // Generate white noise for pneumatic air spray hiss
+    const bufferSize = this.ctx.sampleRate;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(2400, this.ctx.currentTime);
+    filter.Q.setValueAtTime(1.4, this.ctx.currentTime);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.14, this.ctx.currentTime + 0.08);
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    source.start();
+    this.spraySource = source;
+    this.sprayGain = gain;
+  }
+
+  public stopSpraySound() {
+    if (this.sprayGain && this.ctx) {
+      const now = this.ctx.currentTime;
+      this.sprayGain.gain.linearRampToValueAtTime(0.001, now + 0.1);
+      setTimeout(() => {
+        try {
+          this.spraySource?.stop();
+          this.spraySource?.disconnect();
+          this.sprayGain?.disconnect();
+        } catch (_) {}
+        this.spraySource = null;
+        this.sprayGain = null;
+      }, 120);
+    }
+  }
 }
 
 export const sound = new SoundSystem();

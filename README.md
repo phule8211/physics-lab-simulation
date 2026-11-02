@@ -36,7 +36,21 @@
 * **Nhấc rời chi tiết (`Phím Space`):** Cho phép nhấc bổng chi tiết đã cắt rời lơ lửng trong không gian 3D, để lộ khoang rỗng bên dưới tấm phôi.
 * **Xuất file vector SVG:** Tải file vector chuẩn để nạp vào máy CNC/Laser thực tế.
 
-### 4. Hệ Thống Khóa Liên Động An Toàn (Safety Interlock - ISO 11553)
+### 4. Phòng Phủ Sơn Bề Mặt & Sấy Khô UV (Coating & UV Cleanroom - `Phím P / 5`)
+* **Buồng phun sơn màng nước (Water-Wash Spray Booth):** Thiết kế vách thu hồi bụi sơn bằng màng nước chảy tuần hoàn kết hợp ống hút khí lọc khí thải công nghiệp.
+* **Mâm xoay phôi $360^\circ$ (Motorized Turntable):** Tự động xoay đều chi tiết giúp lớp sơn bao phủ đồng nhất mọi góc cạnh.
+* **Súng phun khí nén tĩnh điện (Pneumatic Spray Mist):** Hiệu ứng bụi sơn hạt vi mô bám dính theo màu sơn lựa chọn và mô phỏng âm thanh xịt khí nén chân thực.
+* **Hệ thống sấy UV quang trùng hợp (UV Photopolymerization Array):** Giàn đèn LED UV tử ngoại và sấy hồng ngoại IR đóng rắn màng sơn lập tức ($E = h\nu$).
+* **7 Lớp sơn hoàn thiện cao cấp:**
+  1. *Clear Coat Bóng Cao Cấp (High Gloss Clear)*: 95 GU, bảo vệ chống xước.
+  2. *Sơn Đen Mờ Nhám (Matte Black Powder)*: 12 GU, chống chói và chống bám vân tay.
+  3. *Sơn Kim Loại Đỏ Kẹo (Candy Metallic Red)*: Ánh kim ngọc trai lấp lánh sang trọng.
+  4. *Sơn Cảnh Báo An Toàn Cam (Industrial Safety Orange)*: Độ nhận diện cao cho nhà xưởng.
+  5. *Mạ Vàng Titanium Nitride (Titanium Gold PVD)*: Hiệu ứng PVD kim loại bóng loáng.
+  6. *Sơn Phát Quang Dạ Quang Cyan (Neon Glow Cyan)*: Lớp phủ tự phát xạ ánh sáng xanh lam trong bóng tối.
+  7. *Lớp Phủ Siêu Chống Nước Nano (Hydrophobic Shield)*: Hiệu ứng lá sen góc tiếp xúc $> 150^\circ$.
+
+### 5. Hệ Thống Khóa Liên Động An Toàn (Safety Interlock - ISO 11553)
 * Cơ chế đóng/mở nắp bảo vệ (`Phím O`).
 * Mở nắp khi laser đang hoạt động sẽ kích hoạt ngắt khẩn cấp để bảo vệ người vận hành khỏi bức xạ nguy hiểm.
 * Tự động chặn phát tia khi đặt vật liệu phản xạ cao (như nhôm/thép vào máy laser CO₂).
@@ -56,6 +70,7 @@
 | **`M`** | Phím tắt | Thay đổi phôi vật liệu gia công |
 | **`C`** | Phím tắt | Thực hiện chu trình Cắt xuyên / Khắc laser |
 | **`G`** | Phím tắt | Lấy mẫu ra kiểm tra chất lượng 3D sau khi cắt |
+| **`P` hoặc `5`** | Phím tắt | Dịch chuyển nhanh đến Buồng Phủ Sơn Bề Mặt & Sấy UV |
 | **`Space`** | Phím tắt | Nhấc rời chi tiết khỏi tấm phôi (trong màn hình xem mẫu 3D) |
 | **`ESC`** | Phím tắt | Thoát bảng điều khiển / Đóng cửa sổ modal |
 
@@ -124,3 +139,4 @@ src/
 ## 📄 Bản Quyền & Giấy Phép (License)
 Dự án được phát triển phục vụ mục đích giáo dục, nghiên cứu và đào tạo kỹ thuật gia công công nghệ cao.  
 Được xây dựng bởi **Lê Ngọc Phú** ([@phule8211](https://github.com/phule8211)).
+

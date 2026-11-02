@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { MachineId, AppMode, InfoTab } from '../types/lab';
+import { MachineId, AppMode, InfoTab, CoatingFinishId } from '../types/lab';
 import { MaterialType, MATERIALS_CATALOG } from '../data/materialsConfig';
+import { COATING_FINISHES } from '../data/coatingFinishes';
 import {
   Point2D,
   PRESET_DESIGNS,
@@ -67,6 +68,23 @@ interface LabState {
   togglePartDetached: () => void;
   setPartDetached: (detached: boolean) => void;
 
+  // Spray Coating & Finishing State
+  selectedCoatingFinish: CoatingFinishId;
+  coatingCoverage: number; // 0 - 100%
+  curingProgress: number; // 0 - 100%
+  isSpraying: boolean;
+  isCuring: boolean;
+  isTurntableRotating: boolean;
+  setSelectedCoatingFinish: (finish: CoatingFinishId) => void;
+  startSpraying: () => void;
+  stopSpraying: () => void;
+  setCoatingCoverage: (cov: number) => void;
+  startCuring: () => void;
+  stopCuring: () => void;
+  setCuringProgress: (prog: number) => void;
+  resetCoating: () => void;
+  toggleTurntable: () => void;
+
   // Actions
   setHoveredStation: (id: MachineId | null, distance?: number | null) => void;
   setPointerLocked: (locked: boolean) => void;
@@ -127,6 +145,14 @@ export const useLabStore = create<LabState>((set, get) => ({
   isFraming: false,
   processMode: 'CUT',
   isPartDetached: false,
+
+  // Spray Coating & Finishing State
+  selectedCoatingFinish: 'CLEAR_GLOSS',
+  coatingCoverage: 0,
+  curingProgress: 0,
+  isSpraying: false,
+  isCuring: false,
+  isTurntableRotating: true,
 
   setHoveredStation: (id, distance = null) =>
     set({ hoveredStationId: id, hoveredDistance: distance }),
@@ -560,4 +586,106 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   setPartDetached: (detached: boolean) => set({ isPartDetached: detached }),
+
+  // =========================================================================
+  // SPRAY COATING & UV CURING FINISHING ACTIONS
+  // =========================================================================
+  setSelectedCoatingFinish: (finish) => {
+    sound.playClick();
+    const conf = COATING_FINISHES[finish];
+    set({
+      selectedCoatingFinish: finish,
+      curingProgress: 0,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: `Đã nạp sơn vào bình: ${conf.name} (${conf.glossUnit})`,
+        type: 'info',
+      },
+    });
+  },
+
+  startSpraying: () => {
+    sound.startSpraySound();
+    set({ isSpraying: true });
+  },
+
+  stopSpraying: () => {
+    sound.stopSpraySound();
+    set({ isSpraying: false });
+  },
+
+  setCoatingCoverage: (cov) => {
+    const prev = get().coatingCoverage;
+    const clamped = Math.min(100, Math.max(0, cov));
+    if (prev < 100 && clamped >= 100) {
+      sound.playCutCompleteSound();
+      set({
+        coatingCoverage: 100,
+        isSpraying: false,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: 'HOÀN THÀNH PHỦ SƠN: Màng sơn đã phủ đều 100% bề mặt! Hãy bật sấy quang hóa UV/Hồng ngoại.',
+          type: 'success',
+        },
+      });
+      sound.stopSpraySound();
+      return;
+    }
+    set({ coatingCoverage: clamped });
+  },
+
+  startCuring: () => {
+    sound.playRelayClick();
+    set({
+      isCuring: true,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: 'Đang kích hoạt dàn đèn sấy quang hóa UV (395nm) & Hồng ngoại sấy khô bề mặt...',
+        type: 'info',
+      },
+    });
+  },
+
+  stopCuring: () => {
+    set({ isCuring: false });
+  },
+
+  setCuringProgress: (prog) => {
+    const prev = get().curingProgress;
+    const clamped = Math.min(100, Math.max(0, prog));
+    if (prev < 100 && clamped >= 100) {
+      sound.playCutCompleteSound();
+      set({
+        curingProgress: 100,
+        isCuring: false,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: 'SẤY HOÀN TẤT: Màng sơn đã polyme hóa đóng rắn 100% đạt độ bóng và độ cứng tối đa!',
+          type: 'success',
+        },
+      });
+      return;
+    }
+    set({ curingProgress: clamped });
+  },
+
+  resetCoating: () => {
+    sound.playClick();
+    set({
+      coatingCoverage: 0,
+      curingProgress: 0,
+      isSpraying: false,
+      isCuring: false,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: 'Đã tẩy sạch lớp sơn, đưa mẫu vật trở về trạng thái phôi nguyên bản.',
+        type: 'info',
+      },
+    });
+  },
+
+  toggleTurntable: () => {
+    sound.playClick();
+    set({ isTurntableRotating: !get().isTurntableRotating });
+  },
 }));

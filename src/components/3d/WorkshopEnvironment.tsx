@@ -88,6 +88,16 @@ export function WorkshopEnvironment() {
         castShadow
         shadow-bias={-0.0002}
       />
+      {/* Station 5 (Spray Coating & UV Finishing Room): Clean White / Cool Cyan */}
+      <pointLight
+        position={[0, 4.0, -12.5]}
+        intensity={2.8}
+        distance={12}
+        decay={2}
+        color="#f8fafc"
+        castShadow
+        shadow-bias={-0.0002}
+      />
 
       {/* =========================================================================
           2. PROCEDURAL HDRI ENVIRONMENT MAP (100% Offline with Lightformers)
@@ -203,15 +213,149 @@ export function WorkshopEnvironment() {
       {/* =========================================================================
           4. WALLS & MODULAR CLEANROOM PANELS (PBR with Aluminum Trims)
          ========================================================================= */}
-      {/* North Wall (Back) */}
-      <mesh position={[0, 2.25, -8]} receiveShadow>
-        <boxGeometry args={[20, 4.5, 0.2]} />
+      {/* North Wall: Left section (x: -10 to -1.8) */}
+      <mesh position={[-5.9, 2.25, -8]} receiveShadow>
+        <boxGeometry args={[8.2, 4.5, 0.2]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
           metalness={0.25}
           envMapIntensity={0.6}
         />
+      </mesh>
+
+      {/* North Wall: Right section (x: 1.8 to 10) */}
+      <mesh position={[5.9, 2.25, -8]} receiveShadow>
+        <boxGeometry args={[8.2, 4.5, 0.2]} />
+        <meshStandardMaterial
+          color="#1e293b"
+          roughness={0.6}
+          metalness={0.25}
+          envMapIntensity={0.6}
+        />
+      </mesh>
+
+      {/* North Wall: Door Header Lintel (y: 3.2 to 4.5) */}
+      <mesh position={[0, 3.85, -8]} receiveShadow>
+        <boxGeometry args={[3.6, 1.3, 0.2]} />
+        <meshStandardMaterial
+          color="#1e293b"
+          roughness={0.6}
+          metalness={0.25}
+          envMapIntensity={0.6}
+        />
+      </mesh>
+
+      {/* Doorway Frame & Sliding Glass Airlock Door Trims */}
+      <group position={[0, 0, -8]}>
+        {/* Left & Right Door Frame Jambs */}
+        {[-1.8, 1.8].map((x) => (
+          <mesh key={`door-jamb-${x}`} position={[x, 1.6, 0]} castShadow>
+            <boxGeometry args={[0.08, 3.2, 0.25]} />
+            <meshStandardMaterial color="#64748b" metalness={0.85} roughness={0.25} />
+          </mesh>
+        ))}
+        {/* Door Top Transom Header */}
+        <mesh position={[0, 3.2, 0]} castShadow>
+          <boxGeometry args={[3.68, 0.08, 0.25]} />
+          <meshStandardMaterial color="#64748b" metalness={0.85} roughness={0.25} />
+        </mesh>
+
+        {/* Sliding Tempered Glass Door Leaves (partially open so user walks through) */}
+        <mesh position={[-1.2, 1.6, -0.05]}>
+          <boxGeometry args={[1.1, 3.1, 0.04]} />
+          <meshStandardMaterial
+            color="#e0f2fe"
+            transparent
+            opacity={0.35}
+            roughness={0.1}
+            metalness={0.2}
+          />
+        </mesh>
+        <mesh position={[1.2, 1.6, 0.05]}>
+          <boxGeometry args={[1.1, 3.1, 0.04]} />
+          <meshStandardMaterial
+            color="#e0f2fe"
+            transparent
+            opacity={0.35}
+            roughness={0.1}
+            metalness={0.2}
+          />
+        </mesh>
+
+        {/* Overhead Glowing Signboard */}
+        <group position={[0, 3.6, 0.12]}>
+          <mesh castShadow>
+            <boxGeometry args={[3.4, 0.5, 0.06]} />
+            <meshStandardMaterial color="#090d16" roughness={0.4} metalness={0.6} />
+          </mesh>
+          <SafeText
+            position={[0, 0.08, 0.035]}
+            fontSize={0.13}
+            color="#38bdf8"
+            anchorX="center"
+            anchorY="middle"
+          >
+            PHÒNG PHỦ SƠN BỀ MẶT & SẤY UV
+          </SafeText>
+          <SafeText
+            position={[0, -0.1, 0.035]}
+            fontSize={0.085}
+            color="#fbbf24"
+            anchorX="center"
+            anchorY="middle"
+          >
+            COATING & FINISHING CLEANROOM
+          </SafeText>
+        </group>
+      </group>
+
+      {/* =========================================================================
+          COATING & FINISHING CLEANROOM ARCHITECTURE (x: [-5, 5], z: [-8, -16])
+         ========================================================================= */}
+      {/* Cleanroom Floor (Grey-blue Anti-Static Epoxy) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, -12]} receiveShadow>
+        <planeGeometry args={[10, 8]} />
+        <meshStandardMaterial
+          color="#1e293b"
+          roughness={0.18}
+          metalness={0.2}
+          envMapIntensity={0.8}
+        />
+      </mesh>
+
+      {/* Cleanroom Ceiling */}
+      <mesh position={[0, 4.5, -12]}>
+        <boxGeometry args={[10, 0.1, 8]} />
+        <meshStandardMaterial color="#090d16" roughness={0.8} />
+      </mesh>
+
+      {/* West Wall of Coating Room with Glass Observation Panel */}
+      <mesh position={[-5, 2.25, -12]} receiveShadow>
+        <boxGeometry args={[0.2, 4.5, 8]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.25} />
+      </mesh>
+      {/* Observation Window Glass Pane */}
+      <mesh position={[-4.89, 2.0, -12]}>
+        <planeGeometry args={[4.0, 1.8]} />
+        <meshStandardMaterial
+          color="#e0f2fe"
+          transparent
+          opacity={0.3}
+          roughness={0.1}
+        />
+      </mesh>
+
+      {/* East Wall of Coating Room */}
+      <mesh position={[5, 2.25, -12]} receiveShadow>
+        <boxGeometry args={[0.2, 4.5, 8]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.25} />
+      </mesh>
+
+      {/* North Back Wall of Coating Room */}
+      <mesh position={[0, 2.25, -16]} receiveShadow>
+        <boxGeometry args={[10, 4.5, 0.2]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.25} />
       </mesh>
 
       {/* South Wall (Front) */}

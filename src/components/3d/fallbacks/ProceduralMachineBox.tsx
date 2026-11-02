@@ -9,6 +9,7 @@ import { buildToolpathIndex, interpolateToolpathPoint, computeBoundingBox } from
 import { CO2LaserBeam } from '../visual-effects/CO2LaserBeam';
 import { UVLaserBeam } from '../visual-effects/UVLaserBeam';
 import { GalvoMirrorBeam } from '../visual-effects/GalvoMirrorBeam';
+import { SprayCoatingBooth } from './SprayCoatingBooth';
 
 function SafeText(props: any) {
   return (
@@ -43,6 +44,7 @@ export function ProceduralStation({ id, position, rotation = [0, 0, 0] }: Statio
       {id === 'UV_LASER' && <UVLaserMachine isSelected={isSelected} />}
       {id === 'FIBER_LASER' && <FiberLaserMachine isSelected={isSelected} />}
       {id === 'SENSOR_STATION' && <SensorStationBench isSelected={isSelected} />}
+      {id === 'COATING_STATION' && <SprayCoatingBooth />}
     </group>
   );
 }

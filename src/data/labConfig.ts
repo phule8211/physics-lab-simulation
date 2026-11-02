@@ -6,7 +6,7 @@ export const ROOM_BOUNDS = {
   height: 4.5,
   minX: -9.5,
   maxX: 9.5,
-  minZ: -7.5,
+  minZ: -15.5, // Expanded to accommodate the new spray coating room
   maxZ: 7.5,
 };
 
@@ -83,16 +83,42 @@ export const STATIONS: Record<string, StationConfig> = {
       max: [7.5, 1.5, 5.2],
     },
   },
+  COATING_STATION: {
+    id: 'COATING_STATION',
+    name: 'Buồng Phủ Sơn Tĩnh Điện & Sấy UV Bề Mặt',
+    shortName: 'Phòng Phủ Sơn',
+    category: 'Xử lý bề mặt & Đóng rắn quang học (Finishing)',
+    wavelength: 'Sơn phủ & Sấy UV (395 nm)',
+    accentColor: '#38bdf8',
+    position: [0, 0, -12.5],
+    rotation: [0, 0, 0],
+    inspectCameraPosition: [0, 1.6, -10.4],
+    inspectLookAt: [0, 1.0, -12.5],
+    collider: {
+      id: 'collider_coating',
+      name: 'Buồng sơn và bàn xoay',
+      min: [-2.4, 0, -14.5],
+      max: [2.4, 2.6, -11.0],
+    },
+  },
 };
 
 export const WALL_COLLIDERS: AABBBox[] = [
-  // Bức tường Bắc (North Wall)
-  { id: 'wall_north', name: 'Tường Bắc', min: [-10.5, 0, -8.5], max: [10.5, 5, -7.5] },
-  // Bức tường Nam (South Wall)
-  { id: 'wall_south', name: 'Tường Nam', min: [-10.5, 0, 7.5], max: [10.5, 5, 8.5] },
-  // Bức tường Tây (West Wall)
-  { id: 'wall_west', name: 'Tường Tây', min: [-10.5, 0, -8.5], max: [-9.5, 5, 8.5] },
-  // Bức tường Đông (East Wall)
-  { id: 'wall_east', name: 'Tường Đông', min: [9.5, 0, -8.5], max: [10.5, 5, 8.5] },
-];
+  // Tường Bắc phòng chính (Chia đôi làm cửa thông phòng rộng 3.6m ở giữa x: [-1.8, 1.8])
+  { id: 'wall_north_left', name: 'Tường Bắc Trái', min: [-10.5, 0, -8.5], max: [-1.8, 5, -7.5] },
+  { id: 'wall_north_right', name: 'Tường Bắc Phải', min: [1.8, 0, -8.5], max: [10.5, 5, -7.5] },
 
+  // Tường Nam phòng chính
+  { id: 'wall_south', name: 'Tường Nam', min: [-10.5, 0, 7.5], max: [10.5, 5, 8.5] },
+
+  // Tường Tây phòng chính
+  { id: 'wall_west', name: 'Tường Tây', min: [-10.5, 0, -8.5], max: [-9.5, 5, 8.5] },
+
+  // Tường Đông phòng chính
+  { id: 'wall_east', name: 'Tường Đông', min: [9.5, 0, -8.5], max: [10.5, 5, 8.5] },
+
+  // CÁC BỨC TƯỜNG CỦA PHÒNG PHỦ SƠN (COATING CLEANROOM) (x: [-5.5, 5.5], z: [-16, -8])
+  { id: 'wall_coating_west', name: 'Vách Tây Phòng Sơn', min: [-5.6, 0, -16.5], max: [-4.8, 5, -7.8] },
+  { id: 'wall_coating_east', name: 'Vách Đông Phòng Sơn', min: [4.8, 0, -16.5], max: [5.6, 5, -7.8] },
+  { id: 'wall_coating_north', name: 'Vách Sau Buồng Sơn', min: [-5.6, 0, -16.5], max: [5.6, 5, -15.2] },
+];

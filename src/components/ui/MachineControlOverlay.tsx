@@ -3,6 +3,7 @@ import { useLabStore } from '../../store/useLabStore';
 import { MATERIALS_CATALOG, MaterialType } from '../../data/materialsConfig';
 import { STATIONS } from '../../data/labConfig';
 import { computeBoundingBox } from '../../data/vectorDesigns';
+import { COATING_FINISHES } from '../../data/coatingFinishes';
 import {
   DoorOpen,
   DoorClosed,
@@ -21,6 +22,7 @@ import {
   RotateCcw,
   Scan,
   Scissors,
+  Palette,
 } from 'lucide-react';
 
 export function MachineControlOverlay() {
@@ -50,6 +52,19 @@ export function MachineControlOverlay() {
     autoFitCurrentDesign,
     processMode,
     setProcessMode,
+    selectedCoatingFinish,
+    setSelectedCoatingFinish,
+    coatingCoverage,
+    curingProgress,
+    isSpraying,
+    isCuring,
+    isTurntableRotating,
+    startSpraying,
+    stopSpraying,
+    startCuring,
+    stopCuring,
+    resetCoating,
+    toggleTurntable,
   } = useLabStore();
 
   const bbox = useMemo(() => computeBoundingBox(currentToolpaths), [currentToolpaths]);
@@ -74,6 +89,196 @@ export function MachineControlOverlay() {
     return (
       <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
         <ToastNotification message={actionMessage} onClose={clearActionMessage} />
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // SPECIALIZED COATING & UV FINISHING DOCK
+  // =========================================================================
+  if (currentStationId === 'COATING_STATION') {
+    const finishConfig = COATING_FINISHES[selectedCoatingFinish] || COATING_FINISHES.CLEAR_GLOSS;
+    const finishList = Object.values(COATING_FINISHES);
+
+    return (
+      <div className="fixed inset-x-0 bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3">
+        {actionMessage && (
+          <div className="mb-3 pointer-events-auto max-w-xl w-full">
+            <ToastNotification message={actionMessage} onClose={clearActionMessage} />
+          </div>
+        )}
+
+        <section
+          aria-label="Bảng điều khiển phủ sơn tĩnh điện và sấy UV"
+          className="glass-panel w-full max-w-4xl rounded-2xl border border-slate-700/80 shadow-2xl p-3 md:p-4 pointer-events-auto text-slate-100 flex flex-col gap-3 backdrop-blur-xl bg-slate-950/85"
+        >
+          {/* Header Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+            <div className="flex items-center space-x-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+              <h3 className="text-xs md:text-sm font-bold tracking-wide text-white uppercase font-mono">
+                BUỒNG PHỦ SƠN TĨNH ĐIỆN & SẤY UV BỀ MẶT
+              </h3>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-cyan-950/80 text-cyan-300 border border-cyan-800">
+                Sơn phủ & Sấy UV (395nm)
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2 font-mono text-xs">
+              <div className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 flex items-center space-x-1.5">
+                <span className="text-slate-400">Độ phủ:</span>
+                <b className={coatingCoverage >= 100 ? 'text-emerald-400' : 'text-amber-400'}>
+                  {coatingCoverage.toFixed(0)}%
+                </b>
+              </div>
+              <div className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 flex items-center space-x-1.5">
+                <span className="text-slate-400">Độ khô UV:</span>
+                <b className={curingProgress >= 100 ? 'text-purple-400' : 'text-slate-300'}>
+                  {curingProgress.toFixed(0)}%
+                </b>
+              </div>
+            </div>
+          </div>
+
+          {/* Paint Swatches Row */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span className="flex items-center space-x-1">
+                <Palette className="w-3 h-3 text-lab-cyan" />
+                <span>Chọn loại sơn & màng phủ công nghiệp:</span>
+              </span>
+              <span className="text-cyan-300 font-semibold">{finishConfig.name}</span>
+            </div>
+
+            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-thin">
+              {finishList.map((finish) => {
+                const isSelected = selectedCoatingFinish === finish.id;
+                return (
+                  <button
+                    key={finish.id}
+                    onClick={() => setSelectedCoatingFinish(finish.id)}
+                    className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-150 border ${
+                      isSelected
+                        ? 'bg-lab-cyan/20 border-lab-cyan text-white shadow-lg shadow-lab-cyan/20 ring-1 ring-lab-cyan/40'
+                        : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    }`}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full border border-black/40 flex-shrink-0"
+                      style={{ backgroundColor: finish.color }}
+                    />
+                    <span className="whitespace-nowrap">{finish.name.split(' (')[0]}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">({finish.glossUnit.split(' ')[0]})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action Buttons: Hold to Spray, Turn on Curing, Rotate Turntable, Reset */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center pt-1">
+            {/* Spray Trigger Button (Col 5) */}
+            <div className="sm:col-span-5 flex flex-col gap-1">
+              <button
+                onMouseDown={startSpraying}
+                onMouseUp={stopSpraying}
+                onMouseLeave={stopSpraying}
+                onTouchStart={startSpraying}
+                onTouchEnd={stopSpraying}
+                className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 transition-all duration-150 border shadow-lg select-none active:scale-95 ${
+                  isSpraying
+                    ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 border-cyan-300 shadow-cyan-900/50 animate-pulse'
+                    : coatingCoverage >= 100
+                    ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-300'
+                    : 'bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white border-cyan-400 shadow-cyan-950/50'
+                }`}
+                title="Nhấp giữ chuột để phun lớp sơn lên bề mặt chi tiết"
+              >
+                <Zap className="w-4 h-4 fill-current" />
+                <span>
+                  {isSpraying
+                    ? `Đang Phun Sơn... (${coatingCoverage.toFixed(0)}%)`
+                    : coatingCoverage >= 100
+                    ? '✓ Đã Phủ Kín 100% (Giữ để sơn thêm)'
+                    : 'Giữ Chuột Để Phun Sơn [🔫]'}
+                </span>
+              </button>
+
+              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-lab-cyan h-full transition-all duration-100 ease-linear"
+                  style={{ width: `${coatingCoverage}%` }}
+                />
+              </div>
+            </div>
+
+            {/* UV Curing Button (Col 3) */}
+            <div className="sm:col-span-3">
+              <button
+                onClick={() => {
+                  if (isCuring) stopCuring();
+                  else startCuring();
+                }}
+                disabled={coatingCoverage < 10}
+                className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 transition-all duration-200 border shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isCuring
+                    ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-400 shadow-purple-950/60 animate-pulse'
+                    : curingProgress >= 100
+                    ? 'bg-purple-950/40 border-purple-500/50 text-purple-300'
+                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-purple-300 hover:border-purple-500/50'
+                }`}
+                title="Bật dàn đèn sấy tia cực tím UV 395nm để đóng rắn màng sơn"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <span>
+                  {isCuring
+                    ? `Đang Sấy UV (${curingProgress.toFixed(0)}%)...`
+                    : curingProgress >= 100
+                    ? '✓ Đã Đóng Rắn 100%'
+                    : 'Sấy UV Quang Hóa'}
+                </span>
+              </button>
+            </div>
+
+            {/* Turntable 360 & Reset Buttons (Col 4) */}
+            <div className="sm:col-span-4 flex items-center space-x-1.5">
+              <button
+                onClick={toggleTurntable}
+                className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1 border transition-all active:scale-95 ${
+                  isTurntableRotating
+                    ? 'bg-cyan-950/40 border-cyan-800 text-cyan-300'
+                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'
+                }`}
+                title="Bật / tắt quay bàn xoay 360 độ"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 ${isTurntableRotating ? 'animate-spin' : ''}`} />
+                <span>{isTurntableRotating ? 'Đang Xoay' : 'Xoay Bàn'}</span>
+              </button>
+
+              <button
+                onClick={resetCoating}
+                className="py-2.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 text-xs font-semibold border border-slate-700 flex items-center justify-center space-x-1 transition-all active:scale-95"
+                title="Tẩy sạch lớp sơn, đưa phôi trở về ban đầu"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Tẩy Sơn</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Technical Specs Footer */}
+          <div className="text-[11px] text-slate-300 bg-slate-900/60 rounded-xl p-2 px-3 border border-slate-800/80 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-3.5 h-3.5 text-lab-cyan flex-shrink-0" />
+              <span className="line-clamp-1">{finishConfig.description}</span>
+            </div>
+            <div className="hidden sm:flex items-center space-x-3 text-slate-400 font-mono text-[10px] pl-2 flex-shrink-0">
+              <span>Độ dày: <b className="text-white">{finishConfig.dryFilmThickness}</b></span>
+              <span>•</span>
+              <span>Độ bóng: <b className="text-white">{finishConfig.glossUnit}</b></span>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }

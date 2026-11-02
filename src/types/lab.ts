@@ -1,4 +1,4 @@
-export type MachineId = 'CO2_LASER' | 'UV_LASER' | 'FIBER_LASER' | 'SENSOR_STATION';
+export type MachineId = 'CO2_LASER' | 'UV_LASER' | 'FIBER_LASER' | 'SENSOR_STATION' | 'COATING_STATION';
 
 export type AppMode = 'WALKING' | 'TRANSITIONING' | 'INSPECTING';
 
@@ -31,3 +31,26 @@ export interface StationConfig {
   collider: AABBBox;
 }
 
+export type CoatingFinishId =
+  | 'CLEAR_GLOSS'
+  | 'MATTE_BLACK'
+  | 'CANDY_RED'
+  | 'SAFETY_ORANGE'
+  | 'TITANIUM_GOLD'
+  | 'NEON_CYAN_GLOW'
+  | 'NANO_HYDROPHOBIC';
+
+export interface CoatingFinishConfig {
+  id: CoatingFinishId;
+  name: string;
+  category: string;
+  color: string;
+  roughness: number;
+  metalness: number;
+  emissive?: string;
+  emissiveIntensity?: number;
+  glossUnit: string;
+  dryFilmThickness: string;
+  cureTimeSec: number;
+  description: string;
+}

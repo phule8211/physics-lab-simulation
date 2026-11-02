@@ -22,7 +22,7 @@ export interface MaterialItem {
   transparent: boolean;
   textureLabel: string;
   description: string;
-  interactions: Record<MachineId, MaterialInteraction>;
+  interactions: Record<string, MaterialInteraction>;
 }
 
 export const MATERIALS_CATALOG: Record<MaterialType, MaterialItem> = {

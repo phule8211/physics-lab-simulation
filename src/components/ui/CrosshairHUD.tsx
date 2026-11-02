@@ -190,6 +190,13 @@ export function CrosshairHUD() {
               <span className="text-lab-muted">Thiết kế hình</span>
             </div>
 
+            <div className="flex items-center space-x-1.5">
+              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-cyan-400">
+                P / 5
+              </span>
+              <span className="text-lab-muted">Phòng Phủ Sơn</span>
+            </div>
+
             {cutProgress >= 100 && (
               <div className="flex items-center space-x-1.5 animate-pulse">
                 <span className="px-1.5 py-0.5 rounded bg-emerald-600 border border-emerald-400 font-mono font-bold text-white shadow-sm">
