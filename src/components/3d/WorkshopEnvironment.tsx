@@ -604,6 +604,191 @@ export function WorkshopEnvironment() {
           <meshStandardMaterial color="#991b1b" metalness={0.85} roughness={0.2} />
         </mesh>
       </group>
+
+      {/* =========================================================================
+          7. AUXILIARY INDUSTRIAL EQUIPMENT & PIPING INFRASTRUCTURE
+         ========================================================================= */}
+      {/* A. Industrial Water Chiller CW-5200 for CO2 Machine (Station 1: [-6, 0, -4]) */}
+      <group position={[-7.8, 0, -5.4]}>
+        {/* Chiller Main Cabinet Body */}
+        <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.55, 0.9, 0.7]} />
+          <meshStandardMaterial color="#f1f5f9" metalness={0.4} roughness={0.3} />
+        </mesh>
+        {/* Front Air Intake Grille / Louvers */}
+        <mesh position={[0, 0.35, 0.355]}>
+          <planeGeometry args={[0.45, 0.45]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.8} />
+        </mesh>
+        {/* 4 Swivel Caster Wheels */}
+        {[-0.22, 0.22].map((x) =>
+          [-0.28, 0.28].map((z) => (
+            <mesh key={`caster-cw-${x}-${z}`} position={[x, 0.04, z]} castShadow>
+              <cylinderGeometry args={[0.04, 0.04, 0.06, 12]} />
+              <meshStandardMaterial color="#0f172a" roughness={0.7} />
+            </mesh>
+          ))
+        )}
+        {/* Digital Temperature Controller Panel */}
+        <group position={[0, 0.75, 0.355]}>
+          <mesh>
+            <planeGeometry args={[0.32, 0.14]} />
+            <meshBasicMaterial color="#030712" />
+          </mesh>
+          <SafeText position={[0, 0.03, 0.005]} fontSize={0.032} color="#94a3b8" anchorX="center" anchorY="middle">
+            CHILLER CW-5200
+          </SafeText>
+          <SafeText position={[0, -0.025, 0.005]} fontSize={0.042} color="#38bdf8" anchorX="center" anchorY="middle">
+            21.8 °C [STABLE]
+          </SafeText>
+        </group>
+        {/* Dual Water Connection Manifolds on top */}
+        <mesh position={[-0.12, 0.94, -0.15]}>
+          <cylinderGeometry args={[0.02, 0.02, 0.08, 12]} />
+          <meshStandardMaterial color="#0284c7" metalness={0.9} />
+        </mesh>
+        <mesh position={[0.12, 0.94, -0.15]}>
+          <cylinderGeometry args={[0.02, 0.02, 0.08, 12]} />
+          <meshStandardMaterial color="#dc2626" metalness={0.9} />
+        </mesh>
+      </group>
+
+      {/* Dual Chiller Hoses connecting CW-5200 Chiller to CO2 Laser Rear */}
+      {/* 1. Cold Water Supply Line (Cyan-Blue) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[
+              new Float32Array([
+                -7.8 - 0.12, 0.94, -5.4 - 0.15,
+                -7.8 - 0.12, 0.12, -5.4 - 0.15,
+                -6.95, 0.12, -4.7,
+                -6.95, 1.13, -4.7,
+              ]),
+              3,
+            ]}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#0284c7" linewidth={4} />
+      </line>
+      {/* 2. Warm Water Return Line (Ruby-Red) */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[
+              new Float32Array([
+                -7.8 + 0.12, 0.94, -5.4 - 0.15,
+                -7.8 + 0.12, 0.10, -5.4 - 0.15,
+                -5.05, 0.10, -4.7,
+                -5.05, 1.13, -4.7,
+              ]),
+              3,
+            ]}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color="#dc2626" linewidth={4} />
+      </line>
+
+      {/* Flexible Spiral Fume Extraction Hose from CO2 Machine Rear to Overhead Trunk */}
+      <group position={[-5.2, 0.4, -4.9]}>
+        {/* Hose riser to ceiling */}
+        <mesh position={[0, 1.8, 0.9]}>
+          <cylinderGeometry args={[0.1, 0.1, 3.6, 24]} />
+          <meshStandardMaterial
+            color="#94a3b8"
+            metalness={0.8}
+            roughness={0.3}
+          />
+        </mesh>
+        {/* Spiral ribs rings along the flexible duct */}
+        {[0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8, 3.2].map((y, idx) => (
+          <mesh key={`duct-rib-${idx}`} position={[0, y, 0.9]}>
+            <torusGeometry args={[0.108, 0.012, 8, 24]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* B. High Precision Cleanroom Chiller for UV Machine (Station 2: [6, 0, -4]) */}
+      <group position={[7.8, 0, -5.4]}>
+        <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.55, 0.9, 0.7]} />
+          <meshStandardMaterial color="#f8fafc" metalness={0.3} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.35, 0.355]}>
+          <planeGeometry args={[0.45, 0.45]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.7} />
+        </mesh>
+        {/* Digital Telemetry Panel */}
+        <group position={[0, 0.75, 0.355]}>
+          <mesh>
+            <planeGeometry args={[0.32, 0.14]} />
+            <meshBasicMaterial color="#030712" />
+          </mesh>
+          <SafeText position={[0, 0.03, 0.005]} fontSize={0.032} color="#94a3b8" anchorX="center" anchorY="middle">
+            DUAL TEC CHILLER
+          </SafeText>
+          <SafeText position={[0, -0.025, 0.005]} fontSize={0.042} color="#a855f7" anchorX="center" anchorY="middle">
+            25.0 °C [±0.05°C]
+          </SafeText>
+        </group>
+        {/* Braided Coolant Line to UV Machine Base */}
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[
+                new Float32Array([
+                  0, 0.4, 0,
+                  -1.8, 0.4, 1.4,
+                ]),
+                3,
+              ]}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#a855f7" linewidth={4} />
+        </line>
+      </group>
+
+      {/* C. Industrial Compressed Air Receiver Tank & Air Dryer behind Fiber Machine (Station 3: [-6, 0, 4]) */}
+      <group position={[-7.8, 0, 5.2]}>
+        {/* Vertical Blue Air Pressure Vessel Tank */}
+        <mesh position={[0, 0.7, 0]} castShadow>
+          <cylinderGeometry args={[0.22, 0.22, 1.0, 24]} />
+          <meshStandardMaterial color="#0284c7" metalness={0.7} roughness={0.25} />
+        </mesh>
+        {/* Tank Top Hemisphere Dome */}
+        <mesh position={[0, 1.2, 0]}>
+          <sphereGeometry args={[0.22, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#0284c7" metalness={0.7} roughness={0.25} />
+        </mesh>
+        {/* 3 Tank Stand Legs */}
+        {[0, (2 * Math.PI) / 3, (4 * Math.PI) / 3].map((angle, idx) => (
+          <mesh
+            key={`leg-${idx}`}
+            position={[Math.sin(angle) * 0.18, 0.1, Math.cos(angle) * 0.18]}
+          >
+            <cylinderGeometry args={[0.02, 0.02, 0.2, 12]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+        ))}
+        {/* Bourdon Tube Pressure Gauge */}
+        <group position={[0, 1.15, 0.23]}>
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.06, 0.06, 0.02, 16]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} />
+          </mesh>
+          <mesh position={[0, 0, 0.012]}>
+            <planeGeometry args={[0.09, 0.09]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+          <SafeText position={[0, 0, 0.014]} fontSize={0.024} color="#000000" anchorX="center" anchorY="middle">
+            0.6 MPa
+          </SafeText>
+        </group>
+      </group>
     </group>
   );
 }

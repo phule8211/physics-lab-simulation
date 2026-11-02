@@ -108,6 +108,13 @@ interface LabState {
   resetCoating: () => void;
   toggleTurntable: () => void;
 
+  // Machine Anatomy X-Ray Mode & Bi-directional Component Highlighting
+  isXRayMode: boolean;
+  hoveredComponentId: string | null;
+  setXRayMode: (enabled: boolean) => void;
+  toggleXRayMode: () => void;
+  setHoveredComponentId: (id: string | null) => void;
+
   // Actions
   setHoveredStation: (id: MachineId | null, distance?: number | null) => void;
   setPointerLocked: (locked: boolean) => void;
@@ -183,6 +190,16 @@ export const useLabStore = create<LabState>((set, get) => ({
   smokeDensity: 5,
   isAlarmBuzzerActive: false,
 
+  // Machine Anatomy X-Ray Mode & Bi-directional Component Highlighting
+  isXRayMode: false,
+  hoveredComponentId: null,
+  setXRayMode: (enabled) => set({ isXRayMode: enabled }),
+  toggleXRayMode: () => {
+    sound.playClick();
+    set({ isXRayMode: !get().isXRayMode });
+  },
+  setHoveredComponentId: (id) => set({ hoveredComponentId: id }),
+
   // Spray Coating & Finishing State
   selectedCoatingFinish: 'CLEAR_GLOSS',
   coatingCoverage: 0,
@@ -222,6 +239,8 @@ export const useLabStore = create<LabState>((set, get) => ({
       activeStationId: null,
       isCuttingJob: false,
       isDesignModalOpen: false,
+      isXRayMode: false,
+      hoveredComponentId: null,
     });
   },
 
@@ -229,7 +248,12 @@ export const useLabStore = create<LabState>((set, get) => ({
 
   setActiveTab: (tab) => {
     sound.playClick();
-    set({ activeTab: tab });
+    const isComponents = tab === 'COMPONENTS';
+    set({
+      activeTab: tab,
+      isXRayMode: isComponents ? true : get().isXRayMode,
+      hoveredComponentId: null,
+    });
   },
 
   toggleMachineRunning: () => {

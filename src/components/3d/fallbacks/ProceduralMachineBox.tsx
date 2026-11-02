@@ -19,6 +19,74 @@ function SafeText(props: any) {
   );
 }
 
+/**
+ * Interactive 3D X-Ray Callout Marker with Leader Line & Floating Label Badge
+ */
+function XRayCalloutMarker({
+  position,
+  label,
+  subtitle,
+  active,
+  color = '#06b6d4',
+}: {
+  position: [number, number, number];
+  label: string;
+  subtitle?: string;
+  active: boolean;
+  color?: string;
+}) {
+  const markerRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (markerRef.current && active) {
+      markerRef.current.position.y = position[1] + Math.sin(clock.getElapsedTime() * 5) * 0.02;
+    }
+  });
+
+  if (!active) return null;
+
+  return (
+    <group ref={markerRef} position={position}>
+      {/* Vertical pointer leader line */}
+      <line>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([0, 0, 0, 0, 0.22, 0]), 3]}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial color={color} linewidth={2} />
+      </line>
+
+      {/* Target Dot */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[0.022, 16, 16]} />
+        <meshBasicMaterial color={color} />
+      </mesh>
+
+      {/* Floating Badge Box */}
+      <group position={[0, 0.28, 0]}>
+        <mesh>
+          <boxGeometry args={[0.82, 0.18, 0.02]} />
+          <meshStandardMaterial color="#0b1120" metalness={0.8} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0, 0.011]}>
+          <planeGeometry args={[0.8, 0.16]} />
+          <meshBasicMaterial color="#030712" />
+        </mesh>
+        <SafeText position={[0, 0.03, 0.015]} fontSize={0.045} color={color} anchorX="center" anchorY="middle">
+          {label}
+        </SafeText>
+        {subtitle && (
+          <SafeText position={[0, -0.032, 0.015]} fontSize={0.03} color="#94a3b8" anchorX="center" anchorY="middle">
+            {subtitle}
+          </SafeText>
+        )}
+      </group>
+    </group>
+  );
+}
+
 interface StationProps {
   id: MachineId;
   position: [number, number, number];
@@ -63,6 +131,8 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
   const currentDesignName = useLabStore((state) => state.currentDesignName);
   const processMode = useLabStore((state) => state.processMode);
   const isFraming = useLabStore((state) => state.isFraming);
+  const isXRayMode = useLabStore((state) => state.isXRayMode);
+  const hoveredComponentId = useLabStore((state) => state.hoveredComponentId);
 
   const gantryRef = useRef<THREE.Group>(null);
   const carriageRef = useRef<THREE.Group>(null);
@@ -74,6 +144,47 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
 
   const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
   const matInteraction = matConfig.interactions.CO2_LASER;
+
+  // Component highlighting checks for X-Ray Anatomy Mode
+  const isTubeActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('Ống') ||
+        hoveredComponentId.includes('Tube') ||
+        hoveredComponentId.includes('phóng'))
+  );
+  const isMirrorsActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('gương') ||
+        hoveredComponentId.includes('Mirror') ||
+        hoveredComponentId.includes('đổi hướng'))
+  );
+  const isLensActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('Thấu kính') ||
+        hoveredComponentId.includes('Lens') ||
+        hoveredComponentId.includes('hội tụ') ||
+        hoveredComponentId.includes('khí nén') ||
+        hoveredComponentId.includes('Nozzle'))
+  );
+  const isPsuActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('nguồn') ||
+        hoveredComponentId.includes('PSU') ||
+        hoveredComponentId.includes('Voltage'))
+  );
+  const isChillerActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('Chiller') ||
+        hoveredComponentId.includes('nước') ||
+        hoveredComponentId.includes('làm mát'))
+  );
+  const isExhaustActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('khói') ||
+        hoveredComponentId.includes('Fume') ||
+        hoveredComponentId.includes('hút') ||
+        hoveredComponentId.includes('Lọc'))
+  );
 
   // Build G-code toolpath index & compute framing bounding box
   const bbox = useMemo(() => computeBoundingBox(currentToolpaths), [currentToolpaths]);
@@ -153,11 +264,100 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
 
   return (
     <group>
-      {/* Heavy Steel Machine Base & Stand */}
-      <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+      {/* Heavy Steel Machine Base & Stand (Translucent in X-Ray Anatomy Mode) */}
+      <mesh position={[0, 0.4, 0]} castShadow={!isXRayMode} receiveShadow>
         <boxGeometry args={[2.8, 0.8, 1.8]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
+        <meshStandardMaterial
+          color={isXRayMode ? '#0a1526' : '#1e293b'}
+          metalness={isXRayMode ? 0.2 : 0.7}
+          roughness={isXRayMode ? 0.1 : 0.3}
+          transparent={isXRayMode}
+          opacity={isXRayMode ? 0.22 : 1.0}
+        />
       </mesh>
+
+      {/* =========================================================================
+          INTERNAL BASE ASSEMBLIES (Revealed in X-Ray Anatomy Mode)
+         ========================================================================= */}
+      {isXRayMode && (
+        <group>
+          {/* Internal Base Structural Shelf & Frame */}
+          <mesh position={[0, 0.15, 0]}>
+            <boxGeometry args={[2.6, 0.04, 1.6]} />
+            <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.3} />
+          </mesh>
+
+          {/* 1. High Voltage DC Power Supply Unit (Flyback Transformer PWM) */}
+          <group position={[-0.8, 0.38, 0.2]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.65, 0.3, 0.42]} />
+              <meshStandardMaterial
+                color={isPsuActive ? '#0284c7' : '#1e293b'}
+                emissive={isPsuActive ? '#0284c7' : '#000000'}
+                emissiveIntensity={isPsuActive ? 0.8 : 0}
+                metalness={0.8}
+                roughness={0.2}
+              />
+            </mesh>
+            {/* Flyback High Voltage Transformer Coils */}
+            <mesh position={[-0.15, 0.16, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.07, 0.07, 0.2, 16]} />
+              <meshStandardMaterial color="#b45309" metalness={0.6} roughness={0.3} />
+            </mesh>
+            {/* Aluminum Extruded Heatsink Fins */}
+            {[-0.08, -0.04, 0, 0.04, 0.08].map((offset, idx) => (
+              <mesh key={`fin-${idx}`} position={[0.18, 0.17, offset]}>
+                <boxGeometry args={[0.18, 0.05, 0.015]} />
+                <meshStandardMaterial color="#64748b" metalness={0.9} />
+              </mesh>
+            ))}
+            {/* High Voltage Silicone Red Cable routing to tube cathode */}
+            <mesh position={[0.25, 0.1, -0.1]}>
+              <cylinderGeometry args={[0.01, 0.01, 0.35, 8]} />
+              <meshStandardMaterial color="#dc2626" />
+            </mesh>
+            <XRayCalloutMarker
+              position={[0, 0.35, 0]}
+              label="Bộ Nguồn Cao Áp (HV PSU)"
+              subtitle="Flyback PWM 20-40 kV · 30mA"
+              active={isXRayMode && (isPsuActive || !hoveredComponentId)}
+              color="#38bdf8"
+            />
+          </group>
+
+          {/* 2. Industrial Centrifugal Fume Extractor Fan (Quạt hút ly tâm) */}
+          <group position={[0.8, 0.36, -0.2]}>
+            {/* Centrifugal Blower Snail Shell Housing */}
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.22, 0.22, 0.26, 24]} />
+              <meshStandardMaterial
+                color={isExhaustActive ? '#0369a1' : '#334155'}
+                emissive={isExhaustActive ? '#0369a1' : '#000000'}
+                emissiveIntensity={isExhaustActive ? 0.8 : 0}
+                metalness={0.7}
+                roughness={0.3}
+              />
+            </mesh>
+            {/* Exhaust Tangential Outlet Duct Spigot */}
+            <mesh position={[0.15, 0.15, 0]} rotation={[0, 0, -Math.PI / 4]}>
+              <boxGeometry args={[0.16, 0.22, 0.22]} />
+              <meshStandardMaterial color="#475569" metalness={0.8} />
+            </mesh>
+            {/* Impeller Center Hub */}
+            <mesh position={[0, 0, 0.14]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.06, 0.06, 0.04, 16]} />
+              <meshStandardMaterial color="#0f172a" />
+            </mesh>
+            <XRayCalloutMarker
+              position={[0, 0.35, 0]}
+              label="Quạt Hút Khói Ly Tâm"
+              subtitle="Công suất 750W · Hút khói & bụi VOCs"
+              active={isXRayMode && (isExhaustActive || !hoveredComponentId)}
+              color="#38bdf8"
+            />
+          </group>
+        </group>
+      )}
 
       {/* 4 Rubber Vibration Damper Feet */}
       {[-1.2, 1.2].map((x) =>
@@ -259,19 +459,51 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
         )}
       </group>
 
-      {/* Rear CO2 Glass Tube Enclosure Chamber */}
-      <mesh position={[0, 1.05, -0.7]} castShadow>
+      {/* Rear CO2 Glass Tube Enclosure Chamber (Translucent in X-Ray Anatomy Mode) */}
+      <mesh position={[0, 1.05, -0.7]} castShadow={!isXRayMode}>
         <boxGeometry args={[2.5, 0.35, 0.3]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.5} roughness={0.5} />
+        <meshStandardMaterial
+          color={isXRayMode ? '#0a1120' : '#0f172a'}
+          metalness={isXRayMode ? 0.2 : 0.5}
+          roughness={isXRayMode ? 0.1 : 0.5}
+          transparent={isXRayMode}
+          opacity={isXRayMode ? 0.2 : 1.0}
+        />
       </mesh>
+
+      {/* Water Cooling Glass Jacket (Outer Cylinder) with Water In/Out Ports */}
+      <mesh position={[0, 1.05, -0.7]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.075, 0.075, 2.24, 24]} />
+        <meshStandardMaterial
+          color="#38bdf8"
+          transparent
+          opacity={0.32}
+          roughness={0.05}
+          metalness={0.1}
+        />
+      </mesh>
+
+      {/* Water Hose Connectors (Leading to Chiller) */}
+      {[-0.95, 0.95].map((x, idx) => (
+        <group key={`water-port-${idx}`} position={[x, 1.13, -0.7]}>
+          <mesh>
+            <cylinderGeometry args={[0.015, 0.015, 0.08, 12]} />
+            <meshStandardMaterial color="#0284c7" metalness={0.8} />
+          </mesh>
+          <mesh position={[0, 0.06, -0.05]} rotation={[Math.PI / 4, 0, 0]}>
+            <cylinderGeometry args={[0.012, 0.012, 0.12, 12]} />
+            <meshStandardMaterial color={idx === 0 ? '#0284c7' : '#dc2626'} transparent opacity={0.7} />
+          </mesh>
+        </group>
+      ))}
 
       {/* Glowing CO2 Glass Plasma Tube inside chamber */}
       <mesh position={[0, 1.05, -0.7]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.05, 0.05, 2.2, 16]} />
+        <cylinderGeometry args={[0.045, 0.045, 2.18, 16]} />
         <meshStandardMaterial
           color="#d946ef"
           emissive="#d946ef"
-          emissiveIntensity={isRunning && !isLidOpen ? 2.5 : 0.1}
+          emissiveIntensity={isRunning && !isLidOpen ? 2.5 : isTubeActive ? 2.0 : 0.2}
           transparent
           opacity={0.85}
         />
@@ -285,6 +517,80 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
         </mesh>
       ))}
 
+      {/* Rear Mirror (Total Reflector 99.7% Au) on left end */}
+      <group position={[-1.12, 1.05, -0.7]}>
+        <mesh rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.045, 0.045, 0.025, 20]} />
+          <meshStandardMaterial
+            color={isMirrorsActive ? '#fbbf24' : '#d97706'}
+            emissive={isMirrorsActive ? '#fbbf24' : '#000000'}
+            emissiveIntensity={isMirrorsActive ? 0.9 : 0}
+            metalness={0.99}
+            roughness={0.05}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.28, 0]}
+          label="Gương Phản Xạ Toàn Phần"
+          subtitle="Đồng mạ vàng · Phản xạ 99.7%"
+          active={isXRayMode && (isMirrorsActive || !hoveredComponentId)}
+          color="#fbbf24"
+        />
+      </group>
+
+      {/* Output Coupler (OC 15% transmission ZnSe) on right end */}
+      <group position={[1.12, 1.05, -0.7]}>
+        <mesh rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.045, 0.045, 0.025, 20]} />
+          <meshStandardMaterial
+            color={isMirrorsActive ? '#fde047' : '#eab308'}
+            emissive={isMirrorsActive ? '#fde047' : '#000000'}
+            emissiveIntensity={isMirrorsActive ? 0.9 : 0}
+            metalness={0.8}
+            roughness={0.1}
+            transparent
+            opacity={0.8}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.28, 0]}
+          label="Gương Trích Xuất Bán Xạ (OC)"
+          subtitle="ZnSe · Thoát 15% tia, phản hồi 85%"
+          active={isXRayMode && (isMirrorsActive || !hoveredComponentId)}
+          color="#fbbf24"
+        />
+      </group>
+
+      {/* CO2 Discharge Tube Center Callout Marker */}
+      <XRayCalloutMarker
+        position={[0, 1.35, -0.7]}
+        label="Ống Phóng Điện CO2 & Áo Nước"
+        subtitle="Borosilicate 3 lớp · Khí CO₂-N₂-He"
+        active={isXRayMode && (isTubeActive || !hoveredComponentId)}
+        color="#d946ef"
+      />
+
+      {/* Mirror 1 Housing (Fixed Corner 45° Gold Mirror at rear right) */}
+      <group position={[1.25, 1.05, -0.7]}>
+        <mesh>
+          <boxGeometry args={[0.09, 0.09, 0.09]} />
+          <meshStandardMaterial
+            color={isMirrorsActive ? '#fbbf24' : '#f59e0b'}
+            emissive={isMirrorsActive ? '#fbbf24' : '#000000'}
+            emissiveIntensity={isMirrorsActive ? 0.9 : 0}
+            metalness={0.9}
+            roughness={0.15}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.28, 0]}
+          label="Gương Đổi Hướng 1"
+          subtitle="Bẻ tia 90° từ ống phóng sang trục Y"
+          active={isXRayMode && isMirrorsActive}
+          color="#fbbf24"
+        />
+      </group>
+
       {/* Gantry Beam Group (Moves along Z axis) */}
       <group ref={gantryRef} position={[0, 0.95, coords.z]}>
         {/* Gantry Crossbeam */}
@@ -294,10 +600,24 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
         </mesh>
 
         {/* Mirror 2 Housing on Gantry Right Edge */}
-        <mesh position={[1.1, 0.1, 0]}>
-          <boxGeometry args={[0.08, 0.08, 0.08]} />
-          <meshStandardMaterial color="#f59e0b" metalness={0.9} />
-        </mesh>
+        <group position={[1.1, 0.1, 0]}>
+          <mesh>
+            <boxGeometry args={[0.08, 0.08, 0.08]} />
+            <meshStandardMaterial
+              color={isMirrorsActive ? '#fbbf24' : '#f59e0b'}
+              emissive={isMirrorsActive ? '#fbbf24' : '#000000'}
+              emissiveIntensity={isMirrorsActive ? 0.9 : 0}
+              metalness={0.9}
+            />
+          </mesh>
+          <XRayCalloutMarker
+            position={[0, 0.28, 0]}
+            label="Gương Đổi Hướng 2"
+            subtitle="Di chuyển theo trục Y · Bẻ tia sang trục X"
+            active={isXRayMode && isMirrorsActive}
+            color="#fbbf24"
+          />
+        </group>
 
         {/* Laser Carriage Head (Moves along X axis on Gantry) */}
         <group ref={carriageRef} position={[coords.x, 0, 0]}>
@@ -310,16 +630,62 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
           {/* Mirror 3 Housing (45 deg angle) */}
           <mesh position={[0, 0.1, 0]}>
             <boxGeometry args={[0.06, 0.06, 0.06]} />
-            <meshStandardMaterial color="#f59e0b" metalness={0.9} />
+            <meshStandardMaterial
+              color={isMirrorsActive ? '#fbbf24' : '#f59e0b'}
+              emissive={isMirrorsActive ? '#fbbf24' : '#000000'}
+              emissiveIntensity={isMirrorsActive ? 0.9 : 0}
+              metalness={0.9}
+            />
           </mesh>
 
-          {/* Golden ZnSe Lens Barrel & Nozzle */}
+          {/* Golden ZnSe Lens Barrel & Air Assist Nozzle */}
           <mesh position={[0, -0.06, 0]} castShadow>
             <cylinderGeometry args={[0.035, 0.02, 0.14, 16]} />
-            <meshStandardMaterial color="#f59e0b" metalness={0.85} roughness={0.15} />
+            <meshStandardMaterial
+              color={isLensActive ? '#34d399' : '#f59e0b'}
+              emissive={isLensActive ? '#34d399' : '#000000'}
+              emissiveIntensity={isLensActive ? 0.8 : 0}
+              metalness={0.85}
+              roughness={0.15}
+            />
           </mesh>
+
+          <XRayCalloutMarker
+            position={[0, 0.28, 0]}
+            label="Thấu Kính Hội Tụ ZnSe & Đầu Cắt"
+            subtitle="Tiêu cự 50.8mm · Khí nén dập lửa"
+            active={isXRayMode && (isLensActive || !hoveredComponentId)}
+            color="#10b981"
+          />
         </group>
       </group>
+
+      {/* 3D Optical Beam Tracing Path Line in X-Ray Anatomy Mode */}
+      {isXRayMode && (
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[
+                new Float32Array([
+                  // Rear tube optical axis: Rear Mirror -> OC -> Mirror 1
+                  -1.12, 1.05, -0.7,
+                  1.12, 1.05, -0.7,
+                  1.25, 1.05, -0.7,
+                  // Mirror 1 to Mirror 2 on gantry
+                  1.25, 1.05, coords.z,
+                  // Mirror 2 to Mirror 3 on carriage
+                  coords.x, 1.05, coords.z,
+                  // Mirror 3 down through ZnSe lens to cutting bed
+                  coords.x, 0.85, coords.z,
+                ]),
+                3,
+              ]}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#d946ef" linewidth={2} transparent opacity={0.85} />
+        </line>
+      )}
 
       {/* Real-Time Optical 3-Mirror Laser Beam System & Sparks */}
       <CO2LaserBeam gantryZ={coords.z} carriageX={coords.x} bedY={0.85} />
@@ -380,7 +746,7 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
           <meshStandardMaterial
             color="#f59e0b"
             transparent
-            opacity={0.35}
+            opacity={isXRayMode ? 0.12 : 0.35}
             roughness={0.1}
             metalness={0.2}
           />
@@ -485,9 +851,50 @@ function UVLaserMachine({ isSelected }: { isSelected: boolean }) {
   const currentToolpaths = useLabStore((state) => state.currentToolpaths);
   const currentDesignName = useLabStore((state) => state.currentDesignName);
   const processMode = useLabStore((state) => state.processMode);
+  const isXRayMode = useLabStore((state) => state.isXRayMode);
+  const hoveredComponentId = useLabStore((state) => state.hoveredComponentId);
 
   const doorRef = useRef<THREE.Group>(null);
   const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.SILICON;
+
+  // Component highlighting checks for UV Laser X-Ray Anatomy Mode
+  const isDpssActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('cộng hưởng') ||
+        hoveredComponentId.includes('DPSS') ||
+        hoveredComponentId.includes('Nd:YVO') ||
+        hoveredComponentId.includes('tinh thể rắn'))
+  );
+  const isHarmonicActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('LBO') ||
+        hoveredComponentId.includes('nhân ba') ||
+        hoveredComponentId.includes('Harmonic') ||
+        hoveredComponentId.includes('tinh thể'))
+  );
+  const isQSwitchActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('Q-Switch') ||
+        hoveredComponentId.includes('chuyển mạch Q'))
+  );
+  const isGalvoActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('Galvo') ||
+        hoveredComponentId.includes('gương quét') ||
+        hoveredComponentId.includes('Scanner'))
+  );
+  const isFThetaActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('F-Theta') ||
+        hoveredComponentId.includes('thấu kính') ||
+        hoveredComponentId.includes('Lens'))
+  );
+  const isTecActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('TEC') ||
+        hoveredComponentId.includes('Chiller') ||
+        hoveredComponentId.includes('nhiệt độ'))
+  );
 
   useFrame((_, delta) => {
     // Vertical Sliding Protective Viewport Door Kinematics
@@ -509,16 +916,58 @@ function UVLaserMachine({ isSelected }: { isSelected: boolean }) {
 
   return (
     <group>
-      {/* Cleanroom Vibration-Isolated Base Table */}
-      <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+      {/* Cleanroom Vibration-Isolated Base Table (Translucent in X-Ray Anatomy Mode) */}
+      <mesh position={[0, 0.45, 0]} castShadow={!isXRayMode} receiveShadow>
         <boxGeometry args={[2.2, 0.9, 1.6]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.2} metalness={0.1} />
+        <meshStandardMaterial
+          color={isXRayMode ? '#1e1b4b' : '#f8fafc'}
+          roughness={isXRayMode ? 0.1 : 0.2}
+          metalness={isXRayMode ? 0.2 : 0.1}
+          transparent={isXRayMode}
+          opacity={isXRayMode ? 0.22 : 1.0}
+        />
       </mesh>
 
+      {/* Internal Under-Table Dual TEC Chiller Block (Revealed in X-Ray) */}
+      {isXRayMode && (
+        <group position={[0, 0.45, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.9, 0.4, 0.6]} />
+            <meshStandardMaterial
+              color={isTecActive ? '#0284c7' : '#334155'}
+              emissive={isTecActive ? '#0284c7' : '#000000'}
+              emissiveIntensity={isTecActive ? 0.8 : 0}
+              metalness={0.8}
+              roughness={0.2}
+            />
+          </mesh>
+          {/* Dual Cooling Liquid Hose Spigots */}
+          {[-0.2, 0.2].map((x, idx) => (
+            <mesh key={`tec-pipe-${idx}`} position={[x, 0.22, 0]}>
+              <cylinderGeometry args={[0.02, 0.02, 0.1, 12]} />
+              <meshStandardMaterial color="#06b6d4" metalness={0.9} />
+            </mesh>
+          ))}
+          <XRayCalloutMarker
+            position={[0, 0.48, 0]}
+            label="Bộ Điều Khiển Nhiệt Độ Kép (Dual TEC)"
+            subtitle="Peltier TEC · Độ chính xác nhiệt ±0.1°C"
+            active={isXRayMode && (isTecActive || !hoveredComponentId)}
+            color="#06b6d4"
+          />
+        </group>
+      )}
+
       {/* Enclosed UV Shielding Chamber Structure */}
-      <mesh position={[0, 1.25, 0]} castShadow>
+      <mesh position={[0, 1.25, 0]} castShadow={!isXRayMode}>
         <boxGeometry args={[1.8, 0.8, 1.3]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.8} />
+        <meshStandardMaterial
+          color={isXRayMode ? '#1e1138' : '#0f172a'}
+          roughness={isXRayMode ? 0.1 : 0.3}
+          metalness={isXRayMode ? 0.2 : 0.8}
+          transparent={isXRayMode}
+          opacity={isXRayMode ? 0.2 : 1.0}
+        />
       </mesh>
 
       {/* Interior Chamber Lighting */}
@@ -602,11 +1051,173 @@ function UVLaserMachine({ isSelected }: { isSelected: boolean }) {
         )}
       </group>
 
-      {/* DPSS 355nm UV Laser Head inside chamber */}
-      <mesh position={[0, 1.5, 0]}>
-        <cylinderGeometry args={[0.06, 0.05, 0.2, 16]} />
-        <meshStandardMaterial color="#8b5cf6" metalness={0.7} roughness={0.3} />
-      </mesh>
+      {/* =========================================================================
+          INTERNAL UV OPTICAL RESONATOR & FREQUENCY CONVERSION (X-Ray Mode)
+         ========================================================================= */}
+      {/* 1. DPSS Resonator Block (Nd:YVO4 with 808nm diode fiber input) */}
+      <group position={[-0.32, 1.52, -0.2]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.3, 0.14, 0.18]} />
+          <meshStandardMaterial
+            color={isDpssActive ? '#a855f7' : '#3b0764'}
+            emissive={isDpssActive ? '#a855f7' : '#000000'}
+            emissiveIntensity={isDpssActive ? 0.9 : 0}
+            metalness={0.8}
+            roughness={0.2}
+          />
+        </mesh>
+        {/* Glowing Nd:YVO4 Laser Crystal Core */}
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.08, 0.04, 0.04]} />
+          <meshStandardMaterial color="#c084fc" emissive="#c084fc" emissiveIntensity={1.5} />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.24, 0]}
+          label="Buồng Cộng Hưởng DPSS (Nd:YVO₄)"
+          subtitle="Bơm Diode 808nm · Phát xạ gốc 1064nm"
+          active={isXRayMode && (isDpssActive || !hoveredComponentId)}
+          color="#a855f7"
+        />
+      </group>
+
+      {/* 2. Acousto-Optic Q-Switch Module */}
+      <group position={[-0.04, 1.52, -0.2]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.16, 0.12, 0.14]} />
+          <meshStandardMaterial
+            color={isQSwitchActive ? '#c084fc' : '#1e1b4b'}
+            emissive={isQSwitchActive ? '#c084fc' : '#000000'}
+            emissiveIntensity={isQSwitchActive ? 0.8 : 0}
+            metalness={0.85}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.24, 0]}
+          label="Bộ Chuyển Mạch Q (Acousto-Optic)"
+          subtitle="Nén xung cực ngắn 10-30 ns · Đỉnh công suất MW"
+          active={isXRayMode && (isQSwitchActive || !hoveredComponentId)}
+          color="#8b5cf6"
+        />
+      </group>
+
+      {/* 3. Non-linear LBO Harmonic Conversion Oven (SHG 532nm & THG 355nm) */}
+      <group position={[0.22, 1.52, -0.1]}>
+        {/* Miniature Gold-Plated Crystal Oven Enclosure */}
+        <mesh castShadow>
+          <boxGeometry args={[0.22, 0.12, 0.22]} />
+          <meshStandardMaterial
+            color={isHarmonicActive ? '#facc15' : '#713f12'}
+            emissive={isHarmonicActive ? '#facc15' : '#000000'}
+            emissiveIntensity={isHarmonicActive ? 0.8 : 0}
+            metalness={0.9}
+            roughness={0.15}
+          />
+        </mesh>
+        {/* SHG Crystal (Green 532nm Core) */}
+        <mesh position={[-0.04, 0, 0]}>
+          <boxGeometry args={[0.04, 0.03, 0.06]} />
+          <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={2.0} />
+        </mesh>
+        {/* THG Crystal (Violet 355nm Core) */}
+        <mesh position={[0.04, 0, 0]}>
+          <boxGeometry args={[0.04, 0.03, 0.06]} />
+          <meshStandardMaterial color="#a855f7" emissive="#a855f7" emissiveIntensity={2.5} />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.24, 0]}
+          label="Bộ Tinh Thể Nhân Tần LBO (SHG & THG)"
+          subtitle="1064nm → 532nm (Xanh) → 355nm (Tử ngoại UV)"
+          active={isXRayMode && (isHarmonicActive || !hoveredComponentId)}
+          color="#c084fc"
+        />
+      </group>
+
+      {/* 4. UV Galvo Scanning Head & Telecentric F-Theta Lens */}
+      <group position={[0, 1.5, 0.12]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.18, 0.16, 0.24]} />
+          <meshStandardMaterial
+            color={isGalvoActive ? '#a855f7' : '#475569'}
+            emissive={isGalvoActive ? '#a855f7' : '#000000'}
+            emissiveIntensity={isGalvoActive ? 0.8 : 0}
+            metalness={0.8}
+            roughness={0.2}
+          />
+        </mesh>
+        {/* Fused Silica F-Theta Lens Barrel */}
+        <mesh position={[0, -0.12, 0]}>
+          <cylinderGeometry args={[0.055, 0.04, 0.1, 20]} />
+          <meshStandardMaterial
+            color={isFThetaActive ? '#34d399' : '#0f172a'}
+            emissive={isFThetaActive ? '#34d399' : '#000000'}
+            emissiveIntensity={isFThetaActive ? 0.8 : 0}
+            metalness={0.9}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.24, 0]}
+          label="Gương Quét Galvo UV & F-Theta Thạch Anh"
+          subtitle="Fused Silica tráng phủ 355nm · Quét quang hóa lạnh"
+          active={isXRayMode && (isGalvoActive || isFThetaActive || !hoveredComponentId)}
+          color="#a855f7"
+        />
+      </group>
+
+      {/* 5. Multi-harmonic Tracing Optical Ray Line in X-Ray Mode */}
+      {isXRayMode && (
+        <group>
+          {/* 1064nm Fundamental IR Ray: Nd:YVO4 -> Q-Switch -> SHG Crystal */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[
+                  new Float32Array([
+                    -0.32, 1.52, -0.2,
+                    -0.04, 1.52, -0.2,
+                    0.18, 1.52, -0.1,
+                  ]),
+                  3,
+                ]}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#f59e0b" linewidth={2} />
+          </line>
+          {/* 532nm Green SHG Ray: SHG Crystal -> THG Crystal */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[
+                  new Float32Array([
+                    0.18, 1.52, -0.1,
+                    0.26, 1.52, -0.1,
+                  ]),
+                  3,
+                ]}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#22c55e" linewidth={3} />
+          </line>
+          {/* 355nm UV Violet Ray: THG Crystal -> Galvo -> Wafer */}
+          <line>
+            <bufferGeometry>
+              <bufferAttribute
+                attach="attributes-position"
+                args={[
+                  new Float32Array([
+                    0.26, 1.52, -0.1,
+                    0, 1.5, 0.12,
+                    0, 0.985, 0.12,
+                  ]),
+                  3,
+                ]}
+              />
+            </bufferGeometry>
+            <lineBasicMaterial color="#c084fc" linewidth={3} />
+          </line>
+        </group>
+      )}
 
       {/* Integrated UV Laser Beam Effect */}
       <UVLaserBeam position={[0, 1.45, 0]} waferY={0.985} />
@@ -702,9 +1313,39 @@ function FiberLaserMachine({ isSelected }: { isSelected: boolean }) {
   const currentToolpaths = useLabStore((state) => state.currentToolpaths);
   const currentDesignName = useLabStore((state) => state.currentDesignName);
   const processMode = useLabStore((state) => state.processMode);
+  const isXRayMode = useLabStore((state) => state.isXRayMode);
+  const hoveredComponentId = useLabStore((state) => state.hoveredComponentId);
 
   const clampRef = useRef<THREE.Group>(null);
   const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.STEEL;
+
+  // Component highlighting checks for Fiber Laser X-Ray Anatomy Mode
+  const isSourceActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('sợi quang') ||
+        hoveredComponentId.includes('nguồn') ||
+        hoveredComponentId.includes('Source') ||
+        hoveredComponentId.includes('Ytterbium'))
+  );
+  const isIsolatorActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('cách ly') ||
+        hoveredComponentId.includes('Isolator') ||
+        hoveredComponentId.includes('Collimator'))
+  );
+  const isGalvoActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('Galvo') ||
+        hoveredComponentId.includes('gương quét') ||
+        hoveredComponentId.includes('Scanner') ||
+        hoveredComponentId.includes('Đầu quét'))
+  );
+  const isFThetaActive = Boolean(
+    hoveredComponentId &&
+      (hoveredComponentId.includes('F-Theta') ||
+        hoveredComponentId.includes('thấu kính') ||
+        hoveredComponentId.includes('Lens'))
+  );
 
   useFrame((_, delta) => {
     // Swing Fixture Clamp Kinematics
@@ -726,11 +1367,62 @@ function FiberLaserMachine({ isSelected }: { isSelected: boolean }) {
 
   return (
     <group>
-      {/* Aluminum Profile Workbench with Honeycomb Storage */}
-      <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+      {/* Aluminum Profile Workbench with Honeycomb Storage (Translucent in X-Ray Anatomy Mode) */}
+      <mesh position={[0, 0.45, 0]} castShadow={!isXRayMode} receiveShadow>
         <boxGeometry args={[2.0, 0.9, 1.4]} />
-        <meshStandardMaterial color="#334155" metalness={0.6} roughness={0.4} />
+        <meshStandardMaterial
+          color={isXRayMode ? '#0b1329' : '#334155'}
+          metalness={isXRayMode ? 0.2 : 0.6}
+          roughness={isXRayMode ? 0.1 : 0.4}
+          transparent={isXRayMode}
+          opacity={isXRayMode ? 0.22 : 1.0}
+        />
       </mesh>
+
+      {/* Internal Workbench Raycus/IPG Fiber Laser Source Engine Chassis (X-Ray Mode) */}
+      {isXRayMode && (
+        <group position={[0, 0.42, 0]}>
+          {/* 19-inch Rack Chassis */}
+          <mesh castShadow>
+            <boxGeometry args={[1.3, 0.38, 0.85]} />
+            <meshStandardMaterial
+              color={isSourceActive ? '#b45309' : '#1e293b'}
+              emissive={isSourceActive ? '#b45309' : '#000000'}
+              emissiveIntensity={isSourceActive ? 0.8 : 0}
+              metalness={0.8}
+              roughness={0.25}
+            />
+          </mesh>
+          {/* Active Coiled Yb3+ Optical Fiber Spool (Glowing Golden Amber) */}
+          <mesh position={[0, 0.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.22, 0.035, 16, 32]} />
+            <meshStandardMaterial
+              color="#f59e0b"
+              emissive="#f59e0b"
+              emissiveIntensity={2.5}
+            />
+          </mesh>
+          {/* High Power 976nm Pump Diode Modules */}
+          {[-0.35, 0.35].map((x, idx) => (
+            <mesh key={`pump-${idx}`} position={[x, 0.2, -0.15]}>
+              <boxGeometry args={[0.22, 0.08, 0.18]} />
+              <meshStandardMaterial color="#f97316" metalness={0.8} />
+            </mesh>
+          ))}
+          {/* Armored Yellow Optical Fiber Conduit Routing from Engine to Z-axis Column */}
+          <mesh position={[-0.45, 0.45, -0.12]}>
+            <cylinderGeometry args={[0.018, 0.018, 0.5, 12]} />
+            <meshStandardMaterial color="#eab308" metalness={0.5} roughness={0.4} />
+          </mesh>
+          <XRayCalloutMarker
+            position={[0, 0.52, 0]}
+            label="Module Nguồn Laser Fiber Ytterbium (Yb³⁺)"
+            subtitle="IPG / Raycus 50W · Diode bơm 976nm · FBG Bragg"
+            active={isXRayMode && (isSourceActive || !hoveredComponentId)}
+            color="#f59e0b"
+          />
+        </group>
+      )}
 
       {/* M6 Optical Breadboard Tabletop (Anodized Aluminum with Holes pattern) */}
       <mesh position={[0, 0.92, 0]} receiveShadow>
@@ -739,10 +1431,24 @@ function FiberLaserMachine({ isSelected }: { isSelected: boolean }) {
       </mesh>
 
       {/* Precision Column Z-Axis (Vertical tower with ruler scale) */}
-      <mesh position={[-0.45, 1.4, -0.25]} castShadow>
+      <mesh position={[-0.45, 1.4, -0.25]} castShadow={!isXRayMode}>
         <boxGeometry args={[0.15, 1.0, 0.15]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+        <meshStandardMaterial
+          color={isXRayMode ? '#0a1020' : '#0f172a'}
+          metalness={isXRayMode ? 0.3 : 0.8}
+          roughness={isXRayMode ? 0.1 : 0.2}
+          transparent={isXRayMode}
+          opacity={isXRayMode ? 0.3 : 1.0}
+        />
       </mesh>
+
+      {/* Internal Yellow Armored Fiber Conduit in Z Tower */}
+      {isXRayMode && (
+        <mesh position={[-0.45, 1.4, -0.25]}>
+          <cylinderGeometry args={[0.016, 0.016, 0.95, 12]} />
+          <meshStandardMaterial color="#eab308" metalness={0.7} />
+        </mesh>
+      )}
 
       {/* Manual Height Adjusting Wheel on Top */}
       <mesh position={[-0.45, 1.95, -0.25]} rotation={[0, 0, Math.PI / 2]}>
@@ -751,16 +1457,117 @@ function FiberLaserMachine({ isSelected }: { isSelected: boolean }) {
       </mesh>
 
       {/* Galvo Head Armature & Scanning Enclosure */}
-      <mesh position={[0, 1.5, -0.05]} castShadow>
-        <boxGeometry args={[0.2, 0.22, 0.45]} />
-        <meshStandardMaterial color="#e2e8f0" metalness={0.8} roughness={0.2} />
+      <mesh position={[0, 1.5, -0.05]} castShadow={!isXRayMode}>
+        <boxGeometry args={[0.22, 0.24, 0.48]} />
+        <meshStandardMaterial
+          color={isXRayMode ? '#0f172a' : '#e2e8f0'}
+          metalness={isXRayMode ? 0.2 : 0.8}
+          roughness={isXRayMode ? 0.1 : 0.2}
+          transparent={isXRayMode}
+          opacity={isXRayMode ? 0.25 : 1.0}
+        />
       </mesh>
 
-      {/* F-Theta Scan Lens Cone */}
-      <mesh position={[0, 1.32, 0.1]}>
-        <cylinderGeometry args={[0.07, 0.05, 0.12, 24]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.1} />
-      </mesh>
+      {/* Internal Galvo Components in X-Ray Anatomy Mode */}
+      {/* 1. Collimator & Optical Isolator */}
+      <group position={[-0.05, 1.55, -0.15]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.035, 0.035, 0.14, 16]} />
+          <meshStandardMaterial
+            color={isIsolatorActive ? '#38bdf8' : '#334155'}
+            emissive={isIsolatorActive ? '#38bdf8' : '#000000'}
+            emissiveIntensity={isIsolatorActive ? 0.8 : 0}
+            metalness={0.9}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.28, 0]}
+          label="Bộ Cách Ly Quang Học & Collimator"
+          subtitle="Faraday TGG · Chống phản xạ ngược từ kim loại"
+          active={isXRayMode && (isIsolatorActive || !hoveredComponentId)}
+          color="#38bdf8"
+        />
+      </group>
+
+      {/* 2. Dual Galvo Servo Motors & Mirrors (X & Y) */}
+      <group position={[0, 1.5, 0.04]}>
+        {/* Galvo X Motor Cylinder */}
+        <mesh position={[-0.04, 0.02, -0.04]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.028, 0.028, 0.08, 16]} />
+          <meshStandardMaterial
+            color={isGalvoActive ? '#f59e0b' : '#475569'}
+            emissive={isGalvoActive ? '#f59e0b' : '#000000'}
+            emissiveIntensity={isGalvoActive ? 0.8 : 0}
+            metalness={0.8}
+          />
+        </mesh>
+        {/* Galvo Y Motor Cylinder */}
+        <mesh position={[0.04, -0.02, 0.04]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.028, 0.028, 0.08, 16]} />
+          <meshStandardMaterial
+            color={isGalvoActive ? '#f59e0b' : '#475569'}
+            emissive={isGalvoActive ? '#f59e0b' : '#000000'}
+            emissiveIntensity={isGalvoActive ? 0.8 : 0}
+            metalness={0.8}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, 0.32, 0]}
+          label="Đầu Quét Galvanometer Kép X-Y"
+          subtitle="Động cơ Servo điện động · 7.000 - 12.000 mm/s"
+          active={isXRayMode && (isGalvoActive || !hoveredComponentId)}
+          color="#f59e0b"
+        />
+      </group>
+
+      {/* 3. F-Theta Scan Lens Cone */}
+      <group position={[0, 1.32, 0.1]}>
+        <mesh>
+          <cylinderGeometry args={[0.07, 0.05, 0.12, 24]} />
+          <meshStandardMaterial
+            color={isFThetaActive ? '#34d399' : '#0f172a'}
+            emissive={isFThetaActive ? '#34d399' : '#000000'}
+            emissiveIntensity={isFThetaActive ? 0.8 : 0}
+            metalness={0.9}
+            roughness={0.1}
+          />
+        </mesh>
+        <XRayCalloutMarker
+          position={[0, -0.22, 0]}
+          label="Thấu Kính Trường Phẳng F-Theta (1064nm)"
+          subtitle="Tiêu cự F=160mm · Vùng quét 110x110mm"
+          active={isXRayMode && (isFThetaActive || !hoveredComponentId)}
+          color="#10b981"
+        />
+      </group>
+
+      {/* 4. Tracing Optical Beam Path in X-Ray Anatomy Mode */}
+      {isXRayMode && (
+        <line>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[
+                new Float32Array([
+                  // Engine chassis to Z column conduit
+                  -0.45, 0.55, -0.12,
+                  -0.45, 1.55, -0.25,
+                  // Z column to Galvo Collimator
+                  -0.05, 1.55, -0.15,
+                  // Collimator to Mirror X & Y
+                  0, 1.52, -0.02,
+                  0, 1.48, 0.04,
+                  // Galvo Mirrors down through F-Theta lens to specimen
+                  0, 1.32, 0.1,
+                  0, 0.96, 0.1,
+                ]),
+                3,
+              ]}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#f59e0b" linewidth={3} transparent opacity={0.85} />
+        </line>
+      )}
 
       {/* =========================================================================
           DYNAMIC SPECIMEN CARD ON BREADBOARD (Titanium / Brass / Selected Material)
