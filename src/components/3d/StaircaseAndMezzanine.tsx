@@ -261,24 +261,24 @@ export function StaircaseAndMezzanine() {
       {/* =======================================================================
           4. 2ND FLOOR MEZZANINE (TẦNG 2 - SÀN LỬNG NGHIÊN CỨU & LAN CAN AN TOÀN)
           Deck height: Y = 3.06m.
-          Three floor slabs leaving open stairwell at X in [1.25, 2.45], Z in [3.20, 4.68]
+          Expanded Southwards to Z = 11.6 for Chemistry, Equipment, Sink & Computer Desk
          ======================================================================= */}
       <group position={[0, mez.floorY, 0]}>
-        {/* Slab A: West Floor Deck (X: -9.5 to 1.25, Z: 3.2 to 7.4) */}
-        <mesh position={[-4.125, -mez.floorThickness / 2, 5.3]} receiveShadow>
-          <boxGeometry args={[10.75, mez.floorThickness, 4.2]} />
+        {/* Slab A: West Floor Deck (X: -9.5 to 1.25, Z: 3.2 to 11.6) */}
+        <mesh position={[-4.125, -mez.floorThickness / 2, 7.4]} receiveShadow>
+          <boxGeometry args={[10.75, mez.floorThickness, 8.4]} />
           <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.28} metalness={0.12} />
         </mesh>
 
-        {/* Slab B: East Floor Deck (X: 2.45 to 9.5, Z: 3.2 to 7.4) */}
-        <mesh position={[5.975, -mez.floorThickness / 2, 5.3]} receiveShadow>
-          <boxGeometry args={[7.05, mez.floorThickness, 4.2]} />
+        {/* Slab B: East Floor Deck (X: 2.45 to 9.5, Z: 3.2 to 11.6) */}
+        <mesh position={[5.975, -mez.floorThickness / 2, 7.4]} receiveShadow>
+          <boxGeometry args={[7.05, mez.floorThickness, 8.4]} />
           <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.28} metalness={0.12} />
         </mesh>
 
-        {/* Slab C: South Walkway Behind Stairwell (X: 1.25 to 2.45, Z: 4.68 to 7.4) */}
-        <mesh position={[1.85, -mez.floorThickness / 2, 6.04]} receiveShadow>
-          <boxGeometry args={[1.2, mez.floorThickness, 2.72]} />
+        {/* Slab C: South Walkway Behind Stairwell (X: 1.25 to 2.45, Z: 4.68 to 11.6) */}
+        <mesh position={[1.85, -mez.floorThickness / 2, 8.14]} receiveShadow>
+          <boxGeometry args={[1.2, mez.floorThickness, 6.92]} />
           <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.28} metalness={0.12} />
         </mesh>
 
@@ -296,7 +296,7 @@ export function StaircaseAndMezzanine() {
 
         {/* Heavy Structural Support Columns from Ground to Mezzanine */}
         {[-7.5, -2.5, 5.5, 8.5].map((cx) => (
-          <group key={`mez_col_${cx}`} position={[cx, -mez.floorY / 2, 3.28]}>
+          <group key={`mez_col_front_${cx}`} position={[cx, -mez.floorY / 2, 3.28]}>
             <mesh castShadow receiveShadow>
               <cylinderGeometry args={[0.09, 0.11, mez.floorY, 24]} />
               <meshStandardMaterial color="#18181b" metalness={0.9} roughness={0.3} />
@@ -307,6 +307,20 @@ export function StaircaseAndMezzanine() {
             </mesh>
             <mesh position={[0, -mez.floorY / 2 + 0.08, 0]}>
               <boxGeometry args={[0.28, 0.12, 0.28]} />
+              <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.3} />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Mid-Row Structural Support Columns (at Z = 7.4) */}
+        {[-7.5, -2.5, 5.5, 8.5].map((cx) => (
+          <group key={`mez_col_mid_${cx}`} position={[cx, -mez.floorY / 2, 7.4]}>
+            <mesh castShadow receiveShadow>
+              <cylinderGeometry args={[0.09, 0.11, mez.floorY, 24]} />
+              <meshStandardMaterial color="#18181b" metalness={0.9} roughness={0.3} />
+            </mesh>
+            <mesh position={[0, mez.floorY / 2 - 0.1, 0]}>
+              <boxGeometry args={[0.26, 0.12, 0.26]} />
               <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.3} />
             </mesh>
           </group>

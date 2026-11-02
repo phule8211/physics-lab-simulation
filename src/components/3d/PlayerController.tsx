@@ -6,8 +6,8 @@ import { useKeyboardControls } from '../../hooks/useKeyboardControls';
 import { useLabStore } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
-import { MachineId } from '../../types/lab';
-import { getGroundHeightAt } from '../../data/staircaseConfig';
+import { MachineId, StationId } from '../../types/lab';
+import { getGroundHeightAt, SECOND_FLOOR_STATIONS } from '../../data/staircaseConfig';
 
 const EYE_HEIGHT = 1.7;
 const WALK_SPEED = 4.2;
@@ -18,7 +18,7 @@ export function PlayerController() {
   const { camera, gl } = useThree();
   const keys = useKeyboardControls();
   const controlsRef = useRef<any>(null);
-  const previousStationRef = useRef<MachineId | null>(null);
+  const previousStationRef = useRef<string | null>(null);
 
   const {
     mode,
@@ -62,19 +62,83 @@ export function PlayerController() {
       }
 
       const currentMode = useLabStore.getState().mode;
+      const store = useLabStore.getState();
+
+      // Check if any modal is currently active
+      const anyModalOpen =
+        store.isDesignModalOpen ||
+        store.isSpecimenModalOpen ||
+        store.isHelpModalOpen ||
+        store.isNpcDialogOpen ||
+        store.isChemicalModalOpen ||
+        store.isEquipmentModalOpen ||
+        store.isSinkModalOpen;
+
+      // Auto-lock pointer / hide cursor on movement keys (WASD, arrows, space) in WALKING mode
+      const movementKeys = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'];
+      if (movementKeys.includes(e.code) && currentMode === 'WALKING' && !document.pointerLockElement && !anyModalOpen) {
+        try {
+          gl.domElement.requestPointerLock();
+        } catch {
+          // ignore potential user gesture restrictions
+        }
+      }
 
       if (e.code === 'KeyE') {
-        const hovered = useLabStore.getState().hoveredStationId;
+        const hovered = store.hoveredStationId;
         if (hovered && currentMode === 'WALKING') {
-          setSavedPlayerPosition([position.current.x, position.current.y, position.current.z]);
-          if (document.pointerLockElement) {
-            document.exitPointerLock();
+          if (hovered === 'npc_dung') {
+            if (document.pointerLockElement) document.exitPointerLock();
+            store.openNpcDialog();
+          } else if (hovered === 'chemical_rack') {
+            if (document.pointerLockElement) document.exitPointerLock();
+            store.openChemicalModal();
+          } else if (hovered === 'equipment_rack') {
+            if (document.pointerLockElement) document.exitPointerLock();
+            store.openEquipmentModal();
+          } else if (hovered === 'lab_sink') {
+            if (document.pointerLockElement) document.exitPointerLock();
+            store.openSinkModal();
+          } else if (hovered === 'computer_desk') {
+            if (document.pointerLockElement) document.exitPointerLock();
+            store.openDesignModal();
+          } else if (hovered in STATIONS) {
+            setSavedPlayerPosition([position.current.x, position.current.y, position.current.z]);
+            if (document.pointerLockElement) {
+              document.exitPointerLock();
+            }
+            enterInspection(hovered as MachineId);
           }
-          enterInspection(hovered);
         }
       } else if (e.code === 'Escape') {
-        if (currentMode === 'INSPECTING') {
+        // Auto-lock pointer upon stopping machine usage or closing panels
+        if (store.isNpcDialogOpen) {
+          store.closeNpcDialog();
+          gl.domElement.requestPointerLock();
+        } else if (store.isChemicalModalOpen) {
+          store.closeChemicalModal();
+          gl.domElement.requestPointerLock();
+        } else if (store.isEquipmentModalOpen) {
+          store.closeEquipmentModal();
+          gl.domElement.requestPointerLock();
+        } else if (store.isSinkModalOpen) {
+          store.closeSinkModal();
+          gl.domElement.requestPointerLock();
+        } else if (store.isDesignModalOpen) {
+          store.closeDesignModal();
+          gl.domElement.requestPointerLock();
+        } else if (store.isSpecimenModalOpen) {
+          store.closeSpecimenModal();
+          gl.domElement.requestPointerLock();
+        } else if (store.isHelpModalOpen) {
+          store.closeHelpModal();
+          gl.domElement.requestPointerLock();
+        } else if (currentMode === 'INSPECTING') {
           exitInspection();
+          gl.domElement.requestPointerLock();
+        } else if (currentMode === 'WALKING' && !document.pointerLockElement) {
+          // If standing near a machine or anywhere in the lab, pressing ESC hides cursor and restores mouse-look
+          gl.domElement.requestPointerLock();
         }
       } else if (e.code === 'Digit1') {
         if (document.pointerLockElement) document.exitPointerLock();
@@ -368,7 +432,7 @@ useFrame((_, delta) => {
     camera.position.copy(position.current);
 
     // Proximity Raycasting to detect closest interactive workstation
-    let closestStation: MachineId | null = null;
+    let closestStation: StationId | null = null;
     let minDistance = INTERACTION_DISTANCE;
 
     for (const st of Object.values(STATIONS)) {
@@ -391,29 +455,42 @@ useFrame((_, delta) => {
         viewDir.normalize();
 
         const dot = viewDir.dot(dirToStation);
-          // If close (< 2.4m), allow wider view angle (dot > 0.1); if approaching (2.4m - 3.2m), require facing it (dot > 0.35)
-          const isFacing = dist < 2.4 ? dot > 0.1 : dot > 0.35;
-          if (isFacing) {
-            minDistance = dist;
-            closestStation = st.id;
-          }
+        // If close (< 2.4m), allow wider view angle (dot > 0.1); if approaching (2.4m - 3.2m), require facing it (dot > 0.35)
+        const isFacing = dist < 2.4 ? dot > 0.1 : dot > 0.35;
+        if (isFacing) {
+          minDistance = dist;
+          closestStation = st.id;
         }
       }
+    }
 
-      // Auto-unlock cursor when entering a machine station so user doesn't need to press ESC
-      if (closestStation && closestStation !== previousStationRef.current) {
-        previousStationRef.current = closestStation;
-        if (document.pointerLockElement) {
-          document.exitPointerLock();
+    // Check Second Floor Stations when player is on Floor 2 (Y > 2.0)
+    if (position.current.y > 2.0) {
+      for (const st of Object.values(SECOND_FLOOR_STATIONS)) {
+        const dx = position.current.x - st.position[0];
+        const dz = position.current.z - st.position[2];
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 2.8 && dist < minDistance) {
+          minDistance = dist;
+          closestStation = st.id;
         }
-      } else if (!closestStation) {
-        previousStationRef.current = null;
       }
+    }
 
-      setHoveredStation(
-        closestStation,
-        closestStation ? Number(minDistance.toFixed(1)) : null
-      );
+    // Auto-unlock cursor when entering a machine station so user doesn't need to press ESC
+    if (closestStation && closestStation !== previousStationRef.current) {
+      previousStationRef.current = closestStation;
+      if (closestStation in STATIONS && document.pointerLockElement) {
+        document.exitPointerLock();
+      }
+    } else if (!closestStation) {
+      previousStationRef.current = null;
+    }
+
+    setHoveredStation(
+      closestStation,
+      closestStation ? Number(minDistance.toFixed(1)) : null
+    );
     }
   });
 

@@ -2,6 +2,8 @@ import { AABBBox } from '../types/lab';
 
 /**
  * 2nd Floor Mezzanine Geometry & Layout Constants
+ * Expanded southwards to Z = 11.6 to accommodate the new Computer Desk,
+ * NPC KS. Nguyễn Văn Dũng, Chemical Rack, Equipment Rack, and Water Sink.
  */
 export const MEZZANINE_CONFIG = {
   // Height of 2nd floor walking surface above ground
@@ -10,12 +12,12 @@ export const MEZZANINE_CONFIG = {
 
   // Mezzanine Deck bounds on 2nd floor (South area of the lab):
   // X: -9.5 to 9.5 (width 19m)
-  // Z: 3.2 to 7.4 (depth 4.2m)
+  // Z: 3.2 to 11.6 (depth 8.4m - expanded)
   bounds: {
     minX: -9.5,
     maxX: 9.5,
     minZ: 3.2,
-    maxZ: 7.4,
+    maxZ: 11.6,
   },
 };
 
@@ -71,7 +73,7 @@ export const STAIRCASE_GEOMETRY = {
  * 2. Staircase Flight 1 (smooth step height Y = 0 to 1.53)
  * 3. Mid-landing (Y = 1.53)
  * 4. Staircase Flight 2 (smooth step height Y = 1.53 to 3.06)
- * 5. 2nd Floor Mezzanine (Y = 3.06)
+ * 5. 2nd Floor Mezzanine (Y = 3.06) up to Z = 11.6
  */
 export function getGroundHeightAt(x: number, z: number): number {
   const mez = MEZZANINE_CONFIG.bounds;
@@ -122,12 +124,12 @@ export interface LabTableConfig {
 }
 
 export const LAB_TABLES: LabTableConfig[] = [
-  // Floor 2 Mezzanine Research Row A (South wall row, facing North with wide open space in front)
+  // Floor 2 Mezzanine Research Row A (Middle row, facing North with wide open space in front)
   {
     id: 'table_01',
     name: 'Bàn Quang Học & Tán Sắc Laser',
     tableNumber: 1,
-    position: [-6.8, MEZZANINE_CONFIG.floorY, 6.3],
+    position: [-6.8, MEZZANINE_CONFIG.floorY, 6.8],
     rotation: [0, 0, 0],
     specialty: 'OPTICS_PRISM',
     floor: 2,
@@ -136,7 +138,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_02',
     name: 'Bàn Chuẩn Độ & Hóa Chất Phản Ứng',
     tableNumber: 2,
-    position: [-3.8, MEZZANINE_CONFIG.floorY, 6.3],
+    position: [-3.8, MEZZANINE_CONFIG.floorY, 6.8],
     rotation: [0, 0, 0],
     specialty: 'TITRATION_BURET',
     floor: 2,
@@ -145,7 +147,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_03',
     name: 'Bàn Kính Hiển Vi Quang Học Phân Tích',
     tableNumber: 3,
-    position: [-0.8, MEZZANINE_CONFIG.floorY, 6.3],
+    position: [-0.8, MEZZANINE_CONFIG.floorY, 6.8],
     rotation: [0, 0, 0],
     specialty: 'MICROSCOPE',
     floor: 2,
@@ -154,7 +156,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_04',
     name: 'Bàn Cân Điện Tử Phân Tích Độ Chính Xác Cao',
     tableNumber: 4,
-    position: [3.8, MEZZANINE_CONFIG.floorY, 6.3],
+    position: [3.8, MEZZANINE_CONFIG.floorY, 6.8],
     rotation: [0, 0, 0],
     specialty: 'ANALYTICAL_SCALE',
     floor: 2,
@@ -163,7 +165,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_05',
     name: 'Bàn Gia Nhiệt & Chưng Cất Dung Dịch',
     tableNumber: 5,
-    position: [6.8, MEZZANINE_CONFIG.floorY, 6.3],
+    position: [6.8, MEZZANINE_CONFIG.floorY, 6.8],
     rotation: [0, 0, 0],
     specialty: 'DISTILLATION_BUNSEN',
     floor: 2,
@@ -174,7 +176,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_06',
     name: 'Bàn Giá Ống Nghiệm & Thuốc Thử Màu',
     tableNumber: 6,
-    position: [-6.8, MEZZANINE_CONFIG.floorY, 4.2],
+    position: [-6.8, MEZZANINE_CONFIG.floorY, 4.8],
     rotation: [0, Math.PI, 0],
     specialty: 'TEST_TUBES',
     floor: 2,
@@ -183,7 +185,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_07',
     name: 'Bàn Đo Dao Động Ký & Tín Hiệu Xung',
     tableNumber: 7,
-    position: [-3.8, MEZZANINE_CONFIG.floorY, 4.2],
+    position: [-3.8, MEZZANINE_CONFIG.floorY, 4.8],
     rotation: [0, Math.PI, 0],
     specialty: 'OSCILLOSCOPE',
     floor: 2,
@@ -192,7 +194,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_08',
     name: 'Bàn Ly Tâm & Micropipette Định Lượng',
     tableNumber: 8,
-    position: [-0.8, MEZZANINE_CONFIG.floorY, 4.2],
+    position: [-0.8, MEZZANINE_CONFIG.floorY, 4.8],
     rotation: [0, Math.PI, 0],
     specialty: 'CENTRIFUGE_PIPETTE',
     floor: 2,
@@ -201,7 +203,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_09',
     name: 'Bàn Bếp Khuấy Từ Gia Nhiệt Xoáy Nước',
     tableNumber: 9,
-    position: [5.5, MEZZANINE_CONFIG.floorY, 4.2],
+    position: [5.5, MEZZANINE_CONFIG.floorY, 4.8],
     rotation: [0, Math.PI, 0],
     specialty: 'MAGNETIC_STIRRER',
     floor: 2,
@@ -210,7 +212,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_10',
     name: 'Bàn Quang Phổ Hấp Thụ UV-Vis & Cuvet',
     tableNumber: 10,
-    position: [7.8, MEZZANINE_CONFIG.floorY, 4.2],
+    position: [7.8, MEZZANINE_CONFIG.floorY, 4.8],
     rotation: [0, Math.PI, 0],
     specialty: 'SPECTROPHOTOMETER',
     floor: 2,
@@ -225,7 +227,7 @@ export const LAB_TABLES: LabTableConfig[] = [
 export const GIANT_SHELF_CONFIG = {
   id: 'giant_shelf_bottles',
   name: 'Kệ Siêu To Lưu Trữ 20 Bình Sành Đáy Tròn 2.5L',
-  position: [-8.8, MEZZANINE_CONFIG.floorY, 5.3] as [number, number, number],
+  position: [-8.8, MEZZANINE_CONFIG.floorY, 5.8] as [number, number, number],
   rotation: [0, Math.PI / 2, 0] as [number, number, number],
   width: 3.2,
   height: 2.65,
@@ -234,10 +236,53 @@ export const GIANT_SHELF_CONFIG = {
 };
 
 /**
+ * New 2nd Floor Research Wing Stations Configuration
+ */
+export const SECOND_FLOOR_STATIONS = {
+  // Computer Desk with PC Tower, Dual Monitors, and Laptop on Stand
+  COMPUTER_DESK: {
+    id: 'computer_desk',
+    name: 'Bàn Máy Tính Phân Tích & Giám Sát Laser',
+    position: [-6.0, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
+    rotation: [0, 0, 0] as [number, number, number],
+  },
+  // NPC Instructor Nguyễn Văn Dũng
+  NPC_DUNG: {
+    id: 'npc_dung',
+    name: 'KS. Nguyễn Văn Dũng',
+    title: 'Kỹ sư Trưởng / Cố vấn Kỹ thuật Xưởng Bán Dẫn & Laser',
+    position: [-4.0, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
+    rotation: [0, -Math.PI / 4, 0] as [number, number, number],
+  },
+  // Laboratory Gooseneck Water Sink & Faucet
+  LAB_SINK: {
+    id: 'lab_sink',
+    name: 'Bồn Nước & Vòi Cổ Ngỗng Cấp Nước Khử Ion DI',
+    position: [0.0, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
+    rotation: [0, 0, 0] as [number, number, number],
+  },
+  // Chemical Reagent Storage Rack (HCl, HNO3, H2O2 & Large Beakers)
+  CHEMICAL_RACK: {
+    id: 'chemical_rack',
+    name: 'Giá Đỡ Hóa Chất Ăn Mòn Wafer (HCl, HNO3, H2O2)',
+    position: [4.2, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
+    rotation: [0, 0, 0] as [number, number, number],
+  },
+  // Laboratory Glassware & Equipment Rack (Large Beakers, Test Tubes, Pipettes)
+  EQUIPMENT_RACK: {
+    id: 'equipment_rack',
+    name: 'Giá Đỡ Dụng Cụ Thí Nghiệm (Cốc to, Tuýp nhỏ, Ống hút)',
+    position: [7.5, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
+    rotation: [0, 0, 0] as [number, number, number],
+  },
+} as const;
+
+/**
  * Generates solid AABB Colliders for:
- * 1. 2nd Floor Mezzanine Safety Railings (with stair entrance opening left clear)
+ * 1. 2nd Floor Mezzanine Safety Railings
  * 2. 10 Wooden Lab Tables
  * 3. Giant Bottle Shelf
+ * 4. Computer Desk, Water Sink, Chemical Rack, Equipment Rack
  */
 export const EXTRA_COLLIDERS: AABBBox[] = [
   // 1. Mezzanine Balcony Railing: Left section from X = -9.5 to X = 1.25 at Z = 3.2
@@ -273,8 +318,8 @@ export const EXTRA_COLLIDERS: AABBBox[] = [
   {
     id: 'collider_giant_shelf',
     name: 'Kệ Siêu To 20 Chai Sành',
-    min: [-9.3, MEZZANINE_CONFIG.floorY, 3.7],
-    max: [-8.3, MEZZANINE_CONFIG.floorY + 2.7, 6.9],
+    min: [-9.3, MEZZANINE_CONFIG.floorY, 4.2],
+    max: [-8.3, MEZZANINE_CONFIG.floorY + 2.7, 7.4],
   },
 
   // 3. 10 Wooden Lab Tables Colliders (Width 1.4m, Depth 0.7m, Height 0.9m)
@@ -284,4 +329,30 @@ export const EXTRA_COLLIDERS: AABBBox[] = [
     min: [t.position[0] - 0.7, t.position[1], t.position[2] - 0.35] as [number, number, number],
     max: [t.position[0] + 0.7, t.position[1] + 1.0, t.position[2] + 0.35] as [number, number, number],
   })),
+
+  // 4. New Wing Colliders (Computer Desk, Sink, Chemical Rack, Equipment Rack)
+  {
+    id: 'collider_computer_desk',
+    name: 'Bàn Máy Tính Phân Tích & KS Dũng',
+    min: [-6.8, MEZZANINE_CONFIG.floorY, 9.4],
+    max: [-5.2, MEZZANINE_CONFIG.floorY + 1.3, 10.4],
+  },
+  {
+    id: 'collider_lab_sink',
+    name: 'Bồn Nước & Vòi Rửa Cổ Ngỗng',
+    min: [-0.9, MEZZANINE_CONFIG.floorY, 9.4],
+    max: [0.9, MEZZANINE_CONFIG.floorY + 1.3, 10.4],
+  },
+  {
+    id: 'collider_chemical_rack',
+    name: 'Giá Đỡ Hóa Chất Wafer',
+    min: [3.4, MEZZANINE_CONFIG.floorY, 9.4],
+    max: [5.0, MEZZANINE_CONFIG.floorY + 1.5, 10.4],
+  },
+  {
+    id: 'collider_equipment_rack',
+    name: 'Giá Đỡ Dụng Cụ Thí Nghiệm',
+    min: [6.7, MEZZANINE_CONFIG.floorY, 9.4],
+    max: [8.3, MEZZANINE_CONFIG.floorY + 1.5, 10.4],
+  },
 ];

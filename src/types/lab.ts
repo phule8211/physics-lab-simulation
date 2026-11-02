@@ -1,4 +1,6 @@
 export type MachineId = 'CO2_LASER' | 'UV_LASER' | 'FIBER_LASER' | 'SENSOR_STATION' | 'COATING_STATION';
+export type SecondFloorStationId = 'computer_desk' | 'npc_dung' | 'lab_sink' | 'chemical_rack' | 'equipment_rack';
+export type StationId = MachineId | SecondFloorStationId;
 
 export type AppMode = 'WALKING' | 'TRANSITIONING' | 'INSPECTING';
 

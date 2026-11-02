@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MachineId, AppMode, InfoTab, CoatingFinishId, ProcessedJobInfo } from '../types/lab';
+import { MachineId, StationId, AppMode, InfoTab, CoatingFinishId, ProcessedJobInfo } from '../types/lab';
 import { STATIONS } from '../data/labConfig';
 import { MaterialType, MATERIALS_CATALOG } from '../data/materialsConfig';
 import { COATING_FINISHES } from '../data/coatingFinishes';
@@ -21,7 +21,7 @@ export interface ActionToast {
 interface LabState {
   // Navigation & Core State
   mode: AppMode;
-  hoveredStationId: MachineId | null;
+  hoveredStationId: StationId | null;
   hoveredDistance: number | null;
   activeStationId: MachineId | null;
   isPointerLocked: boolean;
@@ -131,8 +131,50 @@ interface LabState {
   closeHelpModal: () => void;
   toggleHelpModal: () => void;
 
+  // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
+  isNpcDialogOpen: boolean;
+  npcCurrentTopic: string | null;
+  openNpcDialog: () => void;
+  closeNpcDialog: () => void;
+  setNpcTopic: (topic: string | null) => void;
+
+  // Chemical Reagent Station (HCl, HNO3, H2O2 & Large Beakers)
+  isChemicalModalOpen: boolean;
+  chemicalBeaker: {
+    hcl: number;
+    hno3: number;
+    h2o2: number;
+    water: number;
+    capacity: number;
+  };
+  addChemicalToTestBeaker: (type: 'HCl' | 'HNO3' | 'H2O2' | 'WATER', amount: number) => void;
+  resetChemicalBeaker: () => void;
+  openChemicalModal: () => void;
+  closeChemicalModal: () => void;
+
+  // Lab Glassware & Equipment Rack
+  isEquipmentModalOpen: boolean;
+  collectedEquipment: {
+    beakers: number;
+    testTubes: number;
+    pipettes: number;
+  };
+  takeEquipmentItem: (type: 'BEAKER' | 'TEST_TUBE' | 'PIPETTE') => void;
+  openEquipmentModal: () => void;
+  closeEquipmentModal: () => void;
+
+  // Laboratory Water Sink & Gooseneck Faucet
+  isSinkModalOpen: boolean;
+  sinkWaterFlowRate: number; // 0 - 100%
+  isSinkTapRunning: boolean;
+  setSinkWaterFlowRate: (rate: number) => void;
+  toggleSinkTap: () => void;
+  dispenseWaterIntoBeaker: (amount: number) => void;
+  openSinkModal: () => void;
+  closeSinkModal: () => void;
+
   // Actions
-  setHoveredStation: (id: MachineId | null, distance?: number | null) => void;
+  setHoveredStation: (id: StationId | null, distance?: number | null) => void;
   setPointerLocked: (locked: boolean) => void;
   enterInspection: (id: MachineId) => void;
   exitInspection: () => void;
@@ -252,6 +294,145 @@ export const useLabStore = create<LabState>((set, get) => ({
   toggleHelpModal: () => {
     sound.playClick();
     set({ isHelpModalOpen: !get().isHelpModalOpen });
+  },
+
+  // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
+  isNpcDialogOpen: false,
+  npcCurrentTopic: null,
+  openNpcDialog: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isNpcDialogOpen: true, npcCurrentTopic: null });
+  },
+  closeNpcDialog: () => {
+    sound.playClick();
+    set({ isNpcDialogOpen: false, npcCurrentTopic: null });
+  },
+  setNpcTopic: (topic) => {
+    sound.playClick();
+    set({ npcCurrentTopic: topic });
+  },
+
+  // Chemical Reagent Station (HCl, HNO3, H2O2 & Large Beakers)
+  isChemicalModalOpen: false,
+  chemicalBeaker: {
+    hcl: 0,
+    hno3: 0,
+    h2o2: 0,
+    water: 0,
+    capacity: 500,
+  },
+  addChemicalToTestBeaker: (type, amount) => {
+    const beaker = get().chemicalBeaker;
+    const currentTotal = beaker.hcl + beaker.hno3 + beaker.h2o2 + beaker.water;
+    const allowed = Math.min(amount, beaker.capacity - currentTotal);
+    if (allowed <= 0) return;
+
+    sound.playLiquidPour();
+    const updated = { ...beaker };
+    if (type === 'HCl') updated.hcl += allowed;
+    else if (type === 'HNO3') updated.hno3 += allowed;
+    else if (type === 'H2O2') updated.h2o2 += allowed;
+    else if (type === 'WATER') updated.water += allowed;
+
+    set({ chemicalBeaker: updated });
+  },
+  resetChemicalBeaker: () => {
+    sound.playClick();
+    set({
+      chemicalBeaker: {
+        hcl: 0,
+        hno3: 0,
+        h2o2: 0,
+        water: 0,
+        capacity: 500,
+      },
+    });
+  },
+  openChemicalModal: () => {
+    sound.playGlassClink();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isChemicalModalOpen: true });
+  },
+  closeChemicalModal: () => {
+    sound.playClick();
+    set({ isChemicalModalOpen: false });
+  },
+
+  // Lab Glassware & Equipment Rack
+  isEquipmentModalOpen: false,
+  collectedEquipment: {
+    beakers: 1,
+    testTubes: 0,
+    pipettes: 1,
+  },
+  takeEquipmentItem: (type) => {
+    sound.playGlassClink();
+    const current = get().collectedEquipment;
+    if (type === 'BEAKER') {
+      set({ collectedEquipment: { ...current, beakers: current.beakers + 1 } });
+    } else if (type === 'TEST_TUBE') {
+      set({ collectedEquipment: { ...current, testTubes: current.testTubes + 1 } });
+    } else if (type === 'PIPETTE') {
+      set({ collectedEquipment: { ...current, pipettes: current.pipettes + 1 } });
+    }
+  },
+  openEquipmentModal: () => {
+    sound.playGlassClink();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isEquipmentModalOpen: true });
+  },
+  closeEquipmentModal: () => {
+    sound.playClick();
+    set({ isEquipmentModalOpen: false });
+  },
+
+  // Laboratory Water Sink & Gooseneck Faucet
+  isSinkModalOpen: false,
+  sinkWaterFlowRate: 50,
+  isSinkTapRunning: false,
+  setSinkWaterFlowRate: (rate) => {
+    set({ sinkWaterFlowRate: Math.max(0, Math.min(100, rate)) });
+    if (get().isSinkTapRunning) {
+      sound.stopWaterFlow();
+      sound.startWaterFlow(rate / 100);
+    }
+  },
+  toggleSinkTap: () => {
+    const willBeRunning = !get().isSinkTapRunning;
+    if (willBeRunning) {
+      sound.startWaterFlow(get().sinkWaterFlowRate / 100);
+    } else {
+      sound.stopWaterFlow();
+    }
+    set({ isSinkTapRunning: willBeRunning });
+  },
+  dispenseWaterIntoBeaker: (amount) => {
+    sound.startWaterFlow(get().sinkWaterFlowRate / 100);
+    setTimeout(() => {
+      sound.stopWaterFlow();
+      get().addChemicalToTestBeaker('WATER', amount);
+    }, 600);
+  },
+  openSinkModal: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isSinkModalOpen: true });
+  },
+  closeSinkModal: () => {
+    sound.playClick();
+    if (get().isSinkTapRunning) {
+      sound.stopWaterFlow();
+    }
+    set({ isSinkModalOpen: false, isSinkTapRunning: false });
   },
 
   // Spray Coating & Finishing State

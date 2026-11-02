@@ -130,7 +130,10 @@ export function MobileNavBar() {
       <div className="flex items-center space-x-1 flex-shrink-0">
         {activeStationId ? (
           <button
-            onClick={exitInspection}
+            onClick={() => {
+              exitInspection();
+              document.querySelector('canvas')?.requestPointerLock();
+            }}
             className="flex flex-col items-center justify-center p-2 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 hover:bg-rose-500/25 transition-all"
             aria-label="Thoát chế độ kiểm tra máy và quay lại xưởng (Phím ESC)"
             title="Quay lại xưởng (ESC)"

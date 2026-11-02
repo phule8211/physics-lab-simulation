@@ -132,7 +132,10 @@ export function KnowledgePanel() {
 
         {/* Close Button [X] */}
         <button
-          onClick={exitInspection}
+          onClick={() => {
+            exitInspection();
+            document.querySelector('canvas')?.requestPointerLock();
+          }}
           className="absolute top-5 right-5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-200 border border-slate-700 hover:border-slate-500"
           aria-label="Đóng bảng kiến thức và quay lại xưởng"
           title="Đóng (ESC)"
@@ -681,7 +684,10 @@ export function KnowledgePanel() {
           Phím tắt: <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-lab-cyan">ESC</kbd> để thoát
         </span>
         <button
-          onClick={exitInspection}
+          onClick={() => {
+            exitInspection();
+            document.querySelector('canvas')?.requestPointerLock();
+          }}
           className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-all duration-200 border border-slate-700 active:scale-95"
         >
           Quay lại xưởng

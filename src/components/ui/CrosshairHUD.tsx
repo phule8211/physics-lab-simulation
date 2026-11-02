@@ -284,6 +284,7 @@ export function CrosshairHUD() {
                   onClick={() => {
                     if (activeStationId === st.id) {
                       exitInspection();
+                      document.querySelector('canvas')?.requestPointerLock();
                     } else {
                       if (document.pointerLockElement) {
                         document.exitPointerLock();

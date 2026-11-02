@@ -2,12 +2,12 @@ import { StationConfig, AABBBox } from '../types/lab';
 
 export const ROOM_BOUNDS = {
   width: 20,
-  length: 16,
+  length: 28,
   height: 4.5,
   minX: -9.5,
   maxX: 9.5,
   minZ: -15.5, // Expanded to accommodate the new spray coating room
-  maxZ: 7.5,
+  maxZ: 12.0, // Expanded South for the 2nd-floor research & chemistry wing
 };
 
 export const STATIONS: Record<string, StationConfig> = {
@@ -108,14 +108,14 @@ export const WALL_COLLIDERS: AABBBox[] = [
   { id: 'wall_north_left', name: 'Tường Bắc Trái', min: [-10.5, 0, -8.5], max: [-1.8, 8, -7.5] },
   { id: 'wall_north_right', name: 'Tường Bắc Phải', min: [1.8, 0, -8.5], max: [10.5, 8, -7.5] },
 
-  // Tường Nam phòng chính
-  { id: 'wall_south', name: 'Tường Nam', min: [-10.5, 0, 7.5], max: [10.5, 8, 8.5] },
+  // Tường Nam phòng chính (nới rộng đến z = 12.0)
+  { id: 'wall_south', name: 'Tường Nam', min: [-10.5, 0, 11.8], max: [10.5, 8, 12.8] },
 
   // Tường Tây phòng chính
-  { id: 'wall_west', name: 'Tường Tây', min: [-10.5, 0, -8.5], max: [-9.5, 8, 8.5] },
+  { id: 'wall_west', name: 'Tường Tây', min: [-10.5, 0, -8.5], max: [-9.5, 8, 12.8] },
 
   // Tường Đông phòng chính
-  { id: 'wall_east', name: 'Tường Đông', min: [9.5, 0, -8.5], max: [10.5, 8, 8.5] },
+  { id: 'wall_east', name: 'Tường Đông', min: [9.5, 0, -8.5], max: [10.5, 8, 12.8] },
 
   // CÁC BỨC TƯỜNG CỦA PHÒNG PHỦ SƠN (COATING CLEANROOM) (x: [-5.5, 5.5], z: [-16, -8])
   { id: 'wall_coating_west', name: 'Vách Tây Phòng Sơn', min: [-5.6, 0, -16.5], max: [-4.8, 8, -7.8] },

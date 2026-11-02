@@ -459,6 +459,110 @@ class SoundSystem {
       }, 120);
     }
   }
+
+  // Water Tap Flow Sound
+  private waterGain: GainNode | null = null;
+  private waterSource: AudioBufferSourceNode | null = null;
+
+  public startWaterFlow(flowRate: number = 0.5) {
+    if (!useLabStore.getState().soundEnabled) return;
+    this.initCtx();
+    if (!this.ctx || this.waterSource) return;
+
+    const bufferSize = this.ctx.sampleRate;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800 + flowRate * 1200, this.ctx.currentTime);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.08 * Math.max(0.2, flowRate), this.ctx.currentTime + 0.1);
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    source.start();
+    this.waterSource = source;
+    this.waterGain = gain;
+  }
+
+  public stopWaterFlow() {
+    if (this.waterGain && this.ctx) {
+      const now = this.ctx.currentTime;
+      this.waterGain.gain.linearRampToValueAtTime(0.001, now + 0.1);
+      setTimeout(() => {
+        try {
+          this.waterSource?.stop();
+          this.waterSource?.disconnect();
+          this.waterGain?.disconnect();
+        } catch (_) {}
+        this.waterSource = null;
+        this.waterGain = null;
+      }, 120);
+    }
+  }
+
+  /**
+   * Liquid Pour / Chemical Droplets Sound
+   */
+  public playLiquidPour() {
+    if (!useLabStore.getState().soundEnabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    for (let i = 0; i < 4; i++) {
+      const delay = i * 0.05;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(500 + Math.random() * 300, now + delay);
+      osc.frequency.exponentialRampToValueAtTime(900 + Math.random() * 400, now + delay + 0.06);
+
+      gain.gain.setValueAtTime(0.06, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.06);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.06);
+    }
+  }
+
+  /**
+   * Glass Clink Sound
+   */
+  public playGlassClink() {
+    if (!useLabStore.getState().soundEnabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2400, now);
+    osc.frequency.exponentialRampToValueAtTime(1800, now + 0.15);
+
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  }
 }
 
 export const sound = new SoundSystem();

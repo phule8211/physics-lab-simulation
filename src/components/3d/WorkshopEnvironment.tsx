@@ -4,6 +4,11 @@ import { Text, Environment, Lightformer } from '@react-three/drei';
 import { StaircaseAndMezzanine } from './StaircaseAndMezzanine';
 import { LabWorkbenches } from './LabWorkbenches';
 import { GiantCeramicBottleShelf } from './GiantCeramicBottleShelf';
+import { ComputerDeskWithPCAndLaptop } from './ComputerDeskWithPCAndLaptop';
+import { NpcInstructorDung } from './NpcInstructorDung';
+import { ChemicalReagentRack } from './ChemicalReagentRack';
+import { LabEquipmentRack } from './LabEquipmentRack';
+import { LabSinkAndFaucet } from './LabSinkAndFaucet';
 
 function SafeText(props: any) {
   return (
@@ -155,8 +160,8 @@ export function WorkshopEnvironment() {
           3. FLOOR (High-Gloss Industrial Epoxy PBR with Expansion Tile Joints)
          ========================================================================= */}
       {/* Main Epoxy Floor: Low roughness gives high specular sheen of ceiling lights */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[20, 16]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 2]} receiveShadow>
+        <planeGeometry args={[20, 20]} />
         <meshStandardMaterial
           color="#0f172a"
           roughness={0.16}
@@ -166,8 +171,8 @@ export function WorkshopEnvironment() {
       </mesh>
 
       {/* Center Pathway Runner (Dark Matte Grip Strip) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} receiveShadow>
-        <planeGeometry args={[3.2, 16]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 2]} receiveShadow>
+        <planeGeometry args={[3.2, 20]} />
         <meshStandardMaterial
           color="#090d16"
           roughness={0.5}
@@ -371,8 +376,8 @@ export function WorkshopEnvironment() {
         <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.25} />
       </mesh>
 
-      {/* South Wall (Front) */}
-      <mesh position={[0, 3.5, 8]} receiveShadow>
+      {/* South Wall (Front - expanded to Z = 12.0) */}
+      <mesh position={[0, 3.5, 12]} receiveShadow>
         <boxGeometry args={[20, 7.0, 0.2]} />
         <meshStandardMaterial
           color="#1e293b"
@@ -383,8 +388,8 @@ export function WorkshopEnvironment() {
       </mesh>
 
       {/* West Wall (Left) */}
-      <mesh position={[-10, 3.5, 0]} receiveShadow>
-        <boxGeometry args={[0.2, 7.0, 16]} />
+      <mesh position={[-10, 3.5, 2]} receiveShadow>
+        <boxGeometry args={[0.2, 7.0, 20]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -394,8 +399,8 @@ export function WorkshopEnvironment() {
       </mesh>
 
       {/* East Wall (Right) */}
-      <mesh position={[10, 3.5, 0]} receiveShadow>
-        <boxGeometry args={[0.2, 7.0, 16]} />
+      <mesh position={[10, 3.5, 2]} receiveShadow>
+        <boxGeometry args={[0.2, 7.0, 20]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -425,16 +430,16 @@ export function WorkshopEnvironment() {
         <boxGeometry args={[20, 0.2, 0.05]} />
         <meshStandardMaterial color="#0f172a" roughness={0.25} metalness={0.85} />
       </mesh>
-      <mesh position={[0, 0.1, 7.88]}>
+      <mesh position={[0, 0.1, 11.88]}>
         <boxGeometry args={[20, 0.2, 0.05]} />
         <meshStandardMaterial color="#0f172a" roughness={0.25} metalness={0.85} />
       </mesh>
-      <mesh position={[-9.88, 0.1, 0]}>
-        <boxGeometry args={[0.05, 0.2, 16]} />
+      <mesh position={[-9.88, 0.1, 2]}>
+        <boxGeometry args={[0.05, 0.2, 20]} />
         <meshStandardMaterial color="#0f172a" roughness={0.25} metalness={0.85} />
       </mesh>
-      <mesh position={[9.88, 0.1, 0]}>
-        <boxGeometry args={[0.05, 0.2, 16]} />
+      <mesh position={[9.88, 0.1, 2]}>
+        <boxGeometry args={[0.05, 0.2, 20]} />
         <meshStandardMaterial color="#0f172a" roughness={0.25} metalness={0.85} />
       </mesh>
 
@@ -442,13 +447,13 @@ export function WorkshopEnvironment() {
           5. CEILING & INDUSTRIAL ARCHITECTURE (I-Beams, Ducting, Cable Trays)
          ========================================================================= */}
       {/* Ceiling Surface */}
-      <mesh position={[0, 7.0, 0]}>
-        <boxGeometry args={[20, 0.1, 16]} />
+      <mesh position={[0, 7.0, 2]}>
+        <boxGeometry args={[20, 0.1, 20]} />
         <meshStandardMaterial color="#0b1329" roughness={0.85} />
       </mesh>
 
       {/* Heavy Steel I-Beams along X axis */}
-      {[-4, 0, 4].map((z) => (
+      {[-4, 0, 4, 8].map((z) => (
         <group key={`truss-${z}`} position={[0, 6.75, z]}>
           <mesh castShadow receiveShadow>
             <boxGeometry args={[19.8, 0.25, 0.25]} />
@@ -609,6 +614,13 @@ export function WorkshopEnvironment() {
 
       {/* Giant Multi-Tiered Storage Shelf with 20 Round-Bottom 2.5L Stoneware Bottles */}
       <GiantCeramicBottleShelf />
+
+      {/* 2nd Floor Research Wing: Computer Desk, KS Nguyễn Văn Dũng, Chemical Rack, Equipment Rack, Water Sink */}
+      <ComputerDeskWithPCAndLaptop />
+      <NpcInstructorDung />
+      <ChemicalReagentRack />
+      <LabEquipmentRack />
+      <LabSinkAndFaucet />
 
       {/* =========================================================================
           8. AUXILIARY INDUSTRIAL EQUIPMENT & PIPING INFRASTRUCTURE

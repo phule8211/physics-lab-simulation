@@ -9,6 +9,10 @@ import { LoadingScreen } from './components/ui/LoadingScreen';
 import { PerformanceStatsHUD } from './components/ui/PerformanceStatsHUD';
 import { MobileNavBar } from './components/ui/MobileNavBar';
 import { HelpGuideModal } from './components/ui/HelpGuideModal';
+import { NpcDialogModal } from './components/ui/NpcDialogModal';
+import { ChemicalDispenserModal } from './components/ui/ChemicalDispenserModal';
+import { LabEquipmentRackModal } from './components/ui/LabEquipmentRackModal';
+import { WaterSinkModal } from './components/ui/WaterSinkModal';
 
 export function App() {
   return (
@@ -39,6 +43,12 @@ export function App() {
 
       {/* Interactive Keyboard Shortcuts & Laboratory Help Modal */}
       <HelpGuideModal />
+
+      {/* 2nd Floor Interactive Stations Modals */}
+      <NpcDialogModal />
+      <ChemicalDispenserModal />
+      <LabEquipmentRackModal />
+      <WaterSinkModal />
 
       {/* Loading Progress Screen */}
       <LoadingScreen />
