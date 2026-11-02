@@ -2,11 +2,14 @@
 
 > Hệ thống mô phỏng 3D tương tác phòng thí nghiệm vật lý quang học và xưởng máy cắt/khắc laser công nghiệp thế hệ mới, tích hợp Studio thiết kế CAD Vector, kiểm định an toàn liên động (Safety Interlock), kiểm tra mẫu vật gia công 3D và tối ưu hóa WebGL 60 FPS (Phase 4 Hoàn thiện).
 
+🌐 **Trải nghiệm trực tiếp trên Vercel:** [https://physics-lab-simulation-chi.vercel.app](https://physics-lab-simulation-chi.vercel.app)
+
 ![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=black)
 ![Three.js](https://img.shields.io/badge/Three.js-R174-black?logo=three.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?logo=tailwindcss&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel&logoColor=white)
 ![Status](https://img.shields.io/badge/Release-Phase%204%20Complete-10B981)
 
 ---
