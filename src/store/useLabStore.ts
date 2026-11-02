@@ -28,6 +28,13 @@ interface LabState {
   // Saved transform prior to inspection
   savedPlayerPosition: [number, number, number];
 
+  // 3D Compass & Floor Position HUD State
+  cameraHeading: number; // 0 - 360 degrees
+  playerElevation: number; // ground height in meters (0 on floor 1, 3.06 on floor 2)
+  currentFloor: 1 | 2;
+  setCameraHeading: (heading: number) => void;
+  setPlayerElevation: (elevation: number) => void;
+
   // UI state
   activeTab: InfoTab;
   isMachineRunning: boolean;
@@ -122,7 +129,24 @@ export const useLabStore = create<LabState>((set, get) => ({
   hoveredDistance: null,
   activeStationId: null,
   isPointerLocked: false,
-  savedPlayerPosition: [0, 1.7, 4],
+  savedPlayerPosition: [0, 1.7, 0],
+
+  // 3D Compass & Floor State
+  cameraHeading: 0,
+  playerElevation: 0,
+  currentFloor: 1,
+  setCameraHeading: (heading: number) => {
+    const current = get().cameraHeading;
+    if (Math.abs(current - heading) >= 1) {
+      set({ cameraHeading: heading });
+    }
+  },
+  setPlayerElevation: (elevation: number) => {
+    const floor = elevation >= 1.8 ? 2 : 1;
+    if (Math.abs(get().playerElevation - elevation) > 0.05 || get().currentFloor !== floor) {
+      set({ playerElevation: elevation, currentFloor: floor });
+    }
+  },
 
   activeTab: 'PHYSICS_PRINCIPLE',
   isMachineRunning: true,

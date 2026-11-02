@@ -30,10 +30,12 @@ export function PlayerController() {
     setSavedPlayerPosition,
     savedPlayerPosition,
     setMode,
+    setCameraHeading,
+    setPlayerElevation,
   } = useLabStore();
 
   const velocity = useRef(new THREE.Vector3());
-  const position = useRef(new THREE.Vector3(0, EYE_HEIGHT, 4));
+  const position = useRef(new THREE.Vector3(0, EYE_HEIGHT, 0));
   const isJumping = useRef(false);
   const verticalVelocity = useRef(0);
 
@@ -300,7 +302,7 @@ useFrame((_, delta) => {
       velocity.current.z *= Math.max(0, 1 - dt * 12);
     }
 
-    // Resolve AABB collisions with wall sliding
+    // Resolve AABB collisions with wall sliding (radius 0.32m for smooth passage)
     const intendedPos: [number, number, number] = [
       position.current.x + velocity.current.x * dt,
       position.current.y,
@@ -310,14 +312,22 @@ useFrame((_, delta) => {
     const resolvedPos = resolveMovementWithCollisions(
       [position.current.x, position.current.y, position.current.z],
       intendedPos,
-      0.45
+      0.32
     );
 
     position.current.set(resolvedPos[0], resolvedPos[1], resolvedPos[2]);
 
     // Calculate ground height & stair elevation under player
     const targetGround = getGroundHeightAt(position.current.x, position.current.z);
+    setPlayerElevation(targetGround);
     const targetEyeY = targetGround + EYE_HEIGHT;
+
+    // Calculate 3D Compass Heading (0 - 360°)
+    const viewDir = new THREE.Vector3();
+    camera.getWorldDirection(viewDir);
+    // In Three.js: -Z is North (0°), +X is East (90°), +Z is South (180°), -X is West (270°)
+    const heading = Math.round(((Math.atan2(viewDir.x, -viewDir.z) * 180 / Math.PI) + 360) % 360);
+    setCameraHeading(heading);
 
     // Jump & gravity physics
     if (keys.current.jump && !isJumping.current) {
@@ -334,12 +344,16 @@ useFrame((_, delta) => {
         verticalVelocity.current = 0;
       }
     } else {
-      // Smoothly step up or down stairs and walk on 2nd floor mezzanine
-      position.current.y = THREE.MathUtils.lerp(
-        position.current.y,
-        targetEyeY,
-        Math.min(1, dt * 16)
-      );
+      // Step up or down stairs smoothly and responsive to player motion
+      if (targetEyeY > position.current.y) {
+        position.current.y = Math.min(targetEyeY, position.current.y + dt * 18.0);
+      } else {
+        position.current.y = THREE.MathUtils.lerp(
+          position.current.y,
+          targetEyeY,
+          Math.min(1, dt * 18)
+        );
+      }
     }
 
     camera.position.copy(position.current);

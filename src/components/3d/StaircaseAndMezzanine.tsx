@@ -5,7 +5,7 @@ import { MEZZANINE_CONFIG, STAIRCASE_GEOMETRY } from '../../data/staircaseConfig
 
 /**
  * Procedural Wrought Iron Scrollwork Bracket
- * Replicating the ornamental S-scroll / C-scroll metal brackets under each step (Image 1, 4, 5)
+ * Replicating the ornamental S-scroll / C-scroll metal brackets under each step (User Reference Images)
  */
 function OrnateStepBracket({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
   return (
@@ -44,7 +44,7 @@ function OrnateStepBracket({ position, rotation }: { position: [number, number, 
 }
 
 /**
- * Baluster with Ornamental Spindle Sleeve and Ball (Image 1, 5)
+ * Baluster with Ornamental Spindle Sleeve and Ball (User Reference Images)
  */
 function OrnateBaluster({ position, height = 0.9 }: { position: [number, number, number]; height?: number }) {
   return (
@@ -61,7 +61,7 @@ function OrnateBaluster({ position, height = 0.9 }: { position: [number, number,
         <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
       </mesh>
 
-      {/* Center decorative elongated oval spindle sleeve (ống tiện phình bầu dục) */}
+      {/* Center decorative elongated oval spindle sleeve */}
       <mesh position={[0, height * 0.52, 0]} scale={[1, 2.2, 1]}>
         <sphereGeometry args={[0.02, 16, 16]} />
         <meshStandardMaterial color="#27272a" metalness={0.92} roughness={0.25} />
@@ -82,6 +82,7 @@ function OrnateBaluster({ position, height = 0.9 }: { position: [number, number,
 
 /**
  * Complete Switchback Staircase & 2nd Floor Mezzanine Deck Component
+ * Positioned in South section, ascending Southwards to the Mezzanine
  */
 export function StaircaseAndMezzanine() {
   // Load textures
@@ -101,16 +102,17 @@ export function StaircaseAndMezzanine() {
     <group>
       {/* =======================================================================
           1. FLIGHT 1: LOWER FLIGHT (From Ground Y=0 to Landing Y=1.53)
+          Ascends South (+Z) from Z = 0.0 to Z = 1.98 at X = 2.85
          ======================================================================= */}
       <group>
         {Array.from({ length: f1.steps }).map((_, i) => {
           const stepY = i * STAIRCASE_GEOMETRY.stepRise;
-          const stepZ = f1.startZ + i * (f1.directionZ * STAIRCASE_GEOMETRY.treadDepth);
+          const stepZ = f1.startZ + (i + 0.5) * STAIRCASE_GEOMETRY.treadDepth;
           const stepX = f1.startX;
 
           return (
             <group key={`f1_step_${i}`} position={[stepX, stepY, stepZ]}>
-              {/* Solid Wood Tread (Bậc gỗ sồi/óc chó) */}
+              {/* Solid Wood Tread */}
               <mesh position={[0, 0.022, 0]} castShadow receiveShadow>
                 <boxGeometry args={[STAIRCASE_GEOMETRY.treadWidth, 0.045, STAIRCASE_GEOMETRY.treadDepth + 0.03]} />
                 <meshStandardMaterial
@@ -122,7 +124,7 @@ export function StaircaseAndMezzanine() {
               </mesh>
 
               {/* Riser & Under-structure Steel Channel */}
-              <mesh position={[0, -0.06, 0.12]} castShadow>
+              <mesh position={[0, -0.06, 0.11]} castShadow>
                 <boxGeometry args={[STAIRCASE_GEOMETRY.treadWidth - 0.1, 0.12, 0.03]} />
                 <meshStandardMaterial color="#18181b" metalness={0.9} roughness={0.3} />
               </mesh>
@@ -131,13 +133,9 @@ export function StaircaseAndMezzanine() {
               <OrnateStepBracket position={[-STAIRCASE_GEOMETRY.treadWidth / 2 + 0.08, 0, 0]} />
               <OrnateStepBracket position={[STAIRCASE_GEOMETRY.treadWidth / 2 - 0.08, 0, 0]} />
 
-              {/* Outer Railing Balusters (along outer left edge of flight 1) */}
+              {/* Outer Railing Balusters (along outer East edge of flight 1) */}
               <OrnateBaluster
-                position={[-STAIRCASE_GEOMETRY.treadWidth / 2 + 0.04, 0.045, -0.05]}
-                height={0.92}
-              />
-              <OrnateBaluster
-                position={[-STAIRCASE_GEOMETRY.treadWidth / 2 + 0.04, 0.045, 0.08]}
+                position={[STAIRCASE_GEOMETRY.treadWidth / 2 - 0.04, 0.045, 0]}
                 height={0.92}
               />
             </group>
@@ -147,20 +145,21 @@ export function StaircaseAndMezzanine() {
         {/* Flight 1 Sloped Wooden Handrail */}
         <mesh
           position={[
-            f1.startX - STAIRCASE_GEOMETRY.treadWidth / 2 + 0.04,
-            f1.startY + 0.98 + (f1.endY - f1.startY) / 2,
-            f1.startZ + (f1.directionZ * (f1.steps * STAIRCASE_GEOMETRY.treadDepth)) / 2,
+            f1.startX + STAIRCASE_GEOMETRY.treadWidth / 2 - 0.04,
+            f1.startY + (f1.endY - f1.startY) / 2 + 0.95,
+            f1.startZ + (f1.steps * STAIRCASE_GEOMETRY.treadDepth) / 2,
           ]}
-          rotation={[-0.54, 0, 0]}
+          rotation={[-0.658, 0, 0]}
           castShadow
         >
-          <boxGeometry args={[0.06, 0.05, 3.0]} />
+          <boxGeometry args={[0.06, 0.05, 2.5]} />
           <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
         </mesh>
       </group>
 
       {/* =======================================================================
           2. MID-LANDING PLATFORM (Chiếu nghỉ Y = 1.53m)
+          X from 1.25 to 3.45, Z from 1.98 to 2.70
          ======================================================================= */}
       <group position={[(l.minX + l.maxX) / 2, l.y, (l.minZ + l.maxZ) / 2]}>
         {/* Landing Solid Wood Platform */}
@@ -170,43 +169,37 @@ export function StaircaseAndMezzanine() {
         </mesh>
 
         {/* Outer Heavy Steel Fascia Beam Trim */}
-        <mesh position={[0, -0.1, 0]}>
+        <mesh position={[0, -0.09, 0]}>
           <boxGeometry args={[l.maxX - l.minX + 0.04, 0.12, l.maxZ - l.minZ + 0.04]} />
           <meshStandardMaterial color="#18181b" metalness={0.92} roughness={0.25} />
         </mesh>
 
         {/* 4 Heavy Cast-Iron Support Pillars down to ground */}
-        {[-0.9, 0.9].map((px) =>
-          [-0.6, 0.6].map((pz) => (
+        {[-0.85, 0.85].map((px) =>
+          [-0.25, 0.25].map((pz) => (
             <group key={`land_col_${px}_${pz}`} position={[px, -l.y / 2, pz]}>
               <mesh castShadow>
-                <cylinderGeometry args={[0.055, 0.065, l.y, 16]} />
+                <cylinderGeometry args={[0.05, 0.06, l.y, 16]} />
                 <meshStandardMaterial color="#18181b" metalness={0.88} roughness={0.35} />
               </mesh>
-              {/* Pillar Decorative Capital and Base */}
+              {/* Decorative Capital */}
               <mesh position={[0, l.y / 2 - 0.05, 0]}>
-                <boxGeometry args={[0.16, 0.08, 0.16]} />
+                <boxGeometry args={[0.15, 0.08, 0.15]} />
                 <meshStandardMaterial color="#27272a" metalness={0.85} roughness={0.3} />
               </mesh>
+              {/* Decorative Base */}
               <mesh position={[0, -l.y / 2 + 0.05, 0]}>
-                <boxGeometry args={[0.18, 0.1, 0.18]} />
+                <boxGeometry args={[0.16, 0.1, 0.16]} />
                 <meshStandardMaterial color="#27272a" metalness={0.85} roughness={0.3} />
               </mesh>
             </group>
           ))
         )}
 
-        {/* Landing Guardrails along North side (Z-) and East side (X+) */}
-        {[-1.0, -0.5, 0, 0.5, 1.0].map((bx) => (
-          <OrnateBaluster key={`land_bal_n_${bx}`} position={[bx, 0, -(l.maxZ - l.minZ) / 2 + 0.04]} height={0.92} />
+        {/* Landing East Outer Handrail & Balusters */}
+        {[-0.22, 0, 0.22].map((bz) => (
+          <OrnateBaluster key={`land_bal_e_${bz}`} position={[(l.maxX - l.minX) / 2 - 0.04, 0, bz]} height={0.92} />
         ))}
-        {/* North Handrail */}
-        <mesh position={[0, 0.94, -(l.maxZ - l.minZ) / 2 + 0.04]}>
-          <boxGeometry args={[l.maxX - l.minX, 0.06, 0.05]} />
-          <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
-        </mesh>
-
-        {/* East Handrail */}
         <mesh position={[(l.maxX - l.minX) / 2 - 0.04, 0.94, 0]} rotation={[0, Math.PI / 2, 0]}>
           <boxGeometry args={[l.maxZ - l.minZ, 0.06, 0.05]} />
           <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
@@ -215,11 +208,12 @@ export function StaircaseAndMezzanine() {
 
       {/* =======================================================================
           3. FLIGHT 2: UPPER FLIGHT (From Landing Y=1.53 to Mezzanine Y=3.06)
+          Ascends South (+Z) from Z = 2.70 to Z = 4.68 at X = 1.85
          ======================================================================= */}
       <group>
         {Array.from({ length: f2.steps }).map((_, i) => {
           const stepY = f2.startY + i * STAIRCASE_GEOMETRY.stepRise;
-          const stepZ = f2.startZ + i * (f2.directionZ * STAIRCASE_GEOMETRY.treadDepth);
+          const stepZ = f2.startZ + (i + 0.5) * STAIRCASE_GEOMETRY.treadDepth;
           const stepX = f2.startX;
 
           return (
@@ -231,7 +225,7 @@ export function StaircaseAndMezzanine() {
               </mesh>
 
               {/* Riser & Under-structure Steel Channel */}
-              <mesh position={[0, -0.06, -0.12]} castShadow>
+              <mesh position={[0, -0.06, 0.11]} castShadow>
                 <boxGeometry args={[STAIRCASE_GEOMETRY.treadWidth - 0.1, 0.12, 0.03]} />
                 <meshStandardMaterial color="#18181b" metalness={0.9} roughness={0.3} />
               </mesh>
@@ -240,13 +234,9 @@ export function StaircaseAndMezzanine() {
               <OrnateStepBracket position={[-STAIRCASE_GEOMETRY.treadWidth / 2 + 0.08, 0, 0]} />
               <OrnateStepBracket position={[STAIRCASE_GEOMETRY.treadWidth / 2 - 0.08, 0, 0]} />
 
-              {/* Railing Balusters (along outer left edge of flight 2) */}
+              {/* Railing Balusters (along outer West edge of flight 2) */}
               <OrnateBaluster
-                position={[-STAIRCASE_GEOMETRY.treadWidth / 2 + 0.04, 0.045, -0.08]}
-                height={0.92}
-              />
-              <OrnateBaluster
-                position={[-STAIRCASE_GEOMETRY.treadWidth / 2 + 0.04, 0.045, 0.08]}
+                position={[-STAIRCASE_GEOMETRY.treadWidth / 2 + 0.04, 0.045, 0]}
                 height={0.92}
               />
             </group>
@@ -257,58 +247,64 @@ export function StaircaseAndMezzanine() {
         <mesh
           position={[
             f2.startX - STAIRCASE_GEOMETRY.treadWidth / 2 + 0.04,
-            f2.startY + 0.98 + (f2.endY - f2.startY) / 2,
-            f2.startZ + (f2.directionZ * (f2.steps * STAIRCASE_GEOMETRY.treadDepth)) / 2,
+            f2.startY + (f2.endY - f2.startY) / 2 + 0.95,
+            f2.startZ + (f2.steps * STAIRCASE_GEOMETRY.treadDepth) / 2,
           ]}
-          rotation={[0.54, 0, 0]}
+          rotation={[-0.658, 0, 0]}
           castShadow
         >
-          <boxGeometry args={[0.06, 0.05, 3.0]} />
+          <boxGeometry args={[0.06, 0.05, 2.5]} />
           <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
         </mesh>
       </group>
 
       {/* =======================================================================
           4. 2ND FLOOR MEZZANINE (TẦNG 2 - SÀN LỬNG NGHIÊN CỨU & LAN CAN AN TOÀN)
+          Deck height: Y = 3.06m.
+          Three floor slabs leaving open stairwell at X in [1.25, 2.45], Z in [3.20, 4.68]
          ======================================================================= */}
-      <group position={[0, mez.floorY, (mez.bounds.minZ + mez.bounds.maxZ) / 2]}>
-        {/* Main Mezzanine Structural Floor Slab */}
-        <mesh position={[0, -mez.floorThickness / 2, 0]} receiveShadow>
-          <boxGeometry
-            args={[
-              mez.bounds.maxX - mez.bounds.minX,
-              mez.floorThickness,
-              mez.bounds.maxZ - mez.bounds.minZ,
-            ]}
-          />
-          <meshStandardMaterial
-            map={woodTexture}
-            color="#5d4037"
-            roughness={0.28}
-            metalness={0.12}
-            envMapIntensity={0.8}
-          />
+      <group position={[0, mez.floorY, 0]}>
+        {/* Slab A: West Floor Deck (X: -9.5 to 1.25, Z: 3.2 to 7.4) */}
+        <mesh position={[-4.125, -mez.floorThickness / 2, 5.3]} receiveShadow>
+          <boxGeometry args={[10.75, mez.floorThickness, 4.2]} />
+          <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.28} metalness={0.12} />
         </mesh>
 
-        {/* Front Steel I-Beam Fascia (Dầm viền chịu lực thép hình I) */}
-        <mesh position={[0, -mez.floorThickness - 0.08, -(mez.bounds.maxZ - mez.bounds.minZ) / 2]}>
-          <boxGeometry args={[mez.bounds.maxX - mez.bounds.minX, 0.28, 0.12]} />
+        {/* Slab B: East Floor Deck (X: 2.45 to 9.5, Z: 3.2 to 7.4) */}
+        <mesh position={[5.975, -mez.floorThickness / 2, 5.3]} receiveShadow>
+          <boxGeometry args={[7.05, mez.floorThickness, 4.2]} />
+          <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.28} metalness={0.12} />
+        </mesh>
+
+        {/* Slab C: South Walkway Behind Stairwell (X: 1.25 to 2.45, Z: 4.68 to 7.4) */}
+        <mesh position={[1.85, -mez.floorThickness / 2, 6.04]} receiveShadow>
+          <boxGeometry args={[1.2, mez.floorThickness, 2.72]} />
+          <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.28} metalness={0.12} />
+        </mesh>
+
+        {/* Front Steel I-Beam Fascia (West) */}
+        <mesh position={[-4.125, -mez.floorThickness - 0.08, 3.2]}>
+          <boxGeometry args={[10.75, 0.28, 0.12]} />
           <meshStandardMaterial color="#1e293b" metalness={0.92} roughness={0.25} />
         </mesh>
 
-        {/* Heavy Structural Support Columns from Ground to Mezzanine (4 pillars) */}
-        {[-7.5, -2.5, 2.5, 7.5].map((cx) => (
-          <group key={`mez_col_${cx}`} position={[cx, -mez.floorY / 2, -(mez.bounds.maxZ - mez.bounds.minZ) / 2 + 0.1]}>
+        {/* Front Steel I-Beam Fascia (East) */}
+        <mesh position={[5.975, -mez.floorThickness - 0.08, 3.2]}>
+          <boxGeometry args={[7.05, 0.28, 0.12]} />
+          <meshStandardMaterial color="#1e293b" metalness={0.92} roughness={0.25} />
+        </mesh>
+
+        {/* Heavy Structural Support Columns from Ground to Mezzanine */}
+        {[-7.5, -2.5, 5.5, 8.5].map((cx) => (
+          <group key={`mez_col_${cx}`} position={[cx, -mez.floorY / 2, 3.28]}>
             <mesh castShadow receiveShadow>
               <cylinderGeometry args={[0.09, 0.11, mez.floorY, 24]} />
               <meshStandardMaterial color="#18181b" metalness={0.9} roughness={0.3} />
             </mesh>
-            {/* Column Capital */}
             <mesh position={[0, mez.floorY / 2 - 0.1, 0]}>
               <boxGeometry args={[0.26, 0.12, 0.26]} />
               <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.3} />
             </mesh>
-            {/* Column Baseplate */}
             <mesh position={[0, -mez.floorY / 2 + 0.08, 0]}>
               <boxGeometry args={[0.28, 0.12, 0.28]} />
               <meshStandardMaterial color="#334155" metalness={0.85} roughness={0.3} />
@@ -316,48 +312,80 @@ export function StaircaseAndMezzanine() {
           </group>
         ))}
 
-        {/* 2nd Floor Safety Guardrail overlooking Ground Floor (Lan can bảo vệ tầng 2) */}
-        {/* Front overlook railing (skipping stair entrance opening at x in [5.8, 7.5]) */}
-        <group position={[0, 0, -(mez.bounds.maxZ - mez.bounds.minZ) / 2 + 0.04]}>
-          {/* Railing Left Section (from X = -9.6 to X = 5.7) */}
-          <group position={[-1.95, 0, 0]}>
-            {/* Wooden top handrail */}
-            <mesh position={[0, 0.95, 0]} castShadow>
-              <boxGeometry args={[15.3, 0.06, 0.06]} />
-              <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
-            </mesh>
-
-            {/* Bottom iron rail bar */}
-            <mesh position={[0, 0.06, 0]}>
-              <boxGeometry args={[15.3, 0.02, 0.03]} />
-              <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
-            </mesh>
-
-            {/* Vertical Balusters every 0.35m */}
-            {Array.from({ length: 42 }).map((_, bi) => {
-              const bx = -7.4 + bi * 0.36;
-              return <OrnateBaluster key={`rail_bal_${bi}`} position={[bx, 0, 0]} height={0.92} />;
-            })}
-          </group>
-
-          {/* Railing along Upper Stairway Opening (North-South direction) */}
-          <group position={[5.7, 0, 1.2]} rotation={[0, Math.PI / 2, 0]}>
-            <mesh position={[0, 0.95, 0]} castShadow>
-              <boxGeometry args={[2.4, 0.06, 0.06]} />
-              <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
-            </mesh>
-            {Array.from({ length: 7 }).map((_, bi) => (
-              <OrnateBaluster key={`rail_side_bal_${bi}`} position={[-1.0 + bi * 0.33, 0, 0]} height={0.92} />
-            ))}
-          </group>
+        {/* =======================================================================
+            2ND FLOOR SAFETY GUARDRAILS (LAN CAN AN TOÀN TẦNG 2)
+           ======================================================================= */}
+        {/* 1. Left Front Overlook Railing (X: -9.5 to 1.25 at Z = 3.2) */}
+        <group position={[-4.125, 0, 3.24]}>
+          {/* Top Wooden Handrail */}
+          <mesh position={[0, 0.95, 0]} castShadow>
+            <boxGeometry args={[10.75, 0.06, 0.06]} />
+            <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
+          </mesh>
+          {/* Bottom Iron Rail */}
+          <mesh position={[0, 0.06, 0]}>
+            <boxGeometry args={[10.75, 0.02, 0.03]} />
+            <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
+          </mesh>
+          {/* Balusters */}
+          {Array.from({ length: 28 }).map((_, bi) => {
+            const bx = -5.1 + bi * 0.38;
+            return <OrnateBaluster key={`rail_l_${bi}`} position={[bx, 0, 0]} height={0.92} />;
+          })}
         </group>
 
-        {/* Recessed Warm Ceiling / Mezzanine Lighting */}
+        {/* 2. Right Front Overlook Railing (X: 2.45 to 9.5 at Z = 3.2) */}
+        <group position={[5.975, 0, 3.24]}>
+          <mesh position={[0, 0.95, 0]} castShadow>
+            <boxGeometry args={[7.05, 0.06, 0.06]} />
+            <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.06, 0]}>
+            <boxGeometry args={[7.05, 0.02, 0.03]} />
+            <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
+          </mesh>
+          {Array.from({ length: 18 }).map((_, bi) => {
+            const bx = -3.2 + bi * 0.38;
+            return <OrnateBaluster key={`rail_r_${bi}`} position={[bx, 0, 0]} height={0.92} />;
+          })}
+        </group>
+
+        {/* 3. Stairwell Left Side Guardrail (along X = 1.25, Z from 3.20 to 4.68) */}
+        <group position={[1.25, 0, 3.94]} rotation={[0, Math.PI / 2, 0]}>
+          <mesh position={[0, 0.95, 0]} castShadow>
+            <boxGeometry args={[1.48, 0.06, 0.06]} />
+            <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.06, 0]}>
+            <boxGeometry args={[1.48, 0.02, 0.03]} />
+            <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
+          </mesh>
+          {[-0.55, -0.18, 0.18, 0.55].map((bz) => (
+            <OrnateBaluster key={`rail_stair_l_${bz}`} position={[bz, 0, 0]} height={0.92} />
+          ))}
+        </group>
+
+        {/* 4. Stairwell Right Side Guardrail (along X = 2.45, Z from 3.20 to 4.68) */}
+        <group position={[2.45, 0, 3.94]} rotation={[0, Math.PI / 2, 0]}>
+          <mesh position={[0, 0.95, 0]} castShadow>
+            <boxGeometry args={[1.48, 0.06, 0.06]} />
+            <meshStandardMaterial map={woodTexture} color="#5d4037" roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.06, 0]}>
+            <boxGeometry args={[1.48, 0.02, 0.03]} />
+            <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
+          </mesh>
+          {[-0.55, -0.18, 0.18, 0.55].map((bz) => (
+            <OrnateBaluster key={`rail_stair_r_${bz}`} position={[bz, 0, 0]} height={0.92} />
+          ))}
+        </group>
+
+        {/* Warm Ambient Lights on Mezzanine */}
         {[-6, -2, 2, 6].map((lx) => (
           <pointLight
             key={`mez_light_${lx}`}
-            position={[lx, 2.8, 0]}
-            intensity={2.2}
+            position={[lx, 2.6, 5.3]}
+            intensity={2.0}
             distance={8}
             decay={2}
             color="#fef3c7"
@@ -367,4 +395,3 @@ export function StaircaseAndMezzanine() {
     </group>
   );
 }
-

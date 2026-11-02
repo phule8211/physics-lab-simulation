@@ -2,6 +2,7 @@ import React from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
 import { Volume2, VolumeX, Play, Pause, Compass, MousePointerClick, Move3d, PackageCheck } from 'lucide-react';
+import { CompassWidget } from './CompassWidget';
 
 export function CrosshairHUD() {
   const {
@@ -48,33 +49,39 @@ export function CrosshairHUD() {
           </div>
         </div>
 
-        {/* Quick Toolbar (Mute sound, Toggle simulation animation) */}
-        <div className="flex items-center space-x-2 pointer-events-auto">
-          <button
-            onClick={toggleMachineRunning}
-            className={`glass-pill px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-200 ${isMachineRunning
-                ? 'text-lab-cyan border-lab-cyan/50 hover:bg-lab-cyan/10'
-                : 'text-lab-muted border-slate-700 hover:text-white'
-              }`}
-            aria-label={isMachineRunning ? 'Tạm dừng mô phỏng máy' : 'Tiếp tục mô phỏng máy'}
-          >
-            {isMachineRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            <span className="hidden sm:inline">
-              {isMachineRunning ? 'Đang chạy' : 'Đã tạm dừng'}
-            </span>
-          </button>
+        {/* Top Right Controls & 3D Compass HUD */}
+        <div className="flex flex-col items-end space-y-2 pointer-events-auto">
+          {/* Quick Toolbar (Mute sound, Toggle simulation animation) */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={toggleMachineRunning}
+              className={`glass-pill px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-200 ${isMachineRunning
+                  ? 'text-lab-cyan border-lab-cyan/50 hover:bg-lab-cyan/10'
+                  : 'text-lab-muted border-slate-700 hover:text-white'
+                }`}
+              aria-label={isMachineRunning ? 'Tạm dừng mô phỏng máy' : 'Tiếp tục mô phỏng máy'}
+            >
+              {isMachineRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              <span className="hidden sm:inline">
+                {isMachineRunning ? 'Đang chạy' : 'Đã tạm dừng'}
+              </span>
+            </button>
 
-          <button
-            onClick={toggleSound}
-            className={`glass-pill p-2 rounded-lg border transition-all duration-200 ${soundEnabled
-                ? 'text-lab-cyan border-lab-cyan/40 hover:bg-lab-cyan/10'
-                : 'text-slate-500 border-slate-800 hover:text-white'
-              }`}
-            aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}
-            title={soundEnabled ? 'Âm thanh: Đang bật' : 'Âm thanh: Đang tắt'}
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </button>
+            <button
+              onClick={toggleSound}
+              className={`glass-pill p-2 rounded-lg border transition-all duration-200 ${soundEnabled
+                  ? 'text-lab-cyan border-lab-cyan/40 hover:bg-lab-cyan/10'
+                  : 'text-slate-500 border-slate-800 hover:text-white'
+                }`}
+              aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}
+              title={soundEnabled ? 'Âm thanh: Đang bật' : 'Âm thanh: Đang tắt'}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Real-time 3D Compass Orientation Widget */}
+          <CompassWidget />
         </div>
       </header>
 
