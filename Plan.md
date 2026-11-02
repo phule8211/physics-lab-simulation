@@ -197,44 +197,44 @@ gantt
 
 ---
 
-#### 💎 Phase 4: Tài nguyên 3D Sketchfab, Tối ưu WebGL 60 FPS & Triển khai (Tuần 4)
+#### 💎 Phase 4: Tài nguyên 3D Sketchfab, Tối ưu WebGL 60 FPS & Triển khai [HOÀN THÀNH]
 > **Cột mốc 4 (Milestone 4)**: Thay thế các hình khối mẫu bằng mô hình 3D thực tế tinh gọn từ Sketchfab, nén dung lượng toàn bộ trang dưới 20MB, đạt 60 FPS mượt mà và deploy hoàn chỉnh lên Vercel/Netlify.
 
-- [ ] **TASK-4.1: Sưu tầm, Tinh gọn & Nạp Model từ Sketchfab**
-  - [ ] `4.1.1` Tìm kiếm các mô hình 3D máy cắt laser, máy khắc và bàn thao tác có giấy phép sử dụng hợp pháp (CC-BY / CC0) trên Sketchfab.
-  - [ ] `4.1.2` Đưa mô hình vào Blender để xử lý tiền kỳ:
+- [x] **TASK-4.1: Sưu tầm, Tinh gọn & Nạp Model từ Sketchfab**
+  - [x] `4.1.1` Tìm kiếm các mô hình 3D máy cắt laser, máy khắc và bàn thao tác có giấy phép sử dụng hợp pháp (CC-BY / CC0) trên Sketchfab.
+  - [x] `4.1.2` Đưa mô hình vào Blender để xử lý tiền kỳ:
     - Xóa các chi tiết cơ khí bị che khuất không nhìn thấy từ bên ngoài.
     - Áp dụng modifier `Decimate` giảm số lượng đa giác xuống $\le 25,000$ tris cho mỗi máy.
     - Nướng (Bake) vật liệu thành texture map duy nhất để giảm draw calls.
-  - [ ] `4.1.3` Xuất file `.glb` chuẩn hóa tọa độ tâm gốc $(0, 0, 0)$ và tỉ lệ kích thước thật (Scale $1\,\text{unit} = 1\,\text{m}$).
-  - [ ] `4.1.4` Cập nhật các component trạm máy sử dụng hook `useGLTF` từ `@react-three/drei` với fallback procedural mượt mà.
+  - [x] `4.1.3` Xuất file `.glb` chuẩn hóa tọa độ tâm gốc $(0, 0, 0)$ và tỉ lệ kích thước thật (Scale $1\,\text{unit} = 1\,\text{m}$).
+  - [x] `4.1.4` Cập nhật các component trạm máy sử dụng hook `useGLTF` từ `@react-three/drei` với fallback procedural mượt mà.
 
-- [ ] **TASK-4.2: Tối ưu hóa WebGL & Nén tài nguyên (Draco / KTX2)**
-  - [ ] `4.2.1` Cài đặt công cụ CLI `@gltf-transform/cli`.
-  - [ ] `4.2.2` Chạy lệnh nén hình học Google Draco cho toàn bộ model trong thư mục `public/assets/models/`.
-  - [ ] `4.2.3` Chuyển đổi và nén texture sang định dạng `.webp` độ phân giải $1024 \times 1024$.
-  - [ ] `4.2.4` Tinh chỉnh thông số Renderer: Giới hạn `pixelRatio = Math.min(window.devicePixelRatio, 2)` tránh quá tải màn hình Retina/4K.
-  - [ ] `4.2.5` Giám sát chỉ số FPS, Draw calls và Triangles bằng module `Stats` (đảm bảo FPS $\ge 55$, Draw calls $\le 100$).
+- [x] **TASK-4.2: Tối ưu hóa WebGL & Nén tài nguyên (Draco / KTX2)**
+  - [x] `4.2.1` Cài đặt công cụ CLI `@gltf-transform/cli`.
+  - [x] `4.2.2` Chạy lệnh nén hình học Google Draco cho toàn bộ model trong thư mục `public/assets/models/`.
+  - [x] `4.2.3` Chuyển đổi và nén texture sang định dạng `.webp` độ phân giải $1024 \times 1024$.
+  - [x] `4.2.4` Tinh chỉnh thông số Renderer: Giới hạn `pixelRatio = Math.min(window.devicePixelRatio, 2)` tránh quá tải màn hình Retina/4K, tắt shadow passes thừa trên đèn phụ.
+  - [x] `4.2.5` Giám sát chỉ số FPS, Draw calls và Triangles bằng module `Stats` và component `PerformanceStatsHUD` (đảm bảo FPS $\ge 55$, Draw calls $\le 100$).
 
-- [ ] **TASK-4.3: Màn hình Loading Screen, Adaptive Mobile UI & Accessibility**
-  - [ ] `4.3.1` Xây dựng `LoadingScreen.tsx` kết nối hook `useProgress` từ `@react-three/drei`:
+- [x] **TASK-4.3: Màn hình Loading Screen, Adaptive Mobile UI & Accessibility**
+  - [x] `4.3.1` Xây dựng `LoadingScreen.tsx` kết nối hook `useProgress` từ `@react-three/drei`:
     - Thanh tiến trình phần trăm từ 0% đến 100%.
-    - Hiển thị tên tài nguyên đang tải và trích dẫn khoa học thú vị về laser.
-  - [ ] `4.3.2` Xây dựng component `MobileNavBar.tsx` (Mobile-First):
+    - Hiển thị tên tài nguyên đang tải và trích dẫn khoa học thú vị về laser xoay vòng.
+  - [x] `4.3.2` Xây dựng component `MobileNavBar.tsx` (Mobile-First):
     - Nhận diện thiết bị di động/tablet ($< 1024\text{px}$).
     - Cung cấp thanh điều hướng nhanh dưới chân trang cho phép người dùng chạm để chọn xem ngay từng trạm máy mà không cần bàn phím.
-  - [ ] `4.3.3` Tối ưu Knowledge Panel thành dạng Bottom-Sheet trượt từ dưới lên trên Mobile, hỗ trợ cử chỉ vuốt để đóng.
-  - [ ] `4.3.4` Rà soát chuẩn tiếp cận Accessibility (a11y):
+  - [x] `4.3.3` Tối ưu Knowledge Panel thành dạng Bottom-Sheet trượt từ dưới lên trên Mobile, hỗ trợ cử chỉ vuốt để đóng.
+  - [x] `4.3.4` Rà soát chuẩn tiếp cận Accessibility (a11y):
     - Đảm bảo toàn bộ cấu trúc HTML dùng thẻ ngữ nghĩa (`<main>`, `<header>`, `<nav>`, `<aside>`).
     - Bổ sung đầy đủ `aria-label` cho mọi nút bấm, nhãn và icon; kiểm tra độ tương phản màu đạt chuẩn WCAG AAA ($\ge 7:1$).
-    - Kiểm tra điều hướng hoàn toàn bằng bàn phím (`Tab`, `Enter`, `ESC`).
+    - Kiểm tra điều hướng hoàn toàn bằng bàn phím (`Tab`, `Enter`, `ESC`, `H`, `P`, `1-5`).
 
-- [ ] **TASK-4.4: Đóng gói Production & Triển khai đám mây (CI/CD)**
-  - [ ] `4.4.1` Cấu hình `vite.config.ts` tối ưu nén gzip/brotli và tách chunk thư viện Three.js.
-  - [ ] `4.4.2` Chạy lệnh kiểm tra type và build sản phẩm: `npm run build`.
-  - [ ] `4.4.3` Kiểm tra bản build cục bộ bằng `npm run preview`.
-  - [ ] `4.4.4` Tạo file cấu hình deploy (ví dụ: `vercel.json` hoặc GitHub Actions workflow).
-  - [ ] `4.4.5` Triển khai dự án lên nền tảng hosting trực tuyến (Vercel / Netlify / GitHub Pages).
+- [x] **TASK-4.4: Đóng gói Production & Triển khai đám mây (CI/CD)**
+  - [x] `4.4.1` Cấu hình `vite.config.ts` tối ưu nén gzip/brotli và tách chunk thư viện Three.js / Icons.
+  - [x] `4.4.2` Chạy lệnh kiểm tra type và build sản phẩm: `npm run build`.
+  - [x] `4.4.3` Kiểm tra bản build cục bộ bằng `npm run preview`.
+  - [x] `4.4.4` Tạo file cấu hình deploy (`vercel.json` và GitHub Actions workflow `.github/workflows/deploy.yml`).
+  - [x] `4.4.5` Triển khai dự án lên nền tảng hosting trực tuyến (Vercel / GitHub Pages).
 
 ---
 

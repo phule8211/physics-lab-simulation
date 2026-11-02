@@ -6,6 +6,9 @@ import { MachineControlOverlay } from './components/ui/MachineControlOverlay';
 import { VectorDesignModal } from './components/ui/VectorDesignModal';
 import { SpecimenInspectionModal } from './components/ui/SpecimenInspectionModal';
 import { LoadingScreen } from './components/ui/LoadingScreen';
+import { PerformanceStatsHUD } from './components/ui/PerformanceStatsHUD';
+import { MobileNavBar } from './components/ui/MobileNavBar';
+import { HelpGuideModal } from './components/ui/HelpGuideModal';
 
 export function App() {
   return (
@@ -15,6 +18,9 @@ export function App() {
 
       {/* 2D UI & HUD Overlay Layer */}
       <CrosshairHUD />
+
+      {/* Mobile-First Floating Navigation Bar */}
+      <MobileNavBar />
 
       {/* Inspection Sidebar Knowledge Panel (Direct root mount for uninterrupted scroll & tab clicks) */}
       <KnowledgePanel />
@@ -27,6 +33,12 @@ export function App() {
 
       {/* Interactive Finished Specimen 3D Inspection Modal */}
       <SpecimenInspectionModal />
+
+      {/* Real-time WebGL Diagnostics & FPS Stats HUD */}
+      <PerformanceStatsHUD />
+
+      {/* Interactive Keyboard Shortcuts & Laboratory Help Modal */}
+      <HelpGuideModal />
 
       {/* Loading Progress Screen */}
       <LoadingScreen />

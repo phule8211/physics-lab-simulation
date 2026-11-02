@@ -122,6 +122,15 @@ interface LabState {
   toggleXRayMode: () => void;
   setHoveredComponentId: (id: string | null) => void;
 
+  // Phase 4: Performance Monitoring & Help Shortcuts Modal
+  isStatsVisible: boolean;
+  toggleStats: () => void;
+  setStatsVisible: (visible: boolean) => void;
+  isHelpModalOpen: boolean;
+  openHelpModal: () => void;
+  closeHelpModal: () => void;
+  toggleHelpModal: () => void;
+
   // Actions
   setHoveredStation: (id: MachineId | null, distance?: number | null) => void;
   setPointerLocked: (locked: boolean) => void;
@@ -223,6 +232,27 @@ export const useLabStore = create<LabState>((set, get) => ({
     set({ isXRayMode: !get().isXRayMode });
   },
   setHoveredComponentId: (id) => set({ hoveredComponentId: id }),
+
+  // Phase 4: Performance Monitoring & Help Shortcuts Modal
+  isStatsVisible: false,
+  toggleStats: () => {
+    sound.playClick();
+    set({ isStatsVisible: !get().isStatsVisible });
+  },
+  setStatsVisible: (visible) => set({ isStatsVisible: visible }),
+  isHelpModalOpen: false,
+  openHelpModal: () => {
+    sound.playClick();
+    set({ isHelpModalOpen: true });
+  },
+  closeHelpModal: () => {
+    sound.playClick();
+    set({ isHelpModalOpen: false });
+  },
+  toggleHelpModal: () => {
+    sound.playClick();
+    set({ isHelpModalOpen: !get().isHelpModalOpen });
+  },
 
   // Spray Coating & Finishing State
   selectedCoatingFinish: 'CLEAR_GLOSS',

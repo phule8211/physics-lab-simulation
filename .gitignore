@@ -36,6 +36,6 @@ dist-ssr/
 .env.test.local
 .env.production.local
 
-
 # Agent internal state
 .agents/
+.vercel

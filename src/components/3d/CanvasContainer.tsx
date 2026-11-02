@@ -1,11 +1,20 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
+import { AdaptiveDpr, AdaptiveEvents, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { WorkshopEnvironment } from './WorkshopEnvironment';
 import { ProceduralStation } from './fallbacks/ProceduralMachineBox';
 import { PlayerController } from './PlayerController';
 import { PostProcessingEffects } from './PostProcessingEffects';
+import { PerformanceTracker } from './PerformanceTracker';
 import { STATIONS } from '../../data/labConfig';
+
+// Configure Google Draco 3D geometry decoder path for any GLTF/GLB models
+try {
+  useGLTF.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+} catch {
+  // Ignore in environments where useGLTF is mocked
+}
 
 export function CanvasContainer() {
   return (
@@ -25,6 +34,13 @@ export function CanvasContainer() {
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
         }}
       >
+        {/* Dynamic Resolution & Event Adaptive Optimization */}
+        <AdaptiveDpr pixelated={false} />
+        <AdaptiveEvents />
+
+        {/* Real-time WebGL Performance Diagnostics Monitor */}
+        <PerformanceTracker />
+
         {/* Deep Atmospheric Cleanroom Fog & Dark Navy Background */}
         <color attach="background" args={['#080e1e']} />
         <fogExp2 attach="fog" args={['#080e1e', 0.024]} />
@@ -32,7 +48,7 @@ export function CanvasContainer() {
         {/* Workshop Architectural Scene, PBR Materials, Lighting & Procedural HDRI */}
         <WorkshopEnvironment />
 
-        {/* 4 Interactive Machine Workstations */}
+        {/* 5 Interactive Machine Workstations & Spray Coating Booth */}
         {Object.values(STATIONS).map((st) => (
           <ProceduralStation
             key={st.id}
