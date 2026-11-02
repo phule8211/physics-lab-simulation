@@ -52,11 +52,10 @@ export function CrosshairHUD() {
         <div className="flex items-center space-x-2 pointer-events-auto">
           <button
             onClick={toggleMachineRunning}
-            className={`glass-pill px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-200 ${
-              isMachineRunning
+            className={`glass-pill px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-200 ${isMachineRunning
                 ? 'text-lab-cyan border-lab-cyan/50 hover:bg-lab-cyan/10'
                 : 'text-lab-muted border-slate-700 hover:text-white'
-            }`}
+              }`}
             aria-label={isMachineRunning ? 'Tạm dừng mô phỏng máy' : 'Tiếp tục mô phỏng máy'}
           >
             {isMachineRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -67,11 +66,10 @@ export function CrosshairHUD() {
 
           <button
             onClick={toggleSound}
-            className={`glass-pill p-2 rounded-lg border transition-all duration-200 ${
-              soundEnabled
+            className={`glass-pill p-2 rounded-lg border transition-all duration-200 ${soundEnabled
                 ? 'text-lab-cyan border-lab-cyan/40 hover:bg-lab-cyan/10'
                 : 'text-slate-500 border-slate-800 hover:text-white'
-            }`}
+              }`}
             aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}
             title={soundEnabled ? 'Âm thanh: Đang bật' : 'Âm thanh: Đang tắt'}
           >
@@ -111,6 +109,12 @@ export function CrosshairHUD() {
                   <span className="text-[10px] text-lab-cyan font-mono mt-1">
                     {hoveredStation.wavelength}
                   </span>
+                  {!isPointerLocked && (
+                    <div className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
+                      <MousePointerClick className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 animate-pulse" />
+                      <span>Ấn chuột trái thì sẽ mất cursor để điều khiển bằng W, A, S, D</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -206,54 +210,60 @@ export function CrosshairHUD() {
               </div>
             )}
 
-            <div className="flex items-center space-x-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-lab-cyan">
-                CLICK
-              </span>
-              <span className="text-lab-muted">
-                {isPointerLocked ? 'Đã khóa chuột' : 'Khóa chuột'}
-              </span>
+                <div className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-lg transition-all ${!isPointerLocked && hoveredStation
+                    ? 'bg-amber-950/60 border border-amber-500/50'
+                    : ''
+                  }`}>
+                  <span className={`px-1.5 py-0.5 rounded font-mono font-bold text-xs ${!isPointerLocked && hoveredStation
+                      ? 'bg-amber-400 text-slate-950 animate-pulse'
+                      : 'bg-slate-800 border border-slate-700 text-lab-cyan'
+                    }`}>
+                    CHUỘT TRÁI
+                  </span>
+                    <span className={!isPointerLocked && hoveredStation ? 'text-amber-200 font-semibold' : 'text-lab-muted'}>
+                      {isPointerLocked
+                        ? 'Đã ẩn cursor (WASD)'
+                        : 'Ấn chuột trái để ẩn cursor điều khiển WASD'}
+                    </span>
+                </div>
             </div>
-          </div>
 
-          {/* 4 Workstations Quick Selection Buttons with Key Numbers [1-4] */}
-          <div className="flex items-center space-x-2 pointer-events-auto overflow-x-auto max-w-[55vw]">
-            {Object.values(STATIONS).map((st, idx) => (
-              <button
-                key={st.id}
-                onClick={() => {
-                  if (activeStationId === st.id) {
-                    exitInspection();
-                  } else {
-                    if (document.pointerLockElement) {
-                      document.exitPointerLock();
+            {/* 4 Workstations Quick Selection Buttons with Key Numbers [1-4] */}
+            <div className="flex items-center space-x-2 pointer-events-auto overflow-x-auto max-w-[55vw]">
+              {Object.values(STATIONS).map((st, idx) => (
+                <button
+                  key={st.id}
+                  onClick={() => {
+                    if (activeStationId === st.id) {
+                      exitInspection();
+                    } else {
+                      if (document.pointerLockElement) {
+                        document.exitPointerLock();
+                      }
+                      enterInspection(st.id);
                     }
-                    enterInspection(st.id);
-                  }
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all duration-200 flex items-center space-x-2 active:scale-95 ${
-                  activeStationId === st.id
-                    ? 'bg-lab-cyan text-slate-950 font-bold border-lab-cyan shadow-lg shadow-lab-cyan/30 scale-105'
-                    : hoveredStationId === st.id
-                    ? 'bg-lab-cyan/20 border-lab-cyan text-white shadow-lg shadow-lab-cyan/20'
-                    : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200'
-                }`}
-                aria-label={`Xem chi tiết ${st.shortName} (Phím tắt: ${idx + 1})`}
-                title={`Phím tắt: [${idx + 1}]`}
-              >
-                <span
-                  className={`w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center ${
-                    activeStationId === st.id
-                      ? 'bg-slate-950 text-lab-cyan'
-                      : 'bg-slate-800 text-slate-300'
-                  }`}
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all duration-200 flex items-center space-x-2 active:scale-95 ${activeStationId === st.id
+                      ? 'bg-lab-cyan text-slate-950 font-bold border-lab-cyan shadow-lg shadow-lab-cyan/30 scale-105'
+                      : hoveredStationId === st.id
+                        ? 'bg-lab-cyan/20 border-lab-cyan text-white shadow-lg shadow-lab-cyan/20'
+                        : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200'
+                    }`}
+                  aria-label={`Xem chi tiết ${st.shortName} (Phím tắt: ${idx + 1})`}
+                  title={`Phím tắt: [${idx + 1}]`}
                 >
-                  {idx + 1}
-                </span>
-                <span className="whitespace-nowrap">{st.shortName}</span>
-              </button>
-            ))}
-          </div>
+                  <span
+                    className={`w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center ${activeStationId === st.id
+                        ? 'bg-slate-950 text-lab-cyan'
+                        : 'bg-slate-800 text-slate-300'
+                      }`}
+                  >
+                    {idx + 1}
+                  </span>
+                  <span className="whitespace-nowrap">{st.shortName}</span>
+                </button>
+              ))}
+            </div>
         </footer>
       )}
     </div>

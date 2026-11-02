@@ -105,20 +105,20 @@ export const STATIONS: Record<string, StationConfig> = {
 
 export const WALL_COLLIDERS: AABBBox[] = [
   // Tường Bắc phòng chính (Chia đôi làm cửa thông phòng rộng 3.6m ở giữa x: [-1.8, 1.8])
-  { id: 'wall_north_left', name: 'Tường Bắc Trái', min: [-10.5, 0, -8.5], max: [-1.8, 5, -7.5] },
-  { id: 'wall_north_right', name: 'Tường Bắc Phải', min: [1.8, 0, -8.5], max: [10.5, 5, -7.5] },
+  { id: 'wall_north_left', name: 'Tường Bắc Trái', min: [-10.5, 0, -8.5], max: [-1.8, 8, -7.5] },
+  { id: 'wall_north_right', name: 'Tường Bắc Phải', min: [1.8, 0, -8.5], max: [10.5, 8, -7.5] },
 
   // Tường Nam phòng chính
-  { id: 'wall_south', name: 'Tường Nam', min: [-10.5, 0, 7.5], max: [10.5, 5, 8.5] },
+  { id: 'wall_south', name: 'Tường Nam', min: [-10.5, 0, 7.5], max: [10.5, 8, 8.5] },
 
   // Tường Tây phòng chính
-  { id: 'wall_west', name: 'Tường Tây', min: [-10.5, 0, -8.5], max: [-9.5, 5, 8.5] },
+  { id: 'wall_west', name: 'Tường Tây', min: [-10.5, 0, -8.5], max: [-9.5, 8, 8.5] },
 
   // Tường Đông phòng chính
-  { id: 'wall_east', name: 'Tường Đông', min: [9.5, 0, -8.5], max: [10.5, 5, 8.5] },
+  { id: 'wall_east', name: 'Tường Đông', min: [9.5, 0, -8.5], max: [10.5, 8, 8.5] },
 
   // CÁC BỨC TƯỜNG CỦA PHÒNG PHỦ SƠN (COATING CLEANROOM) (x: [-5.5, 5.5], z: [-16, -8])
-  { id: 'wall_coating_west', name: 'Vách Tây Phòng Sơn', min: [-5.6, 0, -16.5], max: [-4.8, 5, -7.8] },
-  { id: 'wall_coating_east', name: 'Vách Đông Phòng Sơn', min: [4.8, 0, -16.5], max: [5.6, 5, -7.8] },
-  { id: 'wall_coating_north', name: 'Vách Sau Buồng Sơn', min: [-5.6, 0, -16.5], max: [5.6, 5, -15.2] },
+  { id: 'wall_coating_west', name: 'Vách Tây Phòng Sơn', min: [-5.6, 0, -16.5], max: [-4.8, 8, -7.8] },
+  { id: 'wall_coating_east', name: 'Vách Đông Phòng Sơn', min: [4.8, 0, -16.5], max: [5.6, 8, -7.8] },
+  { id: 'wall_coating_north', name: 'Vách Sau Buồng Sơn', min: [-5.6, 0, -16.5], max: [5.6, 8, -15.2] },
 ];

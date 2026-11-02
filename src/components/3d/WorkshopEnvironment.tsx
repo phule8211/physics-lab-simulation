@@ -1,6 +1,9 @@
 import React, { Suspense } from 'react';
 import * as THREE from 'three';
 import { Text, Environment, Lightformer } from '@react-three/drei';
+import { StaircaseAndMezzanine } from './StaircaseAndMezzanine';
+import { LabWorkbenches } from './LabWorkbenches';
+import { GiantCeramicBottleShelf } from './GiantCeramicBottleShelf';
 
 function SafeText(props: any) {
   return (
@@ -214,8 +217,8 @@ export function WorkshopEnvironment() {
           4. WALLS & MODULAR CLEANROOM PANELS (PBR with Aluminum Trims)
          ========================================================================= */}
       {/* North Wall: Left section (x: -10 to -1.8) */}
-      <mesh position={[-5.9, 2.25, -8]} receiveShadow>
-        <boxGeometry args={[8.2, 4.5, 0.2]} />
+      <mesh position={[-5.9, 3.5, -8]} receiveShadow>
+        <boxGeometry args={[8.2, 7.0, 0.2]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -225,8 +228,8 @@ export function WorkshopEnvironment() {
       </mesh>
 
       {/* North Wall: Right section (x: 1.8 to 10) */}
-      <mesh position={[5.9, 2.25, -8]} receiveShadow>
-        <boxGeometry args={[8.2, 4.5, 0.2]} />
+      <mesh position={[5.9, 3.5, -8]} receiveShadow>
+        <boxGeometry args={[8.2, 7.0, 0.2]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -235,9 +238,9 @@ export function WorkshopEnvironment() {
         />
       </mesh>
 
-      {/* North Wall: Door Header Lintel (y: 3.2 to 4.5) */}
-      <mesh position={[0, 3.85, -8]} receiveShadow>
-        <boxGeometry args={[3.6, 1.3, 0.2]} />
+      {/* North Wall: Door Header Lintel (y: 3.2 to 7.0) */}
+      <mesh position={[0, 5.1, -8]} receiveShadow>
+        <boxGeometry args={[3.6, 3.8, 0.2]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -379,8 +382,8 @@ export function WorkshopEnvironment() {
       </mesh>
 
       {/* South Wall (Front) */}
-      <mesh position={[0, 2.25, 8]} receiveShadow>
-        <boxGeometry args={[20, 4.5, 0.2]} />
+      <mesh position={[0, 3.5, 8]} receiveShadow>
+        <boxGeometry args={[20, 7.0, 0.2]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -390,8 +393,8 @@ export function WorkshopEnvironment() {
       </mesh>
 
       {/* West Wall (Left) */}
-      <mesh position={[-10, 2.25, 0]} receiveShadow>
-        <boxGeometry args={[0.2, 4.5, 16]} />
+      <mesh position={[-10, 3.5, 0]} receiveShadow>
+        <boxGeometry args={[0.2, 7.0, 16]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -401,8 +404,8 @@ export function WorkshopEnvironment() {
       </mesh>
 
       {/* East Wall (Right) */}
-      <mesh position={[10, 2.25, 0]} receiveShadow>
-        <boxGeometry args={[0.2, 4.5, 16]} />
+      <mesh position={[10, 3.5, 0]} receiveShadow>
+        <boxGeometry args={[0.2, 7.0, 16]} />
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.6}
@@ -413,16 +416,16 @@ export function WorkshopEnvironment() {
 
       {/* Vertical Aluminum Panel Divider Trims along North Wall (skipping open doorway x in [-1.8, 1.8]) */}
       {[-7.5, -5, -2.5, 2.5, 5, 7.5].map((x) => (
-        <mesh key={`trim-north-${x}`} position={[x, 2.25, -7.89]}>
-          <boxGeometry args={[0.04, 4.5, 0.02]} />
+        <mesh key={`trim-north-${x}`} position={[x, 3.5, -7.89]}>
+          <boxGeometry args={[0.04, 7.0, 0.02]} />
           <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.25} />
         </mesh>
       ))}
 
       {/* Vertical Aluminum Panel Divider Trims along West Wall */}
       {[-6, -3, 0, 3, 6].map((z) => (
-        <mesh key={`trim-west-${z}`} position={[-9.89, 2.25, z]}>
-          <boxGeometry args={[0.02, 4.5, 0.04]} />
+        <mesh key={`trim-west-${z}`} position={[-9.89, 3.5, z]}>
+          <boxGeometry args={[0.02, 7.0, 0.04]} />
           <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.25} />
         </mesh>
       ))}
@@ -449,14 +452,14 @@ export function WorkshopEnvironment() {
           5. CEILING & INDUSTRIAL ARCHITECTURE (I-Beams, Ducting, Cable Trays)
          ========================================================================= */}
       {/* Ceiling Surface */}
-      <mesh position={[0, 4.5, 0]}>
+      <mesh position={[0, 7.0, 0]}>
         <boxGeometry args={[20, 0.1, 16]} />
         <meshStandardMaterial color="#0b1329" roughness={0.85} />
       </mesh>
 
       {/* Heavy Steel I-Beams along X axis */}
       {[-4, 0, 4].map((z) => (
-        <group key={`truss-${z}`} position={[0, 4.25, z]}>
+        <group key={`truss-${z}`} position={[0, 6.75, z]}>
           <mesh castShadow receiveShadow>
             <boxGeometry args={[19.8, 0.25, 0.25]} />
             <meshStandardMaterial
@@ -470,7 +473,7 @@ export function WorkshopEnvironment() {
       ))}
 
       {/* Industrial Spiral Aluminum Ventilation Ducting */}
-      <group position={[0, 4.0, -2]}>
+      <group position={[0, 6.4, -2]}>
         <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
           <cylinderGeometry args={[0.3, 0.3, 19.6, 32]} />
           <meshStandardMaterial
@@ -490,7 +493,7 @@ export function WorkshopEnvironment() {
       </group>
 
       {/* Galvanized Cable Trays with Perforated Look */}
-      <mesh position={[0, 4.15, 2]}>
+      <mesh position={[0, 6.55, 2]}>
         <boxGeometry args={[19.6, 0.08, 0.45]} />
         <meshStandardMaterial
           color="#64748b"
@@ -502,7 +505,7 @@ export function WorkshopEnvironment() {
       {/* Overhead Fluorescent Fixtures with Glowing Emissive Tubes */}
       {[-6, 6].map((x) =>
         [-4, 4].map((z) => (
-          <group key={`fixture-${x}-${z}`} position={[x, 4.35, z]}>
+          <group key={`fixture-${x}-${z}`} position={[x, 6.85, z]}>
             {/* Fixture casing */}
             <mesh>
               <boxGeometry args={[1.6, 0.1, 0.5]} />
@@ -604,6 +607,18 @@ export function WorkshopEnvironment() {
           <meshStandardMaterial color="#991b1b" metalness={0.85} roughness={0.2} />
         </mesh>
       </group>
+
+      {/* =========================================================================
+          7. STAIRCASE, 2ND FLOOR MEZZANINE, 10 LAB TABLES & GIANT CERAMIC SHELF
+         ========================================================================= */}
+      {/* Ornate Wrought Iron & Solid Wood Switchback Staircase & 2nd Floor Mezzanine */}
+      <StaircaseAndMezzanine />
+
+      {/* 10 Solid Wood Physics & Chemistry Laboratory Workbenches */}
+      <LabWorkbenches />
+
+      {/* Giant Multi-Tiered Storage Shelf with 20 Round-Bottom 2.5L Stoneware Bottles */}
+      <GiantCeramicBottleShelf />
     </group>
   );
 }

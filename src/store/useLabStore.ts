@@ -160,6 +160,9 @@ export const useLabStore = create<LabState>((set, get) => ({
   setPointerLocked: (locked) => set({ isPointerLocked: locked }),
 
   enterInspection: (id) => {
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
     sound.playWhoosh();
     setTimeout(() => {
       sound.playRelayClick();

@@ -23,6 +23,7 @@ import {
   Scan,
   Scissors,
   Palette,
+  MousePointerClick,
 } from 'lucide-react';
 
 export function MachineControlOverlay() {
@@ -30,6 +31,7 @@ export function MachineControlOverlay() {
     mode,
     activeStationId,
     hoveredStationId,
+    isPointerLocked,
     isLidOpen,
     toggleLid,
     selectedMaterial,
@@ -108,7 +110,11 @@ export function MachineControlOverlay() {
           </div>
         )}
 
+        <CursorGuideBanner isPointerLocked={isPointerLocked} />
+
         <section
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
           aria-label="Bảng điều khiển phủ sơn tĩnh điện và sấy UV"
           className="glass-panel w-full max-w-4xl rounded-2xl border border-slate-700/80 shadow-2xl p-3 md:p-4 pointer-events-auto text-slate-100 flex flex-col gap-3 backdrop-blur-xl bg-slate-950/85"
         >
@@ -299,8 +305,12 @@ export function MachineControlOverlay() {
         </div>
       )}
 
+      <CursorGuideBanner isPointerLocked={isPointerLocked} />
+
       {/* 2. MAIN DOCK CONTROLLER */}
       <section
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         aria-label="Bảng điều khiển gia công vật liệu và nắp máy"
         className="glass-panel w-full max-w-4xl rounded-2xl border border-slate-700/80 shadow-2xl p-3 md:p-4 pointer-events-auto text-slate-100 flex flex-col gap-3 backdrop-blur-xl bg-slate-950/85"
       >
@@ -555,6 +565,50 @@ export function MachineControlOverlay() {
           </span>
         </div>
       </section>
+    </div>
+  );
+}
+
+// =============================================================================
+// CURSOR GUIDANCE BANNER (TỰ ĐỘNG HIỆN CON TRỎ KHI VÀO MÁY + HƯỚNG DẪN WASD)
+// =============================================================================
+function CursorGuideBanner({ isPointerLocked }: { isPointerLocked: boolean }) {
+  if (isPointerLocked) return null;
+
+  const handleLockCursor = () => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      canvas.requestPointerLock();
+    }
+  };
+
+  return (
+    <div
+      onClick={handleLockCursor}
+      className="w-full max-w-4xl mb-2 px-3.5 py-2.5 rounded-xl bg-slate-950/95 border border-cyan-500/50 backdrop-blur-xl shadow-xl shadow-cyan-950/40 flex items-center justify-between pointer-events-auto cursor-pointer hover:bg-slate-900/95 hover:border-cyan-400 transition-all group"
+      title="Nhấp vào đây hoặc nhấp chuột trái vào không gian 3D để ẩn con trỏ chuột và tiếp tục điều khiển bằng W, A, S, D"
+    >
+      <div className="flex items-center space-x-2.5 text-xs text-white">
+        <div className="w-6 h-6 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 flex-shrink-0">
+          <MousePointerClick className="w-3.5 h-3.5 animate-bounce" />
+        </div>
+        <div>
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-cyan-300">Đã tự động hiện con trỏ chuột</span>
+            <span className="hidden sm:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
+              Không cần ấn ESC
+            </span>
+          </div>
+          <p className="text-slate-300 text-[11px] mt-0.5">
+            Ấn <b className="text-amber-300 underline decoration-amber-400/60 font-semibold">chuột trái</b> vào màn hình thì sẽ mất con trỏ chuột để điều khiển bằng <b className="text-white font-mono bg-slate-800 px-1 py-0.5 rounded">W, A, S, D</b>
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-1.5 text-xs font-semibold text-cyan-300 bg-cyan-950/90 group-hover:bg-cyan-500 group-hover:text-slate-950 px-3 py-1.5 rounded-lg border border-cyan-700 transition-all flex-shrink-0">
+        <span className="hidden sm:inline">Ẩn con trỏ chuột</span>
+        <span className="font-mono text-xs font-bold">CLICK ↵</span>
+      </div>
     </div>
   );
 }

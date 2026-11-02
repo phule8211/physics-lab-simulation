@@ -7,16 +7,18 @@ import { useLabStore } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
 import { MachineId } from '../../types/lab';
+import { getGroundHeightAt } from '../../data/staircaseConfig';
 
 const EYE_HEIGHT = 1.7;
 const WALK_SPEED = 4.2;
 const SPRINT_SPEED = 7.5;
-const INTERACTION_DISTANCE = 2.8;
+const INTERACTION_DISTANCE = 3.2;
 
 export function PlayerController() {
   const { camera, gl } = useThree();
   const keys = useKeyboardControls();
   const controlsRef = useRef<any>(null);
+  const previousStationRef = useRef<MachineId | null>(null);
 
   const {
     mode,
@@ -168,8 +170,16 @@ export function PlayerController() {
     camera.position.set(position.current.x, position.current.y, position.current.z);
   }, [camera]);
 
-  // Handle pointer lock state changes
+  // Handle pointer lock state changes via both Drei controls and native browser event
   useEffect(() => {
+    const handlePointerLockChange = () => {
+      const isLocked = document.pointerLockElement !== null;
+      setPointerLocked(isLocked);
+    };
+
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
+    handlePointerLockChange();
+
     const onLock = () => setPointerLocked(true);
     const onUnlock = () => setPointerLocked(false);
 
@@ -177,176 +187,204 @@ export function PlayerController() {
     if (controls) {
       controls.addEventListener('lock', onLock);
       controls.addEventListener('unlock', onUnlock);
+      }
+
       return () => {
-        controls.removeEventListener('lock', onLock);
-        controls.removeEventListener('unlock', onUnlock);
-      };
+        document.removeEventListener('pointerlockchange', handlePointerLockChange);
+        if (controls) {
+          controls.removeEventListener('lock', onLock);
+          controls.removeEventListener('unlock', onUnlock);
     }
-  }, [setPointerLocked]);
+  };
+}, [setPointerLocked]);
 
-  useFrame((_, delta) => {
-    const dt = Math.min(delta, 0.1);
+useFrame((_, delta) => {
+  const dt = Math.min(delta, 0.1);
 
-    // MODE 1: INSPECTION TRANSITION (LERP TO / FROM STATION)
-    if (mode === 'TRANSITIONING') {
-      transitionProgress.current += dt * 1.6; // ~0.65s transition
-      const t = Math.min(transitionProgress.current, 1);
-      // Smooth ease-in-out cubic
-      const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  // MODE 1: INSPECTION TRANSITION (LERP TO / FROM STATION)
+  if (mode === 'TRANSITIONING') {
+    transitionProgress.current += dt * 1.6; // ~0.65s transition
+    const t = Math.min(transitionProgress.current, 1);
+    // Smooth ease-in-out cubic
+    const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-      if (activeStationId) {
-        // Moving TO the station
-        const station = STATIONS[activeStationId];
-        if (transitionProgress.current <= dt * 1.6) {
-          startCameraPos.current.copy(camera.position);
-          targetCameraPos.current.set(...station.inspectCameraPosition);
-          targetLookAt.current.set(...station.inspectLookAt);
+    if (activeStationId) {
+      // Moving TO the station
+      const station = STATIONS[activeStationId];
+      if (transitionProgress.current <= dt * 1.6) {
+        startCameraPos.current.copy(camera.position);
+        targetCameraPos.current.set(...station.inspectCameraPosition);
+        targetLookAt.current.set(...station.inspectLookAt);
 
-          // Reset orbit angles to station default
-          const dx = station.inspectCameraPosition[0] - station.inspectLookAt[0];
-          const dz = station.inspectCameraPosition[2] - station.inspectLookAt[2];
-          orbitYaw.current = Math.atan2(dx, dz);
-          orbitRadius.current = Math.sqrt(dx * dx + dz * dz);
-          orbitPitch.current = Math.asin(
-            (station.inspectCameraPosition[1] - station.inspectLookAt[1]) /
-              Math.max(0.1, orbitRadius.current)
-          );
-        }
-
-        camera.position.lerpVectors(startCameraPos.current, targetCameraPos.current, ease);
-        camera.lookAt(targetLookAt.current);
-
-        if (t >= 1) {
-          transitionProgress.current = 0;
-          setMode('INSPECTING');
-        }
-      } else {
-        // Returning BACK to player's walking position
-        if (transitionProgress.current <= dt * 1.6) {
-          startCameraPos.current.copy(camera.position);
-          targetCameraPos.current.set(savedPlayerPosition[0], EYE_HEIGHT, savedPlayerPosition[2]);
-        }
-
-        camera.position.lerpVectors(startCameraPos.current, targetCameraPos.current, ease);
-
-        if (t >= 1) {
-          transitionProgress.current = 0;
-          position.current.set(savedPlayerPosition[0], EYE_HEIGHT, savedPlayerPosition[2]);
-          camera.position.copy(position.current);
-          setMode('WALKING');
-        }
+        // Reset orbit angles to station default
+        const dx = station.inspectCameraPosition[0] - station.inspectLookAt[0];
+        const dz = station.inspectCameraPosition[2] - station.inspectLookAt[2];
+        orbitYaw.current = Math.atan2(dx, dz);
+        orbitRadius.current = Math.sqrt(dx * dx + dz * dz);
+        orbitPitch.current = Math.asin(
+          (station.inspectCameraPosition[1] - station.inspectLookAt[1]) /
+          Math.max(0.1, orbitRadius.current)
+        );
       }
-      return;
+
+      camera.position.lerpVectors(startCameraPos.current, targetCameraPos.current, ease);
+      camera.lookAt(targetLookAt.current);
+
+      if (t >= 1) {
+        transitionProgress.current = 0;
+        setMode('INSPECTING');
+      }
+    } else {
+      // Returning BACK to player's walking position
+      if (transitionProgress.current <= dt * 1.6) {
+        startCameraPos.current.copy(camera.position);
+        targetCameraPos.current.set(savedPlayerPosition[0], EYE_HEIGHT, savedPlayerPosition[2]);
+      }
+
+      camera.position.lerpVectors(startCameraPos.current, targetCameraPos.current, ease);
+
+      if (t >= 1) {
+        transitionProgress.current = 0;
+        position.current.set(savedPlayerPosition[0], EYE_HEIGHT, savedPlayerPosition[2]);
+        camera.position.copy(position.current);
+        setMode('WALKING');
+      }
+    }
+    return;
+  }
+
+  // MODE 2: INSPECTING MODE (Supports interactive mouse drag orbit around machine)
+  if (mode === 'INSPECTING') {
+    if (activeStationId) {
+      const station = STATIONS[activeStationId];
+      const lookAt = station.inspectLookAt;
+      const r = orbitRadius.current;
+
+      // Spherical to Cartesian relative to machine center
+      const x = lookAt[0] + r * Math.cos(orbitPitch.current) * Math.sin(orbitYaw.current);
+      const y = Math.max(0.2, lookAt[1] + r * Math.sin(orbitPitch.current));
+      const z = lookAt[2] + r * Math.cos(orbitPitch.current) * Math.cos(orbitYaw.current);
+
+      camera.position.lerp(new THREE.Vector3(x, y, z), 0.15);
+      camera.lookAt(lookAt[0], lookAt[1], lookAt[2]);
+    }
+    return;
+  }
+
+  // MODE 3: NORMAL FIRST-PERSON WALKING
+  if (mode === 'WALKING') {
+    const moveDirection = new THREE.Vector3();
+    const currentSpeed = keys.current.sprint ? SPRINT_SPEED : WALK_SPEED;
+
+    // Extract forward and right vectors from camera (ignoring vertical pitch)
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0;
+    forward.normalize();
+
+    const right = new THREE.Vector3();
+    right.crossVectors(camera.up, forward).normalize();
+    right.negate();
+
+    if (keys.current.forward) moveDirection.add(forward);
+    if (keys.current.backward) moveDirection.sub(forward);
+    if (keys.current.right) moveDirection.add(right);
+    if (keys.current.left) moveDirection.sub(right);
+
+    if (moveDirection.lengthSq() > 0) {
+      moveDirection.normalize();
+      velocity.current.x = moveDirection.x * currentSpeed;
+      velocity.current.z = moveDirection.z * currentSpeed;
+    } else {
+      velocity.current.x *= Math.max(0, 1 - dt * 12);
+      velocity.current.z *= Math.max(0, 1 - dt * 12);
     }
 
-    // MODE 2: INSPECTING MODE (Supports interactive mouse drag orbit around machine)
-    if (mode === 'INSPECTING') {
-      if (activeStationId) {
-        const station = STATIONS[activeStationId];
-        const lookAt = station.inspectLookAt;
-        const r = orbitRadius.current;
+    // Resolve AABB collisions with wall sliding
+    const intendedPos: [number, number, number] = [
+      position.current.x + velocity.current.x * dt,
+      position.current.y,
+      position.current.z + velocity.current.z * dt,
+    ];
 
-        // Spherical to Cartesian relative to machine center
-        const x = lookAt[0] + r * Math.cos(orbitPitch.current) * Math.sin(orbitYaw.current);
-        const y = Math.max(0.2, lookAt[1] + r * Math.sin(orbitPitch.current));
-        const z = lookAt[2] + r * Math.cos(orbitPitch.current) * Math.cos(orbitYaw.current);
+    const resolvedPos = resolveMovementWithCollisions(
+      [position.current.x, position.current.y, position.current.z],
+      intendedPos,
+      0.45
+    );
 
-        camera.position.lerp(new THREE.Vector3(x, y, z), 0.15);
-        camera.lookAt(lookAt[0], lookAt[1], lookAt[2]);
-      }
-      return;
+    position.current.set(resolvedPos[0], resolvedPos[1], resolvedPos[2]);
+
+    // Calculate ground height & stair elevation under player
+    const targetGround = getGroundHeightAt(position.current.x, position.current.z);
+    const targetEyeY = targetGround + EYE_HEIGHT;
+
+    // Jump & gravity physics
+    if (keys.current.jump && !isJumping.current) {
+      isJumping.current = true;
+      verticalVelocity.current = 4.2;
     }
 
-    // MODE 3: NORMAL FIRST-PERSON WALKING
-    if (mode === 'WALKING') {
-      const moveDirection = new THREE.Vector3();
-      const currentSpeed = keys.current.sprint ? SPRINT_SPEED : WALK_SPEED;
-
-      // Extract forward and right vectors from camera (ignoring vertical pitch)
-      const forward = new THREE.Vector3();
-      camera.getWorldDirection(forward);
-      forward.y = 0;
-      forward.normalize();
-
-      const right = new THREE.Vector3();
-      right.crossVectors(camera.up, forward).normalize();
-      right.negate();
-
-      if (keys.current.forward) moveDirection.add(forward);
-      if (keys.current.backward) moveDirection.sub(forward);
-      if (keys.current.right) moveDirection.add(right);
-      if (keys.current.left) moveDirection.sub(right);
-
-      if (moveDirection.lengthSq() > 0) {
-        moveDirection.normalize();
-        velocity.current.x = moveDirection.x * currentSpeed;
-        velocity.current.z = moveDirection.z * currentSpeed;
-      } else {
-        velocity.current.x *= Math.max(0, 1 - dt * 12);
-        velocity.current.z *= Math.max(0, 1 - dt * 12);
+    if (isJumping.current) {
+      verticalVelocity.current -= 14 * dt;
+      position.current.y += verticalVelocity.current * dt;
+      if (position.current.y <= targetEyeY) {
+        position.current.y = targetEyeY;
+        isJumping.current = false;
+        verticalVelocity.current = 0;
       }
-
-      // Jump & gravity
-      if (keys.current.jump && !isJumping.current) {
-        isJumping.current = true;
-        verticalVelocity.current = 4.2;
-      }
-
-      if (isJumping.current) {
-        verticalVelocity.current -= 14 * dt;
-        position.current.y += verticalVelocity.current * dt;
-        if (position.current.y <= EYE_HEIGHT) {
-          position.current.y = EYE_HEIGHT;
-          isJumping.current = false;
-          verticalVelocity.current = 0;
-        }
-      } else {
-        position.current.y = EYE_HEIGHT;
-      }
-
-      // Resolve AABB collisions with wall sliding
-      const intendedPos: [number, number, number] = [
-        position.current.x + velocity.current.x * dt,
+    } else {
+      // Smoothly step up or down stairs and walk on 2nd floor mezzanine
+      position.current.y = THREE.MathUtils.lerp(
         position.current.y,
-        position.current.z + velocity.current.z * dt,
-      ];
-
-      const resolvedPos = resolveMovementWithCollisions(
-        [position.current.x, position.current.y, position.current.z],
-        intendedPos,
-        0.45
+        targetEyeY,
+        Math.min(1, dt * 16)
       );
+    }
 
-      position.current.set(resolvedPos[0], resolvedPos[1], resolvedPos[2]);
-      camera.position.copy(position.current);
+    camera.position.copy(position.current);
 
-      // Proximity Raycasting to detect closest interactive workstation
-      let closestStation: MachineId | null = null;
-      let minDistance = INTERACTION_DISTANCE;
+    // Proximity Raycasting to detect closest interactive workstation
+    let closestStation: MachineId | null = null;
+    let minDistance = INTERACTION_DISTANCE;
 
-      for (const st of Object.values(STATIONS)) {
-        const dx = position.current.x - st.position[0];
-        const dz = position.current.z - st.position[2];
-        const dist = Math.sqrt(dx * dx + dz * dz);
+    for (const st of Object.values(STATIONS)) {
+      const dx = position.current.x - st.position[0];
+      const dz = position.current.z - st.position[2];
+      const dy = Math.abs(position.current.y - (st.position[1] + EYE_HEIGHT));
+      const dist = Math.sqrt(dx * dx + dz * dz);
 
-        if (dist < minDistance) {
-          const dirToStation = new THREE.Vector3(
-            st.position[0] - position.current.x,
-            0,
-            st.position[2] - position.current.z
-          ).normalize();
+      // Only interact with ground floor stations when player is on ground floor (dy < 1.5)
+      if (dist < minDistance && dy < 1.5) {
+        const dirToStation = new THREE.Vector3(
+          st.position[0] - position.current.x,
+          0,
+          st.position[2] - position.current.z
+        ).normalize();
 
-          const viewDir = new THREE.Vector3();
-          camera.getWorldDirection(viewDir);
-          viewDir.y = 0;
-          viewDir.normalize();
+        const viewDir = new THREE.Vector3();
+        camera.getWorldDirection(viewDir);
+        viewDir.y = 0;
+        viewDir.normalize();
 
-          const dot = viewDir.dot(dirToStation);
-          if (dot > 0.45) {
+        const dot = viewDir.dot(dirToStation);
+          // If close (< 2.4m), allow wider view angle (dot > 0.1); if approaching (2.4m - 3.2m), require facing it (dot > 0.35)
+          const isFacing = dist < 2.4 ? dot > 0.1 : dot > 0.35;
+          if (isFacing) {
             minDistance = dist;
             closestStation = st.id;
           }
         }
+      }
+
+      // Auto-unlock cursor when entering a machine station so user doesn't need to press ESC
+      if (closestStation && closestStation !== previousStationRef.current) {
+        previousStationRef.current = closestStation;
+        if (document.pointerLockElement) {
+          document.exitPointerLock();
+        }
+      } else if (!closestStation) {
+        previousStationRef.current = null;
       }
 
       setHoveredStation(
@@ -356,11 +394,11 @@ export function PlayerController() {
     }
   });
 
-  return (
-    <>
-      {mode === 'WALKING' && (
-        <PointerLockControls ref={controlsRef} selector="#root" />
-      )}
-    </>
-  );
+return (
+  <>
+    {mode === 'WALKING' && (
+        <PointerLockControls ref={controlsRef} />
+    )}
+  </>
+);
 }

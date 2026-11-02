@@ -85,6 +85,7 @@ export function KnowledgePanel() {
       aria-label={`Bảng tri thức chi tiết: ${data.title}`}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
       className="pointer-events-auto fixed inset-y-0 right-0 w-full md:w-[540px] lg:w-[620px] z-50 flex flex-col bg-slate-900/95 backdrop-blur-2xl border-l border-slate-700/80 shadow-2xl text-slate-100 animate-in slide-in-from-right duration-300 select-text"
     >
