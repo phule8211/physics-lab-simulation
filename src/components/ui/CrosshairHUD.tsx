@@ -1,7 +1,18 @@
 import React from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
-import { Volume2, VolumeX, Play, Pause, Compass, MousePointerClick, Move3d, PackageCheck } from 'lucide-react';
+import {
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
+  Compass,
+  MousePointerClick,
+  Move3d,
+  PackageCheck,
+  HelpCircle,
+  Activity,
+} from 'lucide-react';
 
 export function CrosshairHUD() {
   const {
@@ -18,6 +29,9 @@ export function CrosshairHUD() {
     exitInspection,
     cutProgress,
     openSpecimenModal,
+    openHelpModal,
+    toggleStats,
+    isStatsVisible,
   } = useLabStore();
 
   const hoveredStation = hoveredStationId ? STATIONS[hoveredStationId] : null;
@@ -38,18 +52,43 @@ export function CrosshairHUD() {
               <h1 className="text-sm font-bold tracking-wide text-lab-text">
                 VIRTUAL LASER LAB 3D
               </h1>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-lab-cyan/15 text-lab-cyan border border-lab-cyan/30">
-                Phase 3 Live
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
+                Phase 4 Complete
               </span>
             </div>
             <p className="text-xs text-lab-muted">
-              Xưởng mô phỏng nguyên lý máy laser & cảm biến
+              Xưởng mô phỏng nguyên lý máy laser & cảm biến quang học
             </p>
           </div>
         </div>
 
-        {/* Quick Toolbar (Mute sound, Toggle simulation animation) */}
+        {/* Quick Toolbar (Mute sound, Diagnostics, Help, Simulation Toggle) */}
         <div className="flex items-center space-x-2 pointer-events-auto">
+          {/* Performance Stats HUD Toggle */}
+          <button
+            onClick={toggleStats}
+            className={`glass-pill px-2.5 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 border transition-all duration-200 ${
+              isStatsVisible
+                ? 'text-emerald-400 border-emerald-500/50 bg-emerald-500/10'
+                : 'text-slate-400 border-slate-700/80 hover:text-white hover:bg-slate-800/60'
+            }`}
+            aria-label="Bật tắt bảng theo dõi hiệu năng WebGL 60 FPS (Phím P)"
+            title="Chỉ số hiệu năng WebGL / FPS (P)"
+          >
+            <Activity className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline font-mono text-[11px]">FPS</span>
+          </button>
+
+          {/* Help Shortcuts Modal */}
+          <button
+            onClick={openHelpModal}
+            className="glass-pill p-2 rounded-lg border text-slate-400 border-slate-700/80 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+            aria-label="Mở bảng hướng dẫn thao tác & phím tắt (Phím H)"
+            title="Hướng dẫn & Phím tắt (H)"
+          >
+            <HelpCircle className="w-4 h-4 text-lab-cyan" />
+          </button>
+
           <button
             onClick={toggleMachineRunning}
             className={`glass-pill px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-200 ${

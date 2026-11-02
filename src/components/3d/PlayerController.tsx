@@ -84,9 +84,13 @@ export function PlayerController() {
       } else if (e.code === 'Digit4') {
         if (document.pointerLockElement) document.exitPointerLock();
         enterInspection('SENSOR_STATION');
-      } else if (e.code === 'Digit5' || e.code === 'KeyP') {
+      } else if (e.code === 'Digit5') {
         if (document.pointerLockElement) document.exitPointerLock();
         enterInspection('COATING_STATION');
+      } else if (e.code === 'KeyP') {
+        useLabStore.getState().toggleStats();
+      } else if (e.code === 'KeyH') {
+        useLabStore.getState().toggleHelpModal();
       } else if (e.code === 'KeyO') {
         useLabStore.getState().toggleLid();
       } else if (e.code === 'KeyC') {

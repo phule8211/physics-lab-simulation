@@ -47,7 +47,7 @@ export function WorkshopEnvironment() {
         color="#94a3b8"
       />
 
-      {/* D. 4 Overhead Workstation Spotlights with Quadratic Decay & Color Character */}
+      {/* D. Overhead Workstation Spotlights with Quadratic Decay & Color Character (Optimized: No heavy shadow passes) */}
       {/* Station 1 (CO2 Laser - 10.6um): Cool Cyan White */}
       <pointLight
         position={[-6, 4.0, -4]}
@@ -55,8 +55,6 @@ export function WorkshopEnvironment() {
         distance={10}
         decay={2}
         color="#38bdf8"
-        castShadow
-        shadow-bias={-0.0002}
       />
       {/* Station 2 (UV Laser - 355nm): Violet/Cold Cleanroom White */}
       <pointLight
@@ -65,8 +63,6 @@ export function WorkshopEnvironment() {
         distance={10}
         decay={2}
         color="#c084fc"
-        castShadow
-        shadow-bias={-0.0002}
       />
       {/* Station 3 (Fiber Laser - 1064nm): Warm Amber White */}
       <pointLight
@@ -75,8 +71,6 @@ export function WorkshopEnvironment() {
         distance={10}
         decay={2}
         color="#fbbf24"
-        castShadow
-        shadow-bias={-0.0002}
       />
       {/* Station 4 (Safety Sensor Station): Emerald Cleanroom Light */}
       <pointLight
@@ -85,8 +79,6 @@ export function WorkshopEnvironment() {
         distance={10}
         decay={2}
         color="#34d399"
-        castShadow
-        shadow-bias={-0.0002}
       />
       {/* Station 5 (Spray Coating & UV Finishing Room): Clean White / Cool Cyan */}
       <pointLight
@@ -95,8 +87,6 @@ export function WorkshopEnvironment() {
         distance={12}
         decay={2}
         color="#f8fafc"
-        castShadow
-        shadow-bias={-0.0002}
       />
 
       {/* =========================================================================
