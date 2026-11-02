@@ -3,7 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useLabStore } from '../../store/useLabStore';
-import { MATERIALS_CATALOG } from '../../data/materialsConfig';
+import { MATERIALS_CATALOG, MaterialType } from '../../data/materialsConfig';
 import { STATIONS } from '../../data/labConfig';
 import {
   X,
@@ -230,6 +230,7 @@ function buildCutoutMeshes(
  * Supports true 3D shape cutout, hollow hole in base sheet, and smooth floating lift animation
  */
 function Specimen3DObject() {
+  const lastProcessedJob = useLabStore((state) => state.lastProcessedJob);
   const selectedMaterial = useLabStore((state) => state.selectedMaterial);
   const currentToolpaths = useLabStore((state) => state.currentToolpaths);
   const currentDesignName = useLabStore((state) => state.currentDesignName);
@@ -237,12 +238,16 @@ function Specimen3DObject() {
   const processMode = useLabStore((state) => state.processMode);
   const isPartDetached = useLabStore((state) => state.isPartDetached);
 
-  const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
-  const isWafer = selectedMaterial === 'SILICON';
+  const effectiveMaterial = (lastProcessedJob ? lastProcessedJob.material : selectedMaterial) as MaterialType;
+  const effectiveProcessMode = lastProcessedJob ? lastProcessedJob.processMode : processMode;
+  const effectiveDesignName = lastProcessedJob ? lastProcessedJob.designName : currentDesignName;
+
+  const matConfig = MATERIALS_CATALOG[effectiveMaterial] || MATERIALS_CATALOG.WOOD;
+  const isWafer = effectiveMaterial === 'SILICON';
 
   const scale = isWafer ? 0.9 : 1.0;
   const scaleY = isWafer ? 1 : 0.65;
-  const isCut = processMode === 'CUT';
+  const isCut = effectiveProcessMode === 'CUT';
 
   const bbox = useMemo(() => computeBoundingBox(currentToolpaths), [currentToolpaths]);
 
@@ -513,6 +518,10 @@ export function SpecimenInspectionModal() {
     setProcessMode,
     isPartDetached,
     togglePartDetached,
+    lastProcessedJob,
+    laserPowerWatts,
+    scanSpeedMmS,
+    pulseFrequencyKhz,
   } = useLabStore();
 
   // Release pointer lock whenever modal opens
@@ -529,7 +538,7 @@ export function SpecimenInspectionModal() {
       if (e.key === 'Escape') {
         closeSpecimenModal();
       } else if (e.code === 'Space' || e.key === 'x' || e.key === 'X') {
-        if (processMode === 'CUT') {
+        if (effectiveProcessMode === 'CUT') {
           e.preventDefault();
           togglePartDetached();
         }
@@ -541,39 +550,57 @@ export function SpecimenInspectionModal() {
 
   if (!isSpecimenModalOpen) return null;
 
-  const currentStation = activeStationId ? STATIONS[activeStationId] : STATIONS.CO2_LASER;
-  const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
-  const interaction = matConfig.interactions[currentStation.id];
+  // Snapshot-accurate job retrieval (Never falls back incorrectly to CO2 or wrong material)
+  const job = lastProcessedJob;
+  const currentStation = job
+    ? (STATIONS[job.machineId] || STATIONS.CO2_LASER)
+    : (activeStationId ? STATIONS[activeStationId] : STATIONS.CO2_LASER);
+  const effectiveMaterial = (job ? job.material : selectedMaterial) as MaterialType;
+  const matConfig = MATERIALS_CATALOG[effectiveMaterial] || MATERIALS_CATALOG.WOOD;
+  const effectiveProcessMode = job ? job.processMode : processMode;
+  const effectiveDesignName = job ? job.designName : currentDesignName;
+
+  const power = job ? job.powerWatts : laserPowerWatts;
+  const speed = job ? job.speedMmS : scanSpeedMmS;
+  const frequency = job ? job.frequencyKhz : pulseFrequencyKhz;
+  const energyDensity = job ? job.energyDensityJPerMm : Number((power / Math.max(1, speed)).toFixed(3));
 
   // Laser Quality Metrics & HAZ Descriptions
   const hazEvaluation =
-    selectedMaterial === 'WOOD'
+    effectiveMaterial === 'WOOD'
       ? {
           title: 'Mép cacbon hóa tự bảo vệ (Charring Edge)',
           desc: 'Rãnh cắt bốc hơi nhiệt tạo lớp viền màu nâu cánh gián mịn, giúp ngăn ngừa ẩm mốc và tạo độ tương phản thẩm mỹ cao.',
           kerfWidth: '0.18 mm',
           quality: 'Đạt chuẩn Decor & Cắt mô hình',
         }
-      : selectedMaterial === 'ACRYLIC'
+      : effectiveMaterial === 'ACRYLIC'
       ? {
           title: 'Mép cắt tự đánh bóng quang học (Flame-Polished)',
           desc: 'Laser CO2 làm chảy dẻo và hóa hơi acrylic tức thì, giúp cạnh cắt trong suốt như pha lê mà không cần đánh bóng cơ học.',
           kerfWidth: '0.14 mm',
           quality: 'Chuẩn quang học (Optics Grade)',
         }
-      : selectedMaterial === 'STEEL'
+      : effectiveMaterial === 'STEEL'
       ? {
           title: 'Ủ nhiệt oxit bề mặt (Annealing Track)',
           desc: 'Laser Fiber tạo nhiệt độ ủ cao sinh lớp màng oxit kim loại chống trầy xước và chống ăn mòn mà không làm hao mòn phôi.',
           kerfWidth: '0.04 mm',
           quality: 'Chuẩn mã vạch công nghiệp (ISO 29158)',
         }
-      : selectedMaterial === 'SILICON'
+      : effectiveMaterial === 'SILICON'
       ? {
           title: 'Bóc tách quang hóa lạnh (Zero-HAZ)',
           desc: 'Photon tử ngoại 355nm bẻ gãy trực tiếp liên kết hóa học mà không sinh nhiệt, bề mặt wafer không bị nứt vỡ hay cong vênh.',
           kerfWidth: '0.015 mm',
           quality: 'Chuẩn bán dẫn phòng sạch (Class 10)',
+        }
+      : effectiveMaterial === 'ALUMINUM'
+      ? {
+          title: 'Bóc lớp Anot hóa bề mặt (Anodized Layer Ablation)',
+          desc: 'Laser UV/Fiber bóc tách lớp oxit nhôm tạo hoa văn trắng bạc sắc nét với độ tương phản vượt trội trên nền nhôm đen.',
+          kerfWidth: '0.03 mm',
+          quality: 'Chuẩn linh kiện hàng không & điện tử',
         }
       : {
           title: 'Rãnh cắt vi nhiệt độ cao',
@@ -581,6 +608,9 @@ export function SpecimenInspectionModal() {
           kerfWidth: '0.10 mm',
           quality: 'Đạt chuẩn kiểm định xuất xưởng',
         };
+
+  const effectiveKerf = job ? `${job.kerfWidthMm} mm` : hazEvaluation.kerfWidth;
+  const effectiveHazTitle = job ? job.hazQuality : hazEvaluation.title;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-slate-950/85 backdrop-blur-md select-none animate-in fade-in duration-200">
@@ -701,12 +731,12 @@ export function SpecimenInspectionModal() {
               <div>
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono flex items-center space-x-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-lab-cyan" />
-                  <span>Báo Cáo Kỹ Thuật Gia Công</span>
+                  <span>Báo Cáo Kỹ Thuật Gia Công Thực Nghiệm</span>
                 </h4>
                 <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Tên chi tiết:</span>
-                    <span className="font-bold text-white font-mono">{currentDesignName}</span>
+                    <span className="font-bold text-white font-mono">{effectiveDesignName}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Vật liệu phôi:</span>
@@ -714,13 +744,31 @@ export function SpecimenInspectionModal() {
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Thiết bị laser:</span>
-                    <span className="font-mono text-amber-400">{currentStation.shortName} ({currentStation.wavelength})</span>
+                    <span className="font-mono text-amber-400 font-bold">{currentStation.name} ({currentStation.wavelength})</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Chế độ gia công:</span>
-                    <span className={`font-bold font-mono ${processMode === 'CUT' ? 'text-amber-400' : 'text-cyan-400'}`}>
-                      {processMode === 'CUT' ? 'CẮT XUYÊN PHÔI (3.0mm)' : 'KHẮC BỀ MẶT (0.1mm)'}
+                    <span className={`font-bold font-mono ${effectiveProcessMode === 'CUT' ? 'text-amber-400' : 'text-cyan-400'}`}>
+                      {effectiveProcessMode === 'CUT' ? 'CẮT XUYÊN PHÔI (3.0mm)' : 'KHẮC BỀ MẶT (0.1mm)'}
                     </span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-800/80 grid grid-cols-3 gap-1.5 text-center font-mono text-[10px]">
+                    <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                      <span className="text-slate-400 block">Công suất (P)</span>
+                      <span className="font-bold text-amber-300 text-xs">{power} W</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                      <span className="text-slate-400 block">Tốc độ (v)</span>
+                      <span className="font-bold text-cyan-300 text-xs">{speed} mm/s</span>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                      <span className="text-slate-400 block">Tần số (f)</span>
+                      <span className="font-bold text-emerald-300 text-xs">{frequency} kHz</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] pt-1 font-mono">
+                    <span className="text-slate-400">Mật độ năng lượng đường (E_line):</span>
+                    <span className="font-bold text-amber-400">{energyDensity} J/mm</span>
                   </div>
                 </div>
               </div>
@@ -729,7 +777,7 @@ export function SpecimenInspectionModal() {
               <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-400">Trạng thái tách rời:</span>
-                  {processMode === 'CUT' ? (
+                  {effectiveProcessMode === 'CUT' ? (
                     <span className={`font-bold text-xs ${isPartDetached ? 'text-emerald-400' : 'text-amber-300'}`}>
                       {isPartDetached ? '✓ ĐÃ NHẤC RỜI KHỎI TẤM' : 'ĐANG LẮP KHÍT TRONG PHÔI'}
                     </span>
@@ -742,7 +790,7 @@ export function SpecimenInspectionModal() {
                   <button
                     onClick={() => setProcessMode('CUT')}
                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 border transition-all ${
-                      processMode === 'CUT'
+                      effectiveProcessMode === 'CUT'
                         ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                     }`}
@@ -754,7 +802,7 @@ export function SpecimenInspectionModal() {
                   <button
                     onClick={() => setProcessMode('ENGRAVE')}
                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 border transition-all ${
-                      processMode === 'ENGRAVE'
+                      effectiveProcessMode === 'ENGRAVE'
                         ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-300'
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                     }`}
@@ -774,10 +822,10 @@ export function SpecimenInspectionModal() {
                 <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Độ rộng rãnh cắt (Kerf Width):</span>
-                    <span className="font-mono font-bold text-emerald-400">{hazEvaluation.kerfWidth}</span>
+                    <span className="font-mono font-bold text-emerald-400">{effectiveKerf}</span>
                   </div>
                   <div className="text-xs">
-                    <span className="font-semibold text-white block mb-0.5">{hazEvaluation.title}</span>
+                    <span className="font-semibold text-white block mb-0.5">{effectiveHazTitle}</span>
                     <p className="text-[11px] text-slate-300 leading-relaxed">{hazEvaluation.desc}</p>
                   </div>
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">

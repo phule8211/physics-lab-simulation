@@ -22,6 +22,8 @@ import {
   DoorClosed,
   Square,
   Sparkles,
+  Scan,
+  Eye,
 } from 'lucide-react';
 
 function formatFormula(raw: string) {
@@ -59,6 +61,10 @@ export function KnowledgePanel() {
     cutProgress,
     startCuttingJob,
     stopCuttingJob,
+    isXRayMode,
+    toggleXRayMode,
+    hoveredComponentId,
+    setHoveredComponentId,
   } = useLabStore();
 
   // Ensure pointer lock is released when entering station inspection so user has cursor to scroll & click tabs
@@ -302,10 +308,43 @@ export function KnowledgePanel() {
         )}
 
         {/* =====================================================================
-            TAB 2: CẤU TẠO CHI TIẾT BỘ PHẬN (COMPONENTS)
+            TAB 2: CẤU TẠO CHI TIẾT BỘ PHẬN (COMPONENTS) - X-RAY ANATOMY MODE
            ===================================================================== */}
         {activeTab === 'COMPONENTS' && (
-          <div className="space-y-6">
+          <div className="space-y-5">
+            {/* X-Ray Anatomy Mode Interactive Banner */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/60 to-slate-900 border border-cyan-500/40 flex items-center justify-between shadow-xl">
+              <div className="flex items-center space-x-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${
+                  isXRayMode ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 animate-pulse' : 'bg-slate-800 border-slate-700 text-slate-400'
+                }`}>
+                  <Scan className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white flex items-center space-x-1.5">
+                    <span>Chế Độ Giải Phẫu Máy (X-Ray View)</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">3D</span>
+                  </span>
+                  <span className="text-[11px] text-cyan-200 block">
+                    {isXRayMode ? 'Vỏ máy đang trong suốt • Rê chuột vào linh kiện bên dưới để soi vị trí 3D' : 'Vỏ máy đóng kín • Bấm nút bên cạnh để xem quang học bên trong'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={toggleXRayMode}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all border active:scale-95 flex items-center space-x-1.5 ${
+                  isXRayMode
+                    ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border-cyan-300 shadow-md shadow-cyan-950/50'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                }`}
+                title="Bật / tắt chế độ nhìn xuyên thấu buồng máy 3D"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>{isXRayMode ? 'BẬT X-RAY' : 'TẮT'}</span>
+              </button>
+            </div>
+
             {data.components.map((group, groupIndex) => (
               <section key={groupIndex} className="space-y-3">
                 <h3 className="text-sm font-bold text-white flex items-center space-x-2">
@@ -314,32 +353,56 @@ export function KnowledgePanel() {
                 </h3>
 
                 <div className="space-y-2.5">
-                  {group.parts.map((part, partIndex) => (
-                    <div
-                      key={partIndex}
-                      className="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-slate-700 transition-all duration-200 space-y-1.5"
-                    >
-                      <div className="flex flex-wrap items-baseline justify-between gap-1">
-                        <span className="font-bold text-white text-xs sm:text-sm">
-                          {part.name}
-                        </span>
-                        <span className="text-[11px] font-mono text-slate-400">
-                          {part.englishName}
-                        </span>
-                      </div>
+                  {group.parts.map((part, partIndex) => {
+                    const isHovered = hoveredComponentId === part.name || hoveredComponentId === part.englishName;
 
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        {part.description}
-                      </p>
-
-                      {part.materialOrSpec && (
-                        <div className="pt-1.5 flex items-center space-x-1.5 text-[11px] text-lab-cyan font-mono">
-                          <span className="text-slate-400 font-sans">Quy cách:</span>
-                          <span>{part.materialOrSpec}</span>
+                    return (
+                      <div
+                        key={partIndex}
+                        onMouseEnter={() => setHoveredComponentId(part.name)}
+                        onMouseLeave={() => setHoveredComponentId(null)}
+                        className={`p-3.5 rounded-xl border transition-all duration-200 space-y-1.5 cursor-pointer ${
+                          isHovered
+                            ? 'bg-cyan-950/50 border-cyan-400 shadow-lg shadow-cyan-950/50 ring-1 ring-cyan-400/60 scale-[1.01]'
+                            : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/50'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-baseline justify-between gap-1">
+                          <span className={`font-bold text-xs sm:text-sm ${isHovered ? 'text-cyan-300' : 'text-white'}`}>
+                            {part.name}
+                          </span>
+                          <span className="text-[11px] font-mono text-slate-400">
+                            {part.englishName}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {part.description}
+                        </p>
+
+                        <div className="pt-1.5 flex items-center justify-between text-[11px] font-mono border-t border-slate-800/60">
+                          {part.materialOrSpec ? (
+                            <div className="text-lab-cyan">
+                              <span className="text-slate-400 font-sans">Quy cách: </span>
+                              <span>{part.materialOrSpec}</span>
+                            </div>
+                          ) : (
+                            <span />
+                          )}
+
+                          {isHovered ? (
+                            <span className="text-cyan-300 font-bold flex items-center space-x-1 animate-pulse">
+                              <span>⚡ ĐANG PHÁT SÁNG TRONG MÁY 3D</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 text-[10px] flex items-center space-x-1">
+                              <span>Rê chuột để soi 3D</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             ))}

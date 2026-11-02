@@ -108,8 +108,14 @@ class SoundSystem {
     osc.stop(now + 0.52);
   }
 
+  private activeContinuousNodes: {
+    sources: (AudioNode | AudioBufferSourceNode | OscillatorNode)[];
+    gains: GainNode[];
+  }[] = [];
+
   /**
-   * Ambient laser hum while inspecting a machine
+   * Ambient laser operating acoustic simulation (Coaxial gas assist + Galvo scan flutter + Chiller hum)
+   * Completely avoids harsh pure sine waves and prevents stuck oscillator loops.
    */
   public startLaserHum(machineId: MachineId) {
     if (!useLabStore.getState().soundEnabled) return;
@@ -118,36 +124,80 @@ class SoundSystem {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
-    this.laserHumOsc = this.ctx.createOscillator();
-    this.laserHumGain = this.ctx.createGain();
+    const currentSources: (AudioNode | AudioBufferSourceNode | OscillatorNode)[] = [];
+    const currentGains: GainNode[] = [];
 
-    // Specific frequency timbre per laser type
-    if (machineId === 'CO2_LASER') {
-      this.laserHumOsc.type = 'sawtooth';
-      this.laserHumOsc.frequency.setValueAtTime(120, now); // 120Hz HV transformer hum
-      this.laserHumGain.gain.setValueAtTime(0.001, now);
-      this.laserHumGain.gain.linearRampToValueAtTime(0.02, now + 0.4);
-    } else if (machineId === 'UV_LASER') {
-      this.laserHumOsc.type = 'sine';
-      this.laserHumOsc.frequency.setValueAtTime(2400, now); // High-pitch Q-switch whistle
-      this.laserHumGain.gain.setValueAtTime(0.001, now);
-      this.laserHumGain.gain.linearRampToValueAtTime(0.012, now + 0.4);
-    } else if (machineId === 'FIBER_LASER') {
-      this.laserHumOsc.type = 'triangle';
-      this.laserHumOsc.frequency.setValueAtTime(440, now); // Galvo scan motor whine
-      this.laserHumGain.gain.setValueAtTime(0.001, now);
-      this.laserHumGain.gain.linearRampToValueAtTime(0.025, now + 0.4);
-    } else {
-      // Sensor station tick
-      this.laserHumOsc.type = 'sine';
-      this.laserHumOsc.frequency.setValueAtTime(60, now);
-      this.laserHumGain.gain.setValueAtTime(0.001, now);
-      this.laserHumGain.gain.linearRampToValueAtTime(0.015, now + 0.4);
+    // 1. Gas Assist Jet (Coaxial O2/N2 stream through cutting nozzle)
+    // Synthesized via Bandpass Filtered Noise
+    const sampleRate = this.ctx.sampleRate;
+    const noiseBuffer = this.ctx.createBuffer(1, sampleRate, sampleRate);
+    const channelData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < sampleRate; i++) {
+      channelData[i] = Math.random() * 2 - 1;
     }
 
-    this.laserHumOsc.connect(this.laserHumGain);
-    this.laserHumGain.connect(this.ctx.destination);
-    this.laserHumOsc.start(now);
+    const noiseSource = this.ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    noiseSource.loop = true;
+
+    const gasFilter = this.ctx.createBiquadFilter();
+    gasFilter.type = 'bandpass';
+
+    const gasGain = this.ctx.createGain();
+
+    if (machineId === 'CO2_LASER') {
+      // CO2: Heavy gas assist (1.6 kHz, gentle hiss)
+      gasFilter.frequency.setValueAtTime(1600, now);
+      gasFilter.Q.setValueAtTime(1.2, now);
+      gasGain.gain.setValueAtTime(0.0001, now);
+      gasGain.gain.linearRampToValueAtTime(0.025, now + 0.15);
+    } else if (machineId === 'FIBER_LASER') {
+      // Fiber: High-speed Galvo flutter (2200 Hz with slight resonance)
+      gasFilter.frequency.setValueAtTime(2200, now);
+      gasFilter.Q.setValueAtTime(1.8, now);
+      gasGain.gain.setValueAtTime(0.0001, now);
+      gasGain.gain.linearRampToValueAtTime(0.02, now + 0.15);
+    } else if (machineId === 'UV_LASER') {
+      // UV: Cold ablation micro-pulse hiss (3200 Hz, soft)
+      gasFilter.frequency.setValueAtTime(3200, now);
+      gasFilter.Q.setValueAtTime(1.5, now);
+      gasGain.gain.setValueAtTime(0.0001, now);
+      gasGain.gain.linearRampToValueAtTime(0.015, now + 0.15);
+    } else {
+      gasFilter.frequency.setValueAtTime(1200, now);
+      gasFilter.Q.setValueAtTime(1.0, now);
+      gasGain.gain.setValueAtTime(0.0001, now);
+      gasGain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+    }
+
+    noiseSource.connect(gasFilter);
+    gasFilter.connect(gasGain);
+    gasGain.connect(this.ctx.destination);
+    noiseSource.start(now);
+
+    currentSources.push(noiseSource);
+    currentGains.push(gasGain);
+
+    // 2. Chiller & Sub-harmonic Power Transformer Hum (Warm 60Hz/100Hz undertone, NOT harsh)
+    const subOsc = this.ctx.createOscillator();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(machineId === 'CO2_LASER' ? 100 : 75, now);
+
+    const subGain = this.ctx.createGain();
+    subGain.gain.setValueAtTime(0.0001, now);
+    subGain.gain.linearRampToValueAtTime(0.008, now + 0.2);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+    subOsc.start(now);
+
+    currentSources.push(subOsc);
+    currentGains.push(subGain);
+
+    this.activeContinuousNodes.push({
+      sources: currentSources,
+      gains: currentGains,
+    });
   }
 
   /**
@@ -268,18 +318,91 @@ class SoundSystem {
   }
 
   public stopLaserHum() {
-    if (this.laserHumGain && this.ctx) {
-      const now = this.ctx.currentTime;
-      this.laserHumGain.gain.linearRampToValueAtTime(0.0001, now + 0.3);
-      setTimeout(() => {
+    if (!this.ctx || this.activeContinuousNodes.length === 0) return;
+    const now = this.ctx.currentTime;
+
+    const toClean = [...this.activeContinuousNodes];
+    this.activeContinuousNodes = [];
+
+    toClean.forEach(({ sources, gains }) => {
+      gains.forEach((g) => {
         try {
-          this.laserHumOsc?.stop();
-          this.laserHumOsc?.disconnect();
-          this.laserHumGain?.disconnect();
+          g.gain.cancelScheduledValues(now);
+          g.gain.setValueAtTime(g.gain.value, now);
+          g.gain.linearRampToValueAtTime(0.0001, now + 0.08);
         } catch (_) {}
-        this.laserHumOsc = null;
-        this.laserHumGain = null;
-      }, 350);
+      });
+
+      setTimeout(() => {
+        sources.forEach((s) => {
+          try {
+            if ('stop' in s && typeof (s as any).stop === 'function') {
+              (s as any).stop();
+            }
+            s.disconnect();
+          } catch (_) {}
+        });
+        gains.forEach((g) => {
+          try {
+            g.disconnect();
+          } catch (_) {}
+        });
+      }, 100);
+    });
+  }
+
+  /**
+   * Immediately terminates all ongoing continuous sounds across the simulation
+   */
+  public stopAllAudio() {
+    this.stopLaserHum();
+    this.stopSpraySound();
+    this.stopAlarmBuzzer();
+  }
+
+  private alarmOsc: OscillatorNode | null = null;
+  private alarmGain: GainNode | null = null;
+
+  /**
+   * Safety Interlock Alarm Siren / Buzzer
+   */
+  public startAlarmBuzzer() {
+    if (!useLabStore.getState().soundEnabled) return;
+    this.stopAlarmBuzzer();
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(880, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.035, now + 0.05);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+
+    this.alarmOsc = osc;
+    this.alarmGain = gain;
+  }
+
+  public stopAlarmBuzzer() {
+    if (this.alarmGain && this.ctx) {
+      const now = this.ctx.currentTime;
+      try {
+        this.alarmGain.gain.linearRampToValueAtTime(0.0001, now + 0.05);
+        setTimeout(() => {
+          this.alarmOsc?.stop();
+          this.alarmOsc?.disconnect();
+          this.alarmGain?.disconnect();
+          this.alarmOsc = null;
+          this.alarmGain = null;
+        }, 60);
+      } catch (_) {}
     }
   }
 

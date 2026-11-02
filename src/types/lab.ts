@@ -54,3 +54,20 @@ export interface CoatingFinishConfig {
   cureTimeSec: number;
   description: string;
 }
+
+export interface ProcessedJobInfo {
+  machineId: MachineId;
+  machineName: string;
+  wavelength: string;
+  material: string;
+  materialName: string;
+  designName: string;
+  processMode: 'CUT' | 'ENGRAVE';
+  powerWatts: number;
+  speedMmS: number;
+  frequencyKhz: number;
+  energyDensityJPerMm: number;
+  kerfWidthMm: number;
+  hazQuality: string;
+  timestamp: number;
+}
