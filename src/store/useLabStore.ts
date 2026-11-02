@@ -289,6 +289,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       selectedMaterial: material,
       cutProgress: 0,
       isCuttingJob: false,
+      isPartDetached: false,
       actionMessage: {
         id: ++toastIdCounter,
         text: `Đã đặt phôi: ${item.name} (${item.category}) vào buồng làm việc.`,
@@ -353,6 +354,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       cutProgress: 0,
       isMachineRunning: true,
       interlockTriggered: false,
+      isPartDetached: false,
       actionMessage: {
         id: ++toastIdCounter,
         text: `Bắt đầu cắt vector "${currentDesignName}" trên ${matConfig.name}...`,
@@ -411,6 +413,7 @@ export const useLabStore = create<LabState>((set, get) => ({
     set({
       cutProgress: 0,
       isCuttingJob: false,
+      isPartDetached: false,
       isSpecimenModalOpen: false,
       actionMessage: {
         id: ++toastIdCounter,
@@ -454,6 +457,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       currentToolpaths: preset.paths,
       cutProgress: 0,
       isCuttingJob: false,
+      isPartDetached: false,
       actionMessage: {
         id: ++toastIdCounter,
         text: `Đã nạp file thiết kế: "${preset.name}" vào bộ nhớ máy CNC laser.`,
@@ -470,6 +474,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       currentToolpaths: paths,
       cutProgress: 0,
       isCuttingJob: false,
+      isPartDetached: false,
       actionMessage: {
         id: ++toastIdCounter,
         text: `Đã biên dịch ${paths.length} đường vector và nạp vào máy laser!`,
@@ -488,6 +493,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       currentToolpaths: paths,
       cutProgress: 0,
       isCuttingJob: false,
+      isPartDetached: false,
       actionMessage: {
         id: ++toastIdCounter,
         text: `Đã biên dịch chữ vector "${text}" thành mã lệnh G-code!`,
@@ -581,8 +587,22 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   togglePartDetached: () => {
-    sound.playClick();
-    set({ isPartDetached: !get().isPartDetached });
+    const next = !get().isPartDetached;
+    if (next) {
+      sound.playRelayClick();
+    } else {
+      sound.playMaterialPlaceSound();
+    }
+    set({
+      isPartDetached: next,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: next
+          ? 'Đã nhấc rời chi tiết cắt khỏi tấm phôi [Space]. Bạn có thể xoay 360° để kiểm tra rãnh cắt!'
+          : 'Đã lắp chi tiết trở lại khít vào tấm phôi [Space].',
+        type: 'info',
+      },
+    });
   },
 
   setPartDetached: (detached: boolean) => set({ isPartDetached: detached }),

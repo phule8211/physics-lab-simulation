@@ -95,3 +95,4 @@ export const COATING_FINISHES: Record<CoatingFinishId, CoatingFinishConfig> = {
       'Màng phủ đơn lớp nano tự sắp xếp gốc Silane, tạo góc tiếp xúc giọt nước > 115° (Hiệu ứng lá sen). Chống bám bụi, kháng hóa chất cho Silicon Wafer và Kính.',
   },
 };
+

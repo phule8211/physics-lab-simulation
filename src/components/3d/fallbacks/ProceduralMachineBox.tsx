@@ -61,6 +61,7 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
   const setCutProgress = useLabStore((state) => state.setCutProgress);
   const currentToolpaths = useLabStore((state) => state.currentToolpaths);
   const currentDesignName = useLabStore((state) => state.currentDesignName);
+  const processMode = useLabStore((state) => state.processMode);
   const isFraming = useLabStore((state) => state.isFraming);
 
   const gantryRef = useRef<THREE.Group>(null);
@@ -207,8 +208,14 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
                     />
                   </bufferGeometry>
                   <lineBasicMaterial
-                    color={cutProgress < 100 ? '#f59e0b' : '#0f172a'}
-                    linewidth={2}
+                    color={
+                      cutProgress < 100
+                        ? '#f59e0b'
+                        : processMode === 'CUT'
+                        ? '#020617'
+                        : '#1e293b'
+                    }
+                    linewidth={processMode === 'CUT' ? 3 : 2}
                   />
                 </line>
               );
@@ -222,7 +229,7 @@ function CO2LaserMachine({ isSelected }: { isSelected: boolean }) {
               anchorX="center"
               anchorY="bottom"
             >
-              {`G-CODE: ${currentDesignName.toUpperCase()} [${cutProgress.toFixed(0)}%]`}
+              {`G-CODE: ${currentDesignName.toUpperCase()} [${processMode === 'CUT' ? 'CẮT' : 'KHẮC'} ${cutProgress.toFixed(0)}%]`}
             </SafeText>
           </group>
         )}
@@ -477,6 +484,7 @@ function UVLaserMachine({ isSelected }: { isSelected: boolean }) {
   const setCutProgress = useLabStore((state) => state.setCutProgress);
   const currentToolpaths = useLabStore((state) => state.currentToolpaths);
   const currentDesignName = useLabStore((state) => state.currentDesignName);
+  const processMode = useLabStore((state) => state.processMode);
 
   const doorRef = useRef<THREE.Group>(null);
   const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.SILICON;
@@ -693,6 +701,7 @@ function FiberLaserMachine({ isSelected }: { isSelected: boolean }) {
   const setCutProgress = useLabStore((state) => state.setCutProgress);
   const currentToolpaths = useLabStore((state) => state.currentToolpaths);
   const currentDesignName = useLabStore((state) => state.currentDesignName);
+  const processMode = useLabStore((state) => state.processMode);
 
   const clampRef = useRef<THREE.Group>(null);
   const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.STEEL;

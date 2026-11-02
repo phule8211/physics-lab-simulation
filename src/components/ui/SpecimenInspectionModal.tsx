@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, Suspense, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useLabStore } from '../../store/useLabStore';
@@ -26,8 +26,208 @@ import {
 import { Point2D, computeBoundingBox } from '../../data/vectorDesigns';
 
 /**
+ * Detects whether a 2D stroke forms a closed polygon loop
+ */
+function isStrokeClosed(stroke: Point2D[], tolerance = 0.12): boolean {
+  if (!stroke || stroke.length < 3) return false;
+  const p0 = stroke[0];
+  const p1 = stroke[stroke.length - 1];
+  return Math.hypot(p0[0] - p1[0], p0[1] - p1[1]) < tolerance;
+}
+
+/**
+ * Computes polygon signed area for sorting outer vs inner loops
+ */
+function computeStrokeArea(stroke: Point2D[]): number {
+  let area = 0;
+  for (let i = 0; i < stroke.length - 1; i++) {
+    area += stroke[i][0] * stroke[i + 1][1] - stroke[i + 1][0] * stroke[i][1];
+  }
+  return Math.abs(area) / 2;
+}
+
+/**
+ * Builds a rounded rectangular badge contour around open strokes or text
+ */
+function makeRoundedBadgePath(
+  cx: number,
+  cy: number,
+  width: number,
+  height: number,
+  radius: number
+): Point2D[] {
+  const path: Point2D[] = [];
+  const rx = Math.min(radius, width / 2, height / 2);
+  const steps = 6;
+  const x0 = cx - width / 2;
+  const y0 = cy - height / 2;
+  // bottom-right arc
+  for (let i = 0; i <= steps; i++) {
+    const a = -Math.PI / 2 + (i / steps) * (Math.PI / 2);
+    path.push([x0 + width - rx + Math.cos(a) * rx, y0 + rx + Math.sin(a) * rx]);
+  }
+  // top-right arc
+  for (let i = 0; i <= steps; i++) {
+    const a = 0 + (i / steps) * (Math.PI / 2);
+    path.push([x0 + width - rx + Math.cos(a) * rx, y0 + height - rx + Math.sin(a) * rx]);
+  }
+  // top-left arc
+  for (let i = 0; i <= steps; i++) {
+    const a = Math.PI / 2 + (i / steps) * (Math.PI / 2);
+    path.push([x0 + rx + Math.cos(a) * rx, y0 + height - rx + Math.sin(a) * rx]);
+  }
+  // bottom-left arc
+  for (let i = 0; i <= steps; i++) {
+    const a = Math.PI + (i / steps) * (Math.PI / 2);
+    path.push([x0 + rx + Math.cos(a) * rx, y0 + rx + Math.sin(a) * rx]);
+  }
+  return path;
+}
+
+/**
+ * Builds realistic 3D Extruded Geometries for:
+ * 1. The exact cut-out part (outer loop + inner holes)
+ * 2. The base workpiece plate with a true hollow hole punched through it
+ */
+function buildCutoutMeshes(
+  toolpaths: Point2D[][],
+  scale: number,
+  scaleY: number,
+  isWafer: boolean,
+  isCutMode: boolean
+) {
+  try {
+    // 1. Identify closed strokes
+    const closedStrokes: Point2D[][] = [];
+    toolpaths.forEach((st) => {
+      if (isStrokeClosed(st)) {
+        closedStrokes.push(st);
+      }
+    });
+
+    let outerContour: Point2D[] | null = null;
+    const innerHoles: Point2D[][] = [];
+
+    if (closedStrokes.length > 0) {
+      closedStrokes.sort((a, b) => computeStrokeArea(b) - computeStrokeArea(a));
+      outerContour = closedStrokes[0];
+      for (let i = 1; i < closedStrokes.length; i++) {
+        innerHoles.push(closedStrokes[i]);
+      }
+    }
+
+    // Fallback: If no closed stroke exists (e.g. text letters or open sketch),
+    // create a sleek rounded badge perimeter around the toolpaths
+    if (!outerContour || outerContour.length < 3) {
+      let minX = Infinity,
+        maxX = -Infinity,
+        minY = Infinity,
+        maxY = -Infinity;
+      toolpaths.forEach((st) => {
+        st.forEach(([x, y]) => {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        });
+      });
+      if (minX === Infinity) {
+        minX = -0.4;
+        maxX = 0.4;
+        minY = -0.3;
+        maxY = 0.3;
+      }
+      const w = (maxX - minX) * 1.15 + 0.12;
+      const h = (maxY - minY) * 1.25 + 0.12;
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      outerContour = makeRoundedBadgePath(cx, cy, w, h, 0.08);
+    }
+
+    // Build the 3D Cutout Part Shape
+    const partShape = new THREE.Shape();
+    outerContour.forEach(([x, y], idx) => {
+      const sx = x * scale;
+      const sy = y * scaleY;
+      if (idx === 0) partShape.moveTo(sx, sy);
+      else partShape.lineTo(sx, sy);
+    });
+    partShape.closePath();
+
+    innerHoles.forEach((holeStroke) => {
+      const holePath = new THREE.Path();
+      holeStroke.forEach(([x, y], idx) => {
+        const hx = x * scale;
+        const hy = y * scaleY;
+        if (idx === 0) holePath.moveTo(hx, hy);
+        else holePath.lineTo(hx, hy);
+      });
+      holePath.closePath();
+      partShape.holes.push(holePath);
+    });
+
+    const partGeometry = new THREE.ExtrudeGeometry(partShape, {
+      depth: 0.076,
+      bevelEnabled: true,
+      bevelThickness: 0.002,
+      bevelSize: 0.002,
+      bevelSegments: 2,
+    });
+    partGeometry.translate(0, 0, -0.038); // Center along Z axis
+
+    // Build Base Plate Shape
+    const plateShape = new THREE.Shape();
+    if (isWafer) {
+      plateShape.absarc(0, 0, 1.2, 0, Math.PI * 2, false);
+    } else {
+      plateShape.moveTo(-1.2, -0.8);
+      plateShape.lineTo(1.2, -0.8);
+      plateShape.lineTo(1.2, 0.8);
+      plateShape.lineTo(-1.2, 0.8);
+      plateShape.closePath();
+    }
+
+    if (isCutMode) {
+      const plateHole = new THREE.Path();
+      outerContour.forEach(([x, y], idx) => {
+        const sx = x * scale;
+        const sy = y * scaleY;
+        if (idx === 0) plateHole.moveTo(sx, sy);
+        else plateHole.lineTo(sx, sy);
+      });
+      plateHole.closePath();
+      plateShape.holes.push(plateHole);
+    }
+
+    const plateGeometry = new THREE.ExtrudeGeometry(plateShape, {
+      depth: 0.08,
+      bevelEnabled: !isWafer,
+      bevelThickness: 0.002,
+      bevelSize: 0.002,
+      bevelSegments: 2,
+    });
+    plateGeometry.translate(0, 0, -0.04);
+
+    return { partGeometry, plateGeometry, outerContour };
+  } catch (err) {
+    console.error('buildCutoutMeshes error, falling back to box geometries:', err);
+    return {
+      partGeometry: new THREE.BoxGeometry(0.8, 0.076, 0.5),
+      plateGeometry: new THREE.BoxGeometry(2.4, 0.08, 1.6),
+      outerContour: [
+        [-0.4, -0.25],
+        [0.4, -0.25],
+        [0.4, 0.25],
+        [-0.4, 0.25],
+        [-0.4, -0.25],
+      ] as Point2D[],
+    };
+  }
+}
+
+/**
  * 3D Specimen in Inspection Studio:
- * Supports both Through-Cut (with interactive detached part lifting) and Surface Engrave
+ * Supports true 3D shape cutout, hollow hole in base sheet, and smooth floating lift animation
  */
 function Specimen3DObject() {
   const selectedMaterial = useLabStore((state) => state.selectedMaterial);
@@ -40,7 +240,35 @@ function Specimen3DObject() {
   const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
   const isWafer = selectedMaterial === 'SILICON';
 
+  const scale = isWafer ? 0.9 : 1.0;
+  const scaleY = isWafer ? 1 : 0.65;
+  const isCut = processMode === 'CUT';
+
   const bbox = useMemo(() => computeBoundingBox(currentToolpaths), [currentToolpaths]);
+
+  // Generate exact 3D extruded meshes with real cutout hole
+  const { partGeometry, plateGeometry, outerContour } = useMemo(() => {
+    return buildCutoutMeshes(currentToolpaths, scale, scaleY, isWafer, isCut);
+  }, [currentToolpaths, scale, scaleY, isWafer, isCut]);
+
+  useEffect(() => {
+    return () => {
+      partGeometry?.dispose();
+      plateGeometry?.dispose();
+    };
+  }, [partGeometry, plateGeometry]);
+
+  // Smooth floating lift animation
+  const liftGroupRef = useRef<THREE.Group>(null);
+  const liftY = useRef(0);
+
+  useFrame((_, delta) => {
+    const targetY = isCut && isPartDetached ? 0.38 : 0;
+    liftY.current = THREE.MathUtils.damp(liftY.current, targetY, 8, delta);
+    if (liftGroupRef.current) {
+      liftGroupRef.current.position.y = liftY.current;
+    }
+  });
 
   // Distinct Kerf color based on material interaction physics
   const kerfColor =
@@ -56,77 +284,170 @@ function Specimen3DObject() {
       ? '#e2e8f0' // Frosted micro-fracture
       : '#c084fc'; // UV violet ionization
 
-  const scale = isWafer ? 0.9 : 1.0;
-  const scaleY = isWafer ? 1 : 0.65;
-
-  const partW = Math.max(0.3, bbox.width * scale * 1.05);
-  const partH = Math.max(0.3, bbox.height * scaleY * 1.05);
-  const partCenterX = bbox.centerX * scale;
-  const partCenterZ = -bbox.centerY * scaleY;
-
   return (
     <group rotation={[0.4, -0.6, 0]}>
       {/* =========================================================================
-          A. BASE WORKPIECE STOCK PLATE
+          A. BASE WORKPIECE STOCK (Punched with True Hollow Cutout Hole)
          ========================================================================= */}
-      {isWafer ? (
-        // Circular Semiconductor Silicon Wafer Disc
-        <mesh castShadow receiveShadow position={[0, 0, 0]}>
-          <cylinderGeometry args={[1.2, 1.2, 0.04, 64]} />
-          <meshStandardMaterial
-            color="#1e1b4b"
-            metalness={0.96}
-            roughness={0.06}
-          />
-        </mesh>
-      ) : (
-        // Rectangular Material Specimen Plate (e.g. 2.4 x 1.6 x 0.08)
-        <mesh castShadow receiveShadow position={[0, 0, 0]}>
-          <boxGeometry args={[2.4, 0.08, 1.6]} />
-          <meshStandardMaterial
-            color={matConfig.color}
-            metalness={matConfig.metalness}
-            roughness={matConfig.roughness}
-            transparent={matConfig.transparent}
-            opacity={matConfig.opacity}
-          />
-        </mesh>
-      )}
+      <mesh
+        castShadow
+        receiveShadow
+        geometry={plateGeometry}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <meshStandardMaterial
+          color={matConfig.color}
+          metalness={matConfig.metalness}
+          roughness={matConfig.roughness}
+          transparent={matConfig.transparent}
+          opacity={matConfig.opacity}
+        />
+      </mesh>
 
-      {/* Recessed Cutout Pocket on Base Sheet when part is detached in CUT mode */}
-      {processMode === 'CUT' && isPartDetached && (
-        <group position={[partCenterX, 0.002, partCenterZ]}>
+      {/* Honeycomb cutting bed visible through cutout cavity */}
+      {isCut && (
+        <group position={[0, -0.045, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <mesh receiveShadow>
-            <boxGeometry args={[partW, 0.085, partH]} />
-            <meshStandardMaterial
-              color="#090d16"
-              metalness={0.2}
-              roughness={0.9}
-            />
+            <planeGeometry args={[2.38, 1.58]} />
+            <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.4} />
           </mesh>
-
-          {/* Honeycomb bed visible through cutout cavity */}
-          <mesh position={[0, -0.041, 0]}>
-            <planeGeometry args={[partW * 0.98, partH * 0.98]} />
-            <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
-          </mesh>
+          <gridHelper args={[2.2, 22, '#475569', '#334155']} rotation={[Math.PI / 2, 0, 0]} />
         </group>
       )}
 
-      {/* Vertical projection guide lines connecting base plate to detached floating part */}
-      {processMode === 'CUT' && isPartDetached && (
+      {/* Laser Engraved Title Bar on Bottom Rim (Firmly on Base Plate, Never Floats) */}
+      <group position={[0, isWafer ? -1.02 : -0.72, 0.042]} rotation={[-Math.PI / 2, 0, 0]}>
+        <Suspense fallback={null}>
+          <Text
+            fontSize={0.05}
+            color={kerfColor}
+            anchorX="center"
+            anchorY="bottom"
+          >
+            {`G-CODE: ${currentDesignName.toUpperCase()} • ${
+              isCut ? 'CẮT XUYÊN (THRU-CUT 3.0mm)' : 'KHẮC MẶT (ENGRAVE 0.1mm)'
+            } • ${cutProgress >= 100 ? '100% PASS' : `${cutProgress.toFixed(0)}%`}`}
+          </Text>
+        </Suspense>
+      </group>
+
+      {/* =========================================================================
+          B. THE 3D CUTOUT PART / ENGRAVING
+             - In CUT mode: Exactly shaped 3D solid that lifts out of the hole
+             - In ENGRAVE mode: Etched lines on the intact plate surface
+         ========================================================================= */}
+      {isCut ? (
+        <group ref={liftGroupRef}>
+          {/* 3D Solid Cutout Part Body */}
+          <mesh
+            castShadow
+            receiveShadow
+            geometry={partGeometry}
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
+            <meshStandardMaterial
+              color={matConfig.color}
+              metalness={matConfig.metalness}
+              roughness={matConfig.roughness}
+              transparent={matConfig.transparent}
+              opacity={matConfig.opacity}
+            />
+          </mesh>
+
+          {/* Laser Cut Edge Perimeter Kerf Line */}
+          <group rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0.039]}>
+            <line>
+              <bufferGeometry>
+                <bufferAttribute
+                  attach="attributes-position"
+                  args={[
+                    new Float32Array(
+                      outerContour.flatMap(([px, py]) => [px * scale, py * scaleY, 0.001])
+                    ),
+                    3,
+                  ]}
+                />
+              </bufferGeometry>
+              <lineBasicMaterial color={kerfColor} linewidth={3} />
+            </line>
+          </group>
+
+          {/* Exact Surface Vector Toolpaths on Part Face */}
+          <group position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            {currentToolpaths.map((stroke, sIdx) => {
+              if (stroke.length < 2) return null;
+              const pointsFlat: number[] = [];
+              stroke.forEach(([px, py]) => {
+                pointsFlat.push(px * scale, py * scaleY, 0.001);
+              });
+              return (
+                <line key={`inspect-stroke-${sIdx}`}>
+                  <bufferGeometry>
+                    <bufferAttribute
+                      attach="attributes-position"
+                      args={[new Float32Array(pointsFlat), 3]}
+                    />
+                  </bufferGeometry>
+                  <lineBasicMaterial color={kerfColor} linewidth={3.0} />
+                </line>
+              );
+            })}
+          </group>
+
+          {/* Floating Annotation Pill when Part is Detached */}
+          {isPartDetached && (
+            <group position={[bbox.centerX * scale, 0.16, -bbox.centerY * scaleY]}>
+              <Suspense fallback={null}>
+                <Text
+                  fontSize={0.055}
+                  color="#38bdf8"
+                  anchorX="center"
+                  anchorY="middle"
+                >
+                  CHI TIẾT CẮT RỜI [3.0mm]
+                </Text>
+              </Suspense>
+            </group>
+          )}
+        </group>
+      ) : (
+        /* Flat Engraved Toolpaths on Surface in ENGRAVE Mode */
+        <group position={[0, isWafer ? 0.022 : 0.042, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          {currentToolpaths.map((stroke, sIdx) => {
+            if (stroke.length < 2) return null;
+            const pointsFlat: number[] = [];
+            stroke.forEach(([px, py]) => {
+              pointsFlat.push(px * scale, py * scaleY, 0.001);
+            });
+            return (
+              <line key={`inspect-engrave-stroke-${sIdx}`}>
+                <bufferGeometry>
+                  <bufferAttribute
+                    attach="attributes-position"
+                    args={[new Float32Array(pointsFlat), 3]}
+                  />
+                </bufferGeometry>
+                <lineBasicMaterial color={kerfColor} linewidth={2.0} />
+              </line>
+            );
+          })}
+        </group>
+      )}
+
+      {/* Vertical projection guide lines connecting base plate hole to floating part */}
+      {isCut && isPartDetached && (
         <group>
           {[
-            [partCenterX - partW / 2, partCenterZ - partH / 2],
-            [partCenterX + partW / 2, partCenterZ - partH / 2],
-            [partCenterX + partW / 2, partCenterZ + partH / 2],
-            [partCenterX - partW / 2, partCenterZ + partH / 2],
+            [bbox.minX * scale, -bbox.minY * scaleY],
+            [bbox.maxX * scale, -bbox.minY * scaleY],
+            [bbox.maxX * scale, -bbox.maxY * scaleY],
+            [bbox.minX * scale, -bbox.maxY * scaleY],
           ].map(([gx, gz], gIdx) => (
             <line key={`guide-${gIdx}`}>
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
-                  args={[new Float32Array([gx, 0.04, gz, gx, 0.42, gz]), 3]}
+                  args={[new Float32Array([gx, 0.04, gz, gx, 0.38, gz]), 3]}
                 />
               </bufferGeometry>
               <lineDashedMaterial
@@ -139,110 +460,6 @@ function Specimen3DObject() {
           ))}
         </group>
       )}
-
-      {/* =========================================================================
-          B. THE FINISHED PART / TOOLPATHS
-             - In CUT mode + detached: Floats at Y = 0.42 with 3D thickness
-             - In CUT mode + attached: Flush at Y = 0.042
-             - In ENGRAVE mode: Flat surface engraving lines on plate
-         ========================================================================= */}
-      <group
-        position={[
-          0,
-          processMode === 'CUT' && isPartDetached ? 0.42 : 0,
-          0,
-        ]}
-      >
-        {/* If CUT mode and detached, give the cut part solid physical volume */}
-        {processMode === 'CUT' && isPartDetached && (
-          <group position={[partCenterX, 0, partCenterZ]}>
-            {/* Cutout Part Solid Body */}
-            <mesh castShadow receiveShadow>
-              <boxGeometry args={[partW * 0.96, 0.076, partH * 0.96]} />
-              <meshStandardMaterial
-                color={matConfig.color}
-                metalness={matConfig.metalness}
-                roughness={matConfig.roughness}
-                transparent={matConfig.transparent}
-                opacity={matConfig.opacity}
-              />
-            </mesh>
-
-            {/* Glowing Cut Boundary Edge highlight */}
-            <group position={[0, 0.039, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <line>
-                <bufferGeometry>
-                  <bufferAttribute
-                    attach="attributes-position"
-                    args={[
-                      new Float32Array([
-                        -(partW * 0.96) / 2, -(partH * 0.96) / 2, 0,
-                        (partW * 0.96) / 2, -(partH * 0.96) / 2, 0,
-                        (partW * 0.96) / 2, (partH * 0.96) / 2, 0,
-                        -(partW * 0.96) / 2, (partH * 0.96) / 2, 0,
-                        -(partW * 0.96) / 2, -(partH * 0.96) / 2, 0,
-                      ]),
-                      3,
-                    ]}
-                  />
-                </bufferGeometry>
-                <lineBasicMaterial color={kerfColor} linewidth={3} />
-              </line>
-            </group>
-
-            {/* Floating Annotation Pill above detached part */}
-            <Suspense fallback={null}>
-              <Text
-                position={[0, 0.14, 0]}
-                fontSize={0.055}
-                color="#38bdf8"
-                anchorX="center"
-                anchorY="middle"
-              >
-                CHI TIẾT CẮT RỜI [3.0mm]
-              </Text>
-            </Suspense>
-          </group>
-        )}
-
-        {/* The Exact Vector Toolpaths on Surface */}
-        <group position={[0, isWafer ? 0.022 : 0.042, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          {currentToolpaths.map((stroke, sIdx) => {
-            if (stroke.length < 2) return null;
-            const pointsFlat: number[] = [];
-            stroke.forEach(([px, py]) => {
-              pointsFlat.push(px * scale, py * scaleY, 0);
-            });
-            return (
-              <line key={`inspect-stroke-${sIdx}`}>
-                <bufferGeometry>
-                  <bufferAttribute
-                    attach="attributes-position"
-                    args={[new Float32Array(pointsFlat), 3]}
-                  />
-                </bufferGeometry>
-                <lineBasicMaterial
-                  color={kerfColor}
-                  linewidth={processMode === 'CUT' ? 3.5 : 2.0}
-                />
-              </line>
-            );
-          })}
-
-          {/* Laser Engraved Title Bar on Bottom Rim */}
-          <Suspense fallback={null}>
-            <Text
-              position={[0, isWafer ? -1.02 : -0.7, 0.002]}
-              fontSize={0.055}
-              color={kerfColor}
-              anchorX="center"
-              anchorY="bottom"
-            >
-              {`G-CODE: ${currentDesignName.toUpperCase()} • ${processMode === 'CUT' ? 'CẮT XUYÊN (THRU-CUT)' : 'KHẮC MẶT (ENGRAVE)'} • 100% PASS`}
-            </Text>
-          </Suspense>
-        </group>
-      </group>
     </group>
   );
 }
