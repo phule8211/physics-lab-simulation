@@ -1,0 +1,397 @@
+import React, { useEffect, useMemo } from 'react';
+import { useLabStore } from '../../store/useLabStore';
+import { MATERIALS_CATALOG, MaterialType } from '../../data/materialsConfig';
+import { STATIONS } from '../../data/labConfig';
+import { computeBoundingBox } from '../../data/vectorDesigns';
+import {
+  DoorOpen,
+  DoorClosed,
+  Play,
+  Square,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldCheck,
+  ShieldAlert,
+  Flame,
+  Layers,
+  Sparkles,
+  Zap,
+  PenTool,
+  PackageCheck,
+  RotateCcw,
+  Scan,
+  Scissors,
+} from 'lucide-react';
+
+export function MachineControlOverlay() {
+  const {
+    mode,
+    activeStationId,
+    hoveredStationId,
+    isLidOpen,
+    toggleLid,
+    selectedMaterial,
+    setSelectedMaterial,
+    isCuttingJob,
+    cutProgress,
+    startCuttingJob,
+    stopCuttingJob,
+    interlockTriggered,
+    actionMessage,
+    clearActionMessage,
+    currentDesignName,
+    currentToolpaths,
+    openDesignModal,
+    openSpecimenModal,
+    resetWorkpiece,
+    isFraming,
+    startFraming,
+    stopFraming,
+    autoFitCurrentDesign,
+    processMode,
+    setProcessMode,
+  } = useLabStore();
+
+  const bbox = useMemo(() => computeBoundingBox(currentToolpaths), [currentToolpaths]);
+  const isOutOfBounds = bbox.isOutOfBounds;
+
+  const currentStationId = activeStationId || (mode === 'WALKING' && hoveredStationId ? hoveredStationId : null);
+  const currentStation = currentStationId ? STATIONS[currentStationId] : null;
+
+  // Auto clear action message after 4.5 seconds
+  useEffect(() => {
+    if (actionMessage) {
+      const timer = setTimeout(() => {
+        clearActionMessage();
+      }, 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [actionMessage, clearActionMessage]);
+
+  if (!currentStationId || currentStationId === 'SENSOR_STATION') {
+    // Only show toast if there is a message
+    if (!actionMessage) return null;
+    return (
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+        <ToastNotification message={actionMessage} onClose={clearActionMessage} />
+      </div>
+    );
+  }
+
+  const currentMatConfig = MATERIALS_CATALOG[selectedMaterial];
+  const interaction = currentMatConfig.interactions[currentStationId];
+  const isReflective = interaction.status === 'BLOCKED_REFLECTIVE';
+  const isIneffective = interaction.status === 'INEFFECTIVE';
+
+  const materialsList: MaterialType[] = ['WOOD', 'ACRYLIC', 'STEEL', 'ALUMINUM', 'SILICON', 'GLASS'];
+
+  return (
+    <div className="fixed inset-x-0 bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3">
+      {/* 1. FLOATING ACTION TOAST NOTIFICATION */}
+      {actionMessage && (
+        <div className="mb-3 pointer-events-auto max-w-xl w-full">
+          <ToastNotification message={actionMessage} onClose={clearActionMessage} />
+        </div>
+      )}
+
+      {/* 2. MAIN DOCK CONTROLLER */}
+      <section
+        aria-label="Bảng điều khiển gia công vật liệu và nắp máy"
+        className="glass-panel w-full max-w-4xl rounded-2xl border border-slate-700/80 shadow-2xl p-3 md:p-4 pointer-events-auto text-slate-100 flex flex-col gap-3 backdrop-blur-xl bg-slate-950/85"
+      >
+        {/* Header Bar: Station Name, Safety Interlock Status */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+          <div className="flex items-center space-x-2">
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: currentStation?.accentColor || '#06b6d4' }}
+            />
+            <h3 className="text-xs md:text-sm font-bold tracking-wide text-white uppercase font-mono">
+              {currentStation?.shortName || 'THIẾT BỊ LASER'}
+            </h3>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700">
+              {currentStation?.wavelength}
+            </span>
+          </div>
+
+          {/* Design CAD Studio Button & Safety Interlock Pill */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={openDesignModal}
+              className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-lab-cyan/15 hover:bg-lab-cyan/25 border border-lab-cyan/50 text-lab-cyan text-xs font-semibold transition-all active:scale-95 shadow-md shadow-cyan-950/40"
+              title="Mở Studio thiết kế hình cắt & G-code (Phím T)"
+            >
+              <PenTool className="w-3.5 h-3.5" />
+              <span className="truncate max-w-[150px]">Hình: <b>{currentDesignName.split(' ')[0]}</b></span>
+              <span className="text-[10px] text-cyan-200 font-mono">[T]</span>
+            </button>
+
+            <button
+              onClick={() => setProcessMode(processMode === 'CUT' ? 'ENGRAVE' : 'CUT')}
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all active:scale-95 ${
+                processMode === 'CUT'
+                  ? 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/60 text-amber-300'
+                  : 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/60 text-cyan-300'
+              }`}
+              title="Chuyển đổi chế độ: Cắt Xuyên Phôi (3mm) hoặc Khắc Bề Mặt (0.1mm)"
+            >
+              {processMode === 'CUT' ? (
+                <>
+                  <Scissors className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Cắt Xuyên</span>
+                </>
+              ) : (
+                <>
+                  <Flame className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Khắc Mặt</span>
+                </>
+              )}
+            </button>
+
+            {isLidOpen ? (
+              <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/50 text-rose-300 text-xs font-mono font-semibold animate-pulse">
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                <span>INTERLOCK NGẮT TIA (Nắp mở)</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-semibold">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>INTERLOCK SẴN SÀNG (Nắp đóng)</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Controls Row: Lid Toggle + Material Selection + Cut Button */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          {/* A. LID TOGGLE BUTTON (Col 3) */}
+          <div className="md:col-span-3">
+            <button
+              onClick={toggleLid}
+              className={`w-full py-2.5 px-3 rounded-xl border font-semibold text-xs flex items-center justify-center space-x-2 transition-all duration-200 active:scale-95 shadow-md ${
+                isLidOpen
+                  ? 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/50 text-amber-200 shadow-amber-500/20'
+                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+              }`}
+              title="Phím tắt: O"
+            >
+              {isLidOpen ? (
+                <>
+                  <DoorOpen className="w-4 h-4 text-amber-400" />
+                  <span>Đóng nắp máy [O]</span>
+                </>
+              ) : (
+                <>
+                  <DoorClosed className="w-4 h-4 text-slate-400" />
+                  <span>Mở nắp máy [O]</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* B. MATERIAL SELECTOR PILLS (Col 6) */}
+          <div className="md:col-span-6 flex flex-col gap-1.5">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span className="flex items-center space-x-1">
+                <Layers className="w-3 h-3 text-lab-cyan" />
+                <span>Chọn phôi vật liệu vào bàn cắt [M]:</span>
+              </span>
+              <span
+                className="font-semibold"
+                style={{ color: interaction.badgeColor }}
+              >
+                {interaction.statusText}
+              </span>
+            </div>
+
+            {/* Scrollable pill container */}
+            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-thin">
+              {materialsList.map((mType) => {
+                const mat = MATERIALS_CATALOG[mType];
+                const matInter = mat.interactions[currentStationId];
+                const isSelected = selectedMaterial === mType;
+
+                return (
+                  <button
+                    key={mType}
+                    onClick={() => setSelectedMaterial(mType)}
+                    className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-150 border ${
+                      isSelected
+                        ? 'bg-lab-cyan/20 border-lab-cyan text-white shadow-lg shadow-lab-cyan/20 ring-1 ring-lab-cyan/40'
+                        : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    }`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full border border-black/40 flex-shrink-0"
+                      style={{ backgroundColor: mat.color }}
+                    />
+                    <span className="whitespace-nowrap">{mat.name.split(' ')[0]}</span>
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: matInter.badgeColor }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* C. CUT / ENGRAVE CTA BUTTON (Col 3) */}
+          <div className="md:col-span-3">
+            {isCuttingJob ? (
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={stopCuttingJob}
+                  className="w-full py-2.5 px-3 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all duration-200 border border-rose-500 shadow-lg shadow-rose-900/40 active:scale-95 animate-pulse"
+                >
+                  <Square className="w-3.5 h-3.5 fill-current" />
+                  <span>Dừng Cắt ({cutProgress.toFixed(0)}%)</span>
+                </button>
+
+                {/* Progress bar */}
+                <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-lab-cyan h-full transition-all duration-100 ease-linear"
+                    style={{ width: `${cutProgress}%` }}
+                  />
+                </div>
+              </div>
+            ) : cutProgress >= 100 ? (
+              <div className="flex flex-col gap-1.5">
+                <button
+                  onClick={() => {
+                    if (document.pointerLockElement) document.exitPointerLock();
+                    openSpecimenModal();
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all duration-200 border border-emerald-300 shadow-xl shadow-emerald-950/50 active:scale-95 animate-pulse"
+                  title="Lấy mẫu sản phẩm ra khỏi máy để quan sát 360° (Phím G)"
+                >
+                  <PackageCheck className="w-4 h-4 text-emerald-200" />
+                  <span>Lấy Mẫu Ra Xem [G]</span>
+                </button>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    onClick={startCuttingJob}
+                    className="flex-1 py-1 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono border border-slate-700 flex items-center justify-center space-x-1"
+                    title="Cắt lại hình này"
+                  >
+                    <Zap className="w-3 h-3 text-amber-400" />
+                    <span>Cắt lại</span>
+                  </button>
+                  <button
+                    onClick={resetWorkpiece}
+                    className="flex-1 py-1 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono border border-slate-700 flex items-center justify-center space-x-1"
+                    title="Đặt phôi mới chưa cắt vào bàn làm việc"
+                  >
+                    <RotateCcw className="w-3 h-3 text-cyan-400" />
+                    <span>Phôi mới</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    onClick={startCuttingJob}
+                    disabled={isReflective || isIneffective}
+                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 transition-all duration-200 border shadow-lg active:scale-95 ${
+                      isReflective
+                        ? 'bg-rose-950/40 border-rose-800 text-rose-400 cursor-not-allowed opacity-75'
+                        : isIneffective
+                        ? 'bg-amber-950/40 border-amber-800 text-amber-400 cursor-not-allowed opacity-75'
+                        : 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400/80 text-white shadow-emerald-950/50 hover:shadow-emerald-500/30'
+                    }`}
+                    title="Bắt đầu chu trình cắt / khắc laser (Phím C)"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-current text-white" />
+                    <span>{processMode === 'CUT' ? 'Cắt [C]' : 'Khắc [C]'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (isFraming) stopFraming();
+                      else startFraming();
+                    }}
+                    className={`py-2 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 transition-all duration-200 border active:scale-95 ${
+                      isFraming
+                        ? 'bg-rose-500/20 border-rose-400 text-rose-300 animate-pulse'
+                        : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-cyan-300 hover:border-cyan-500/50'
+                    }`}
+                    title="Quét thử khung bao viền của mẫu trên bàn cắt bằng tia laser dẫn hướng đỏ (Phím F)"
+                  >
+                    <Scan className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>{isFraming ? 'Dừng' : 'Frame [F]'}</span>
+                  </button>
+                </div>
+
+                {isOutOfBounds && (
+                  <button
+                    onClick={autoFitCurrentDesign}
+                    className="w-full py-1 px-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/60 text-amber-300 text-[10px] font-bold flex items-center justify-center space-x-1.5 animate-pulse transition-all shadow-md active:scale-95"
+                    title="Thiết kế đang tràn phôi. Bấm để tự động co vừa vào trong lòng phôi"
+                  >
+                    <AlertTriangle className="w-3 h-3 text-amber-400" />
+                    <span>Tràn phôi! Bấm để thu vừa</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Live Interaction Physics Hint Description */}
+        <div className="text-[11px] text-slate-300 bg-slate-900/60 rounded-xl p-2 px-3 border border-slate-800/80 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="w-3.5 h-3.5 text-lab-cyan flex-shrink-0" />
+            <span className="line-clamp-1">{interaction.effectDescription}</span>
+          </div>
+          <span className="hidden sm:inline text-slate-400 font-mono text-[10px] pl-2 flex-shrink-0">
+            {isLidOpen ? '⚠️ Cần đóng nắp để cắt' : '✓ Sẵn sàng kích hoạt'}
+          </span>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ToastNotification({
+  message,
+  onClose,
+}: {
+  message: { text: string; type: 'info' | 'warning' | 'error' | 'success' };
+  onClose: () => void;
+}) {
+  const styles = {
+    info: 'bg-cyan-950/95 border-cyan-500/70 text-cyan-200 shadow-cyan-950/50',
+    warning: 'bg-amber-950/95 border-amber-500/70 text-amber-200 shadow-amber-950/50',
+    error: 'bg-rose-950/95 border-rose-500/70 text-rose-200 shadow-rose-950/50 animate-shake',
+    success: 'bg-emerald-950/95 border-emerald-500/70 text-emerald-200 shadow-emerald-950/50',
+  };
+
+  const icons = {
+    info: <Zap className="w-5 h-5 text-cyan-400 flex-shrink-0" />,
+    warning: <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0" />,
+    error: <ShieldAlert className="w-5 h-5 text-rose-400 flex-shrink-0" />,
+    success: <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />,
+  };
+
+  return (
+    <div
+      role="alert"
+      className={`p-3.5 rounded-2xl border shadow-2xl flex items-start justify-between gap-3 backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 ${styles[message.type]}`}
+    >
+      <div className="flex items-start space-x-2.5">
+        {icons[message.type]}
+        <p className="text-xs md:text-sm font-medium leading-relaxed">{message.text}</p>
+      </div>
+      <button
+        onClick={onClose}
+        className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+        aria-label="Đóng thông báo"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
