@@ -525,24 +525,24 @@ export function WorkshopEnvironment() {
       {/* =========================================================================
           6. LAB SIGNAGE & POSTERS (Typography with Emissive Glow)
          ========================================================================= */}
-      {/* Main Lab Title Header Sign along Upper Wall Frieze (Clear of Doorway) */}
-      <group position={[0, 4.14, -7.88]}>
+      {/* Main Lab Title Header Sign along South Entrance Wall (Facing inward toward the lab) */}
+      <group position={[0, 3.45, 7.88]} rotation={[0, Math.PI, 0]}>
         <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[10.6, 0.52]} />
+          <planeGeometry args={[11.2, 0.68]} />
           <meshStandardMaterial color="#070d18" roughness={0.25} metalness={0.6} />
         </mesh>
         {/* Top & Bottom glowing cyan border lines */}
-        <mesh position={[0, 0.25, 0.005]}>
-          <planeGeometry args={[10.6, 0.016]} />
+        <mesh position={[0, 0.33, 0.005]}>
+          <planeGeometry args={[11.2, 0.018]} />
           <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.9} />
         </mesh>
-        <mesh position={[0, -0.25, 0.005]}>
-          <planeGeometry args={[10.6, 0.016]} />
+        <mesh position={[0, -0.33, 0.005]}>
+          <planeGeometry args={[11.2, 0.018]} />
           <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.9} />
         </mesh>
         <SafeText
-          position={[0, 0.075, 0.01]}
-          fontSize={0.22}
+          position={[0, 0.1, 0.01]}
+          fontSize={0.24}
           color="#38bdf8"
           anchorX="center"
           anchorY="middle"
@@ -551,8 +551,8 @@ export function WorkshopEnvironment() {
           ADVANCED PHOTONICS & LASER LAB
         </SafeText>
         <SafeText
-          position={[0, -0.10, 0.01]}
-          fontSize={0.12}
+          position={[0, -0.12, 0.01]}
+          fontSize={0.13}
           color="#94a3b8"
           anchorX="center"
           anchorY="middle"

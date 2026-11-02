@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { MachineId, AppMode, InfoTab, CoatingFinishId } from '../types/lab';
+import { MachineId, AppMode, InfoTab, CoatingFinishId, ProcessedJobInfo } from '../types/lab';
+import { STATIONS } from '../data/labConfig';
 import { MaterialType, MATERIALS_CATALOG } from '../data/materialsConfig';
 import { COATING_FINISHES } from '../data/coatingFinishes';
 import {
@@ -67,6 +68,28 @@ interface LabState {
   isPartDetached: boolean;
   togglePartDetached: () => void;
   setPartDetached: (detached: boolean) => void;
+
+  // Laser Process Technology Tuning Parameters (P, v, f)
+  laserPowerWatts: number;
+  scanSpeedMmS: number;
+  pulseFrequencyKhz: number;
+  setLaserPowerWatts: (p: number) => void;
+  setScanSpeedMmS: (v: number) => void;
+  setPulseFrequencyKhz: (f: number) => void;
+
+  // Last Processed Job Snapshot (Guarantees 100% state accuracy in Inspection Modal)
+  lastProcessedJob: ProcessedJobInfo | null;
+
+  // Sensor Station Telemetry & Interactive Fault Injection
+  sampleTemperature: number; // °C (Normal: 26.5, Trip: > 95)
+  chillerFlowRate: number; // L/min (Normal: 4.8, Trip: < 2.0)
+  smokeDensity: number; // ppm (Normal: 5, Trip: > 60)
+  isAlarmBuzzerActive: boolean;
+  setSampleTemperature: (temp: number) => void;
+  setChillerFlowRate: (flow: number) => void;
+  setSmokeDensity: (smoke: number) => void;
+  triggerEmergencyStop: () => void;
+  resetSensors: () => void;
 
   // Spray Coating & Finishing State
   selectedCoatingFinish: CoatingFinishId;
@@ -145,6 +168,20 @@ export const useLabStore = create<LabState>((set, get) => ({
   isFraming: false,
   processMode: 'CUT',
   isPartDetached: false,
+
+  // Laser Process Technology Tuning Parameters (P, v, f)
+  laserPowerWatts: 60,
+  scanSpeedMmS: 300,
+  pulseFrequencyKhz: 30,
+
+  // Last Processed Job Snapshot (Guarantees 100% state accuracy in Inspection Modal)
+  lastProcessedJob: null,
+
+  // Sensor Station Telemetry & Interactive Fault Injection
+  sampleTemperature: 26.5,
+  chillerFlowRate: 4.8,
+  smokeDensity: 5,
+  isAlarmBuzzerActive: false,
 
   // Spray Coating & Finishing State
   selectedCoatingFinish: 'CLEAR_GLOSS',
@@ -299,7 +336,61 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   startCuttingJob: () => {
-    const { isLidOpen, activeStationId, selectedMaterial, currentDesignName } = get();
+    const {
+      isLidOpen,
+      activeStationId,
+      selectedMaterial,
+      currentDesignName,
+      chillerFlowRate,
+      sampleTemperature,
+      smokeDensity,
+    } = get();
+
+    // 0. Safety Sensor Threshold Checks
+    if (chillerFlowRate < 2.0) {
+      sound.playInterlockTripSound();
+      sound.startAlarmBuzzer();
+      set({
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `KHÔNG THỂ PHÁT TIA: Lưu lượng nước làm mát Chiller quá thấp (${chillerFlowRate.toFixed(1)} L/min < 2.0 L/min)! Cảnh báo nổ bóng laser.`,
+          type: 'error',
+        },
+      });
+      return false;
+    }
+
+    if (sampleTemperature > 95) {
+      sound.playInterlockTripSound();
+      sound.startAlarmBuzzer();
+      set({
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `KHÔNG THỂ PHÁT TIA: Cảm biến phát hiện phôi quá nhiệt (${sampleTemperature.toFixed(1)}°C > 95°C)! Nguy cơ cháy nổ.`,
+          type: 'error',
+        },
+      });
+      return false;
+    }
+
+    if (smokeDensity > 60) {
+      sound.playInterlockTripSound();
+      sound.startAlarmBuzzer();
+      set({
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `KHÔNG THỂ PHÁT TIA: Mật độ khói khoang cắt vượt ngưỡng (${smokeDensity.toFixed(0)} ppm > 60 ppm)! Kiểm tra quạt hút.`,
+          type: 'error',
+        },
+      });
+      return false;
+    }
 
     // 1. Safety Interlock check: lid must be closed!
     if (isLidOpen) {
@@ -366,6 +457,7 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   stopCuttingJob: () => {
+    sound.stopLaserHum();
     sound.playRelayClick();
     set({
       isCuttingJob: false,
@@ -381,15 +473,54 @@ export const useLabStore = create<LabState>((set, get) => ({
   setCutProgress: (progress) => {
     const prev = get().cutProgress;
     if (prev < 100 && progress >= 100) {
+      const machineId = get().activeStationId || 'CO2_LASER';
+      const station = STATIONS[machineId] || STATIONS.CO2_LASER;
+      const mat = MATERIALS_CATALOG[get().selectedMaterial];
+      const p = get().laserPowerWatts;
+      const v = Math.max(1, get().scanSpeedMmS);
+      const f = get().pulseFrequencyKhz;
+      const energyDensity = Number((p / v).toFixed(3));
+      const mode = get().processMode;
+
+      let kerf = 0.15;
+      if (machineId === 'UV_LASER') kerf = 0.02 + (p / 100) * 0.015;
+      else if (machineId === 'FIBER_LASER') kerf = 0.04 + (p / 100) * 0.025;
+      else kerf = 0.12 + (p / 100) * 0.06;
+
+      let hazQuality = 'Tối ưu (Mép cắt sắc nét, không biến tính)';
+      if (energyDensity > 0.45 && machineId === 'CO2_LASER') {
+        hazQuality = 'Nhiệt ảnh hưởng lớn (Mép sém nhẹ do năng lượng đường thẳng cao)';
+      } else if (machineId === 'UV_LASER') {
+        hazQuality = 'Hoàn hảo (Gia công lạnh quang hóa Cold Ablation, HAZ = 0)';
+      }
+
+      const job: ProcessedJobInfo = {
+        machineId,
+        machineName: station.name,
+        wavelength: station.wavelength,
+        material: get().selectedMaterial,
+        materialName: mat.name,
+        designName: get().currentDesignName,
+        processMode: mode,
+        powerWatts: p,
+        speedMmS: v,
+        frequencyKhz: f,
+        energyDensityJPerMm: energyDensity,
+        kerfWidthMm: Number(kerf.toFixed(3)),
+        hazQuality,
+        timestamp: Date.now(),
+      };
+
+      sound.stopLaserHum();
       sound.playCutCompleteSound();
-      const mat = MATERIALS_CATALOG[get().selectedMaterial].name;
-      const design = get().currentDesignName;
+
       set({
         cutProgress: 100,
         isCuttingJob: false,
+        lastProcessedJob: job,
         actionMessage: {
           id: ++toastIdCounter,
-          text: `HOÀN THÀNH: Đã gia công xong "${design}" trên ${mat}! Nhấn [G] hoặc nhấp nút để lấy mẫu ra kiểm tra.`,
+          text: `HOÀN THÀNH: Đã gia công xong "${job.designName}" trên ${mat.name}! Nhấn [G] hoặc nhấp nút để lấy mẫu ra kiểm tra.`,
           type: 'success',
         },
       });
@@ -399,6 +530,7 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   openSpecimenModal: () => {
+    sound.stopLaserHum();
     sound.playClick();
     set({ isSpecimenModalOpen: true });
   },
@@ -438,6 +570,7 @@ export const useLabStore = create<LabState>((set, get) => ({
   // VECTOR CAD DESIGN ACTIONS
   // =========================================================================
   openDesignModal: () => {
+    sound.stopLaserHum();
     sound.playClick();
     set({ isDesignModalOpen: true });
   },
@@ -606,6 +739,138 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   setPartDetached: (detached: boolean) => set({ isPartDetached: detached }),
+
+  // =========================================================================
+  // LASER PROCESS TECHNOLOGY TUNING PARAMETERS (P, v, f)
+  // =========================================================================
+  setLaserPowerWatts: (p: number) => set({ laserPowerWatts: Math.max(1, Math.min(100, p)) }),
+  setScanSpeedMmS: (v: number) => set({ scanSpeedMmS: Math.max(10, Math.min(1000, v)) }),
+  setPulseFrequencyKhz: (f: number) => set({ pulseFrequencyKhz: Math.max(1, Math.min(100, f)) }),
+
+  // =========================================================================
+  // SENSOR STATION TELEMETRY & FAULT INJECTION ACTIONS
+  // =========================================================================
+  setSampleTemperature: (temp: number) => {
+    const isTripped = temp > 95;
+    if (isTripped && !get().isAlarmBuzzerActive) {
+      sound.startAlarmBuzzer();
+    } else if (!isTripped && get().chillerFlowRate >= 2.0 && get().smokeDensity <= 60) {
+      sound.stopAlarmBuzzer();
+    }
+    if (isTripped && get().isCuttingJob) {
+      sound.playInterlockTripSound();
+      sound.stopLaserHum();
+      set({
+        sampleTemperature: temp,
+        isCuttingJob: false,
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `CẢNH BÁO NHIỆT ĐỘ: Cảm biến phát hiện phôi quá nhiệt (${temp.toFixed(1)}°C > 95°C)! Đã tự động ngắt phát tia laser.`,
+          type: 'error',
+        },
+      });
+      return;
+    }
+    set({
+      sampleTemperature: temp,
+      isAlarmBuzzerActive: isTripped || get().chillerFlowRate < 2.0 || get().smokeDensity > 60,
+    });
+  },
+
+  setChillerFlowRate: (flow: number) => {
+    const isTripped = flow < 2.0;
+    if (isTripped && !get().isAlarmBuzzerActive) {
+      sound.startAlarmBuzzer();
+    } else if (!isTripped && get().sampleTemperature <= 95 && get().smokeDensity <= 60) {
+      sound.stopAlarmBuzzer();
+    }
+    if (isTripped && get().isCuttingJob) {
+      sound.playInterlockTripSound();
+      sound.stopLaserHum();
+      set({
+        chillerFlowRate: flow,
+        isCuttingJob: false,
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `CẢNH BÁO LƯU LƯỢNG NƯỚC: Nước giải nhiệt Chiller tụt dưới 2.0 L/min (${flow.toFixed(1)} L/min)! Khóa liên động đã ngắt nguồn laser.`,
+          type: 'error',
+        },
+      });
+      return;
+    }
+    set({
+      chillerFlowRate: flow,
+      isAlarmBuzzerActive: isTripped || get().sampleTemperature > 95 || get().smokeDensity > 60,
+    });
+  },
+
+  setSmokeDensity: (smoke: number) => {
+    const isTripped = smoke > 60;
+    if (isTripped && !get().isAlarmBuzzerActive) {
+      sound.startAlarmBuzzer();
+    } else if (!isTripped && get().sampleTemperature <= 95 && get().chillerFlowRate >= 2.0) {
+      sound.stopAlarmBuzzer();
+    }
+    if (isTripped && get().isCuttingJob) {
+      sound.playInterlockTripSound();
+      sound.stopLaserHum();
+      set({
+        smokeDensity: smoke,
+        isCuttingJob: false,
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `CẢNH BÁO MẬT ĐỘ KHÓI: Cảm biến Tyndall phát hiện khói đậm đặc (${smoke.toFixed(0)} ppm > 60 ppm)! Đã ngắt tia laser khẩn cấp.`,
+          type: 'error',
+        },
+      });
+      return;
+    }
+    set({
+      smokeDensity: smoke,
+      isAlarmBuzzerActive: isTripped || get().sampleTemperature > 95 || get().chillerFlowRate < 2.0,
+    });
+  },
+
+  triggerEmergencyStop: () => {
+    sound.playInterlockTripSound();
+    sound.stopLaserHum();
+    sound.startAlarmBuzzer();
+    set({
+      isMachineRunning: false,
+      isCuttingJob: false,
+      cutProgress: 0,
+      interlockTriggered: true,
+      isAlarmBuzzerActive: true,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: 'DỪNG KHẨN CẤP (E-STOP): Đã ngắt toàn bộ nguồn cao áp, hệ thống laser và chiller!',
+        type: 'error',
+      },
+    });
+  },
+
+  resetSensors: () => {
+    sound.stopAlarmBuzzer();
+    sound.playClick();
+    set({
+      sampleTemperature: 26.5,
+      chillerFlowRate: 4.8,
+      smokeDensity: 5,
+      isAlarmBuzzerActive: false,
+      interlockTriggered: false,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: 'Hệ thống cảm biến đã được reset về trạng thái định mức bình thường.',
+        type: 'success',
+      },
+    });
+  },
 
   // =========================================================================
   // SPRAY COATING & UV CURING FINISHING ACTIONS

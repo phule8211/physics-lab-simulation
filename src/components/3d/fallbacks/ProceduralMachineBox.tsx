@@ -852,25 +852,45 @@ function FiberLaserMachine({ isSelected }: { isSelected: boolean }) {
 }
 
 /**
- * 4. SAFETY SENSORS TEST BENCH MESH
+ * 4. SAFETY SENSORS TEST BENCH MESH WITH LIVE TELEMETRY BADGES & FAULT ALARM BEACON
  */
 function SensorStationBench({ isSelected }: { isSelected: boolean }) {
   const isRunning = useLabStore((state) => state.isMachineRunning);
+  const sampleTemperature = useLabStore((state) => state.sampleTemperature);
+  const chillerFlowRate = useLabStore((state) => state.chillerFlowRate);
+  const smokeDensity = useLabStore((state) => state.smokeDensity);
+  const isAlarmBuzzerActive = useLabStore((state) => state.isAlarmBuzzerActive);
+
   const turbine = useRef<THREE.Group>(null);
   const smokeLed = useRef<THREE.Mesh>(null);
+  const alarmBeacon = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
     if (isRunning) {
-      const t = clock.getElapsedTime();
       if (turbine.current) {
-        turbine.current.rotation.y = t * 14;
+        // Speed proportional to flow rate
+        const speed = Math.max(0, chillerFlowRate) * 3.5;
+        turbine.current.rotation.y = t * speed;
       }
       if (smokeLed.current) {
         const mat = smokeLed.current.material as THREE.MeshStandardMaterial;
-        mat.emissiveIntensity = 1.0 + Math.sin(t * 8) * 1.0;
+        mat.emissiveIntensity = smokeDensity > 60 ? 3.0 + Math.sin(t * 18) * 2.0 : 1.0 + Math.sin(t * 4) * 0.5;
+      }
+    }
+    if (alarmBeacon.current) {
+      const beaconMat = alarmBeacon.current.material as THREE.MeshStandardMaterial;
+      if (isAlarmBuzzerActive) {
+        beaconMat.emissiveIntensity = Math.sin(t * 20) > 0 ? 4.0 : 0.2;
+      } else {
+        beaconMat.emissiveIntensity = 0.1;
       }
     }
   });
+
+  const isTempTripped = sampleTemperature > 95;
+  const isFlowTripped = chillerFlowRate < 2.0;
+  const isSmokeTripped = smokeDensity > 60;
 
   return (
     <group>
@@ -886,106 +906,241 @@ function SensorStationBench({ isSelected }: { isSelected: boolean }) {
         <meshStandardMaterial color="#0284c7" roughness={0.7} />
       </mesh>
 
-      {/* Sensor 1: Non-Contact IR Thermopile Sensor Module (MLX90614) */}
-      <group position={[-0.6, 1.05, 0]}>
+      {/* =========================================================================
+          SENSOR 1 (LEFT): NON-CONTACT IR THERMAL PYROMETER (MLX90614)
+         ========================================================================= */}
+      <group position={[-0.65, 1.0, 0.1]}>
+        {/* Sensor Body Aluminum Block */}
         <mesh castShadow>
-          <boxGeometry args={[0.15, 0.12, 0.15]} />
-          <meshStandardMaterial color="#334155" metalness={0.5} />
+          <boxGeometry args={[0.16, 0.14, 0.16]} />
+          <meshStandardMaterial color="#334155" metalness={0.7} roughness={0.3} />
         </mesh>
-        <mesh position={[0, 0, 0.08]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.03, 0.03, 0.02, 16]} />
-          <meshStandardMaterial color="#d97706" metalness={0.8} />
+        {/* Germanium Optical Filter Lens Cone */}
+        <mesh position={[0, 0, 0.09]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.035, 0.035, 0.03, 16]} />
+          <meshStandardMaterial color="#d97706" metalness={0.8} roughness={0.2} />
         </mesh>
-        {/* Dynamic IR Radiation Measurement Cone */}
-        <mesh position={[0, 0, 0.22]} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.12, 0.25, 16]} />
+        {/* Dynamic IR Field-of-View Cone */}
+        <mesh position={[0, 0, 0.25]} rotation={[Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[0.13, 0.28, 16]} />
           <meshBasicMaterial
-            color="#ef4444"
+            color={isTempTripped ? '#ef4444' : '#f59e0b'}
             wireframe
             transparent
-            opacity={isRunning ? 0.45 : 0.1}
+            opacity={isRunning ? (isTempTripped ? 0.8 : 0.4) : 0.1}
           />
         </mesh>
-        <SafeText position={[0, 0.15, 0]} fontSize={0.08} color="#f8fafc">
-          IR THERMAL SENSOR
-        </SafeText>
+        {/* Mounting Standoff Pillar */}
+        <mesh position={[0, 0.15, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.16, 8]} />
+          <meshStandardMaterial color="#64748b" metalness={0.8} />
+        </mesh>
+        {/* Dedicated Angled Telemetry Nameplate */}
+        <group position={[0, 0.25, 0]} rotation={[-0.32, 0, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.42, 0.14, 0.015]} />
+            <meshStandardMaterial color="#0b1120" roughness={0.2} metalness={0.8} />
+          </mesh>
+          <mesh position={[0, 0, 0.009]}>
+            <planeGeometry args={[0.40, 0.12]} />
+            <meshBasicMaterial color={isTempTripped ? '#450a0a' : '#030712'} />
+          </mesh>
+          <SafeText position={[0, 0.032, 0.012]} fontSize={0.034} color="#94a3b8" anchorX="center" anchorY="middle">
+            IR THERMAL MLX90614
+          </SafeText>
+          <SafeText
+            position={[0, -0.024, 0.012]}
+            fontSize={0.048}
+            color={isTempTripped ? '#ef4444' : sampleTemperature > 60 ? '#f59e0b' : '#10b981'}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {`${sampleTemperature.toFixed(1)} °C ${isTempTripped ? '⚠️ TRIP' : '[OK]'}`}
+          </SafeText>
+        </group>
       </group>
 
-      {/* Sensor 2: Liquid Chiller Flow Sensor with Turbine Impeller */}
-      <group position={[0, 1.05, 0]}>
+      {/* =========================================================================
+          SENSOR 2 (CENTER): CHILLER WATER FLOW SENSOR WITH HALL TURBINE
+         ========================================================================= */}
+      <group position={[0, 1.0, 0.1]}>
+        {/* Acrylic Transparent Tube */}
         <mesh rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.06, 0.06, 0.4, 16]} />
+          <cylinderGeometry args={[0.065, 0.065, 0.42, 16]} />
           <meshStandardMaterial
             color="#38bdf8"
             transparent
-            opacity={0.4}
+            opacity={0.45}
             roughness={0.1}
             metalness={0.2}
           />
         </mesh>
+        {/* Rotating Impeller Turbine */}
         <group ref={turbine}>
           {[0, 1, 2, 3].map((i) => (
             <mesh key={`blade-${i}`} rotation={[0, (i * Math.PI) / 2, 0]}>
-              <boxGeometry args={[0.08, 0.015, 0.01]} />
-              <meshStandardMaterial color="#ef4444" />
+              <boxGeometry args={[0.08, 0.016, 0.01]} />
+              <meshStandardMaterial color={isFlowTripped ? '#dc2626' : '#ef4444'} />
             </mesh>
           ))}
         </group>
+        {/* Hall Effect Pickup Block */}
         <mesh position={[0, 0.09, 0]}>
-          <boxGeometry args={[0.06, 0.06, 0.06]} />
-          <meshStandardMaterial color="#0f172a" />
+          <boxGeometry args={[0.07, 0.07, 0.07]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.3} />
         </mesh>
-        <SafeText position={[0, 0.15, 0]} fontSize={0.08} color="#f8fafc">
-          FLOW SENSOR (HALL)
-        </SafeText>
+        {/* Mounting Standoff Pillar */}
+        <mesh position={[0, 0.18, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.14, 8]} />
+          <meshStandardMaterial color="#64748b" metalness={0.8} />
+        </mesh>
+        {/* Dedicated Angled Telemetry Nameplate */}
+        <group position={[0, 0.28, 0]} rotation={[-0.32, 0, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.42, 0.14, 0.015]} />
+            <meshStandardMaterial color="#0b1120" roughness={0.2} metalness={0.8} />
+          </mesh>
+          <mesh position={[0, 0, 0.009]}>
+            <planeGeometry args={[0.40, 0.12]} />
+            <meshBasicMaterial color={isFlowTripped ? '#450a0a' : '#030712'} />
+          </mesh>
+          <SafeText position={[0, 0.032, 0.012]} fontSize={0.034} color="#94a3b8" anchorX="center" anchorY="middle">
+            CHILLER FLOW (HALL)
+          </SafeText>
+          <SafeText
+            position={[0, -0.024, 0.012]}
+            fontSize={0.048}
+            color={isFlowTripped ? '#ef4444' : chillerFlowRate < 3.0 ? '#f59e0b' : '#38bdf8'}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {`${chillerFlowRate.toFixed(1)} L/min ${isFlowTripped ? '⚠️ TRIP' : '[OK]'}`}
+          </SafeText>
+        </group>
       </group>
 
-      {/* Sensor 3: Photoelectric Optical Smoke & Fume Detector */}
-      <group position={[0.6, 1.05, 0]}>
+      {/* =========================================================================
+          SENSOR 3 (RIGHT): PHOTOELECTRIC OPTICAL SMOKE DETECTOR (TYNDALL)
+         ========================================================================= */}
+      <group position={[0.65, 1.0, 0.1]}>
+        {/* Smoke Chamber Outer Disk */}
         <mesh castShadow>
           <cylinderGeometry args={[0.09, 0.09, 0.08, 24]} />
           <meshStandardMaterial color="#f1f5f9" roughness={0.3} />
         </mesh>
+        {/* Labyrinth Baffle Cap */}
         <mesh position={[0, 0.01, 0]}>
           <cylinderGeometry args={[0.092, 0.092, 0.02, 24]} />
           <meshStandardMaterial color="#0f172a" roughness={0.8} />
         </mesh>
+        {/* Optical Sensor Status Indicator LED */}
         <mesh ref={smokeLed} position={[0, 0.05, 0.05]}>
-          <sphereGeometry args={[0.012, 16, 16]} />
+          <sphereGeometry args={[0.014, 16, 16]} />
           <meshStandardMaterial
-            color="#10b981"
-            emissive="#10b981"
-            emissiveIntensity={isRunning ? 2.0 : 0.2}
+            color={isSmokeTripped ? '#ef4444' : '#10b981'}
+            emissive={isSmokeTripped ? '#ef4444' : '#10b981'}
+            emissiveIntensity={isRunning ? 2.5 : 0.2}
           />
         </mesh>
-        <SafeText position={[0, 0.15, 0]} fontSize={0.08} color="#f8fafc">
-          SMOKE DETECTOR
-        </SafeText>
+        {/* Mounting Standoff Pillar */}
+        <mesh position={[0, 0.15, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.16, 8]} />
+          <meshStandardMaterial color="#64748b" metalness={0.8} />
+        </mesh>
+        {/* Dedicated Angled Telemetry Nameplate */}
+        <group position={[0, 0.25, 0]} rotation={[-0.32, 0, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.42, 0.14, 0.015]} />
+            <meshStandardMaterial color="#0b1120" roughness={0.2} metalness={0.8} />
+          </mesh>
+          <mesh position={[0, 0, 0.009]}>
+            <planeGeometry args={[0.40, 0.12]} />
+            <meshBasicMaterial color={isSmokeTripped ? '#450a0a' : '#030712'} />
+          </mesh>
+          <SafeText position={[0, 0.032, 0.012]} fontSize={0.034} color="#94a3b8" anchorX="center" anchorY="middle">
+            TYNDALL SMOKE SENSOR
+          </SafeText>
+          <SafeText
+            position={[0, -0.024, 0.012]}
+            fontSize={0.048}
+            color={isSmokeTripped ? '#ef4444' : smokeDensity > 30 ? '#f59e0b' : '#10b981'}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {`${smokeDensity.toFixed(0)} ppm ${isSmokeTripped ? '⚠️ TRIP' : '[OK]'}`}
+          </SafeText>
+        </group>
       </group>
 
-      {/* Central Digital Multi-Meter / Sensor Controller Display */}
+      {/* =========================================================================
+          CENTRAL DIGITAL MULTI-METER CONSOLE & FLASHING ALARM BEACON
+         ========================================================================= */}
       <group position={[0, 1.25, -0.3]}>
+        {/* Console Box */}
         <mesh>
-          <boxGeometry args={[0.7, 0.35, 0.2]} />
+          <boxGeometry args={[0.85, 0.42, 0.22]} />
           <meshStandardMaterial color="#0f172a" metalness={0.7} roughness={0.3} />
         </mesh>
-        <mesh position={[0, 0, 0.105]}>
-          <planeGeometry args={[0.55, 0.25]} />
-          <meshBasicMaterial color="#022c22" />
+        {/* LCD Screen Display */}
+        <mesh position={[0, 0, 0.112]}>
+          <planeGeometry args={[0.72, 0.32]} />
+          <meshBasicMaterial color={isAlarmBuzzerActive ? '#450a0a' : '#022c22'} />
         </mesh>
-        <SafeText position={[0, 0.05, 0.11]} fontSize={0.07} color="#10b981">
-          CHILLER: 4.8 L/min [OK]
+        <SafeText
+          position={[0, 0.08, 0.115]}
+          fontSize={0.055}
+          color={isFlowTripped ? '#ef4444' : '#10b981'}
+          anchorX="center"
+          anchorY="middle"
+        >
+          {`CHILLER: ${chillerFlowRate.toFixed(1)} L/min [${chillerFlowRate >= 2.0 ? 'NORMAL' : 'FAULT: LOW FLOW'}]`}
         </SafeText>
-        <SafeText position={[0, -0.05, 0.11]} fontSize={0.07} color="#06b6d4">
-          TEMP: 24.2 °C | AIR: CLEAN
+        <SafeText
+          position={[0, 0.0, 0.115]}
+          fontSize={0.055}
+          color={isTempTripped ? '#ef4444' : '#06b6d4'}
+          anchorX="center"
+          anchorY="middle"
+        >
+          {`TEMP: ${sampleTemperature.toFixed(1)} °C [${sampleTemperature <= 95 ? 'NORMAL' : 'FAULT: OVERHEAT'}]`}
         </SafeText>
+        <SafeText
+          position={[0, -0.08, 0.115]}
+          fontSize={0.055}
+          color={isSmokeTripped ? '#ef4444' : '#a855f7'}
+          anchorX="center"
+          anchorY="middle"
+        >
+          {`SMOKE: ${smokeDensity.toFixed(0)} ppm [${smokeDensity <= 60 ? 'NORMAL' : 'FAULT: HEAVY SMOKE'}]`}
+        </SafeText>
+
+        {/* Flashing Emergency Alarm Strobe Beacon */}
+        <group position={[0, 0.25, 0]}>
+          <mesh position={[0, 0, 0]}>
+            <cylinderGeometry args={[0.04, 0.05, 0.06, 16]} />
+            <meshStandardMaterial color="#334155" metalness={0.8} />
+          </mesh>
+          <mesh ref={alarmBeacon} position={[0, 0.05, 0]}>
+            <cylinderGeometry args={[0.035, 0.035, 0.08, 16]} />
+            <meshStandardMaterial
+              color="#ef4444"
+              emissive="#ef4444"
+              emissiveIntensity={isAlarmBuzzerActive ? 4.0 : 0.1}
+              transparent
+              opacity={0.9}
+            />
+          </mesh>
+          {isAlarmBuzzerActive && (
+            <pointLight position={[0, 0.15, 0]} intensity={4.0} color="#ef4444" distance={5} />
+          )}
+        </group>
       </group>
 
       {/* Floating 3D Station Identifier */}
       <SafeText
-        position={[0, 2.1, 0]}
+        position={[0, 2.15, 0]}
         fontSize={0.2}
-        color="#10b981"
+        color={isAlarmBuzzerActive ? '#ef4444' : '#10b981'}
         anchorX="center"
         anchorY="bottom"
       >

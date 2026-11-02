@@ -23,6 +23,12 @@ import {
   Scan,
   Scissors,
   Palette,
+  Sliders,
+  Thermometer,
+  Wind,
+  Droplets,
+  AlertOctagon,
+  Power,
 } from 'lucide-react';
 
 export function MachineControlOverlay() {
@@ -65,6 +71,21 @@ export function MachineControlOverlay() {
     stopCuring,
     resetCoating,
     toggleTurntable,
+    laserPowerWatts,
+    scanSpeedMmS,
+    pulseFrequencyKhz,
+    setLaserPowerWatts,
+    setScanSpeedMmS,
+    setPulseFrequencyKhz,
+    sampleTemperature,
+    chillerFlowRate,
+    smokeDensity,
+    isAlarmBuzzerActive,
+    setSampleTemperature,
+    setChillerFlowRate,
+    setSmokeDensity,
+    triggerEmergencyStop,
+    resetSensors,
   } = useLabStore();
 
   const bbox = useMemo(() => computeBoundingBox(currentToolpaths), [currentToolpaths]);
@@ -83,12 +104,169 @@ export function MachineControlOverlay() {
     }
   }, [actionMessage, clearActionMessage]);
 
-  if (!currentStationId || currentStationId === 'SENSOR_STATION') {
+  if (!currentStationId) {
     // Only show toast if there is a message
     if (!actionMessage) return null;
     return (
       <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
         <ToastNotification message={actionMessage} onClose={clearActionMessage} />
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // SENSOR STATION FAULT INJECTION & SAFETY DOCK
+  // =========================================================================
+  if (currentStationId === 'SENSOR_STATION') {
+    const isFlowTripped = chillerFlowRate < 2.0;
+    const isTempTripped = sampleTemperature > 95;
+    const isSmokeTripped = smokeDensity > 60;
+    const hasAnyFault = isFlowTripped || isTempTripped || isSmokeTripped || isAlarmBuzzerActive;
+
+    return (
+      <div className="fixed inset-x-0 bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3">
+        {actionMessage && (
+          <div className="mb-3 pointer-events-auto max-w-xl w-full">
+            <ToastNotification message={actionMessage} onClose={clearActionMessage} />
+          </div>
+        )}
+
+        <section
+          aria-label="Bảng giả lập sự cố cảm biến và ngắt khẩn cấp"
+          className="glass-panel w-full max-w-4xl rounded-2xl border border-slate-700/80 shadow-2xl p-3 md:p-4 pointer-events-auto text-slate-100 flex flex-col gap-3 backdrop-blur-xl bg-slate-950/85"
+        >
+          {/* Header Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+            <div className="flex items-center space-x-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <h3 className="text-xs md:text-sm font-bold tracking-wide text-white uppercase font-mono">
+                BẢNG GIẢ LẬP SỰ CỐ AN TOÀN (FAULT INJECTION)
+              </h3>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700">
+                ACTIVE HARDWARE INTERLOCK
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {hasAnyFault ? (
+                <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/60 text-rose-300 text-xs font-mono font-bold animate-pulse">
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                  <span>SỰ CỐ KÍCH HOẠT: INTERLOCK NGẮT TIA LASER</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>CẢM BIẾN ĐỊNH MỨC AN TOÀN</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Interactive Fault Injection Sliders */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* 1. Chiller Flow Slider */}
+            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+              isFlowTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
+            }`}>
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                  <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Nước làm mát Chiller:</span>
+                </span>
+                <span className={`font-mono font-bold ${isFlowTripped ? 'text-rose-400' : 'text-cyan-300'}`}>
+                  {chillerFlowRate.toFixed(1)} L/min
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="6.0"
+                step="0.1"
+                value={chillerFlowRate}
+                onChange={(e) => setChillerFlowRate(parseFloat(e.target.value))}
+                className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              />
+              <span className="text-[10px] mt-1.5 font-mono text-slate-400">
+                {isFlowTripped ? '⚠️ Dưới 2.0 L/min: Nguy cơ nổ bóng!' : '✓ Ngưỡng an toàn ≥ 2.0 L/min'}
+              </span>
+            </div>
+
+            {/* 2. Workpiece Temperature Slider */}
+            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+              isTempTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
+            }`}>
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                  <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Nhiệt độ phôi cắt:</span>
+                </span>
+                <span className={`font-mono font-bold ${isTempTripped ? 'text-rose-400' : 'text-amber-300'}`}>
+                  {sampleTemperature.toFixed(0)} °C
+                </span>
+              </div>
+              <input
+                type="range"
+                min="20"
+                max="140"
+                step="1"
+                value={sampleTemperature}
+                onChange={(e) => setSampleTemperature(parseFloat(e.target.value))}
+                className="w-full accent-amber-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              />
+              <span className="text-[10px] mt-1.5 font-mono text-slate-400">
+                {isTempTripped ? '⚠️ Trên 95°C: Nguy cơ bốc cháy!' : '✓ Ngưỡng an toàn ≤ 95°C'}
+              </span>
+            </div>
+
+            {/* 3. Optical Smoke Concentration Slider */}
+            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+              isSmokeTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
+            }`}>
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                  <Wind className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Mật độ khói (Tyndall):</span>
+                </span>
+                <span className={`font-mono font-bold ${isSmokeTripped ? 'text-rose-400' : 'text-purple-300'}`}>
+                  {smokeDensity.toFixed(0)} ppm
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={smokeDensity}
+                onChange={(e) => setSmokeDensity(parseFloat(e.target.value))}
+                className="w-full accent-purple-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              />
+              <span className="text-[10px] mt-1.5 font-mono text-slate-400">
+                {isSmokeTripped ? '⚠️ Trên 60 ppm: Buồng quá nhiều khói!' : '✓ Quạt hút hoạt động tốt'}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Row: Emergency Stop Button + Reset Button */}
+          <div className="flex items-center space-x-2 pt-1 border-t border-slate-800/80">
+            <button
+              onClick={triggerEmergencyStop}
+              className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-700 to-red-600 hover:from-rose-600 hover:to-red-500 text-white font-bold text-xs flex items-center justify-center space-x-2 border border-rose-400 shadow-xl shadow-rose-950/60 active:scale-95 transition-all"
+              title="Kích hoạt ngắt khẩn cấp E-STOP toàn bộ hệ thống xưởng"
+            >
+              <AlertOctagon className="w-4 h-4 text-white fill-rose-900" />
+              <span>NÚT DỪNG KHẨN CẤP (EMERGENCY STOP)</span>
+            </button>
+
+            <button
+              onClick={resetSensors}
+              className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center space-x-1.5 border border-slate-700 transition-all active:scale-95"
+              title="Khôi phục trạng thái cảm biến về mức bình thường"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Reset Về Định Mức</span>
+            </button>
+          </div>
+        </section>
       </div>
     );
   }
@@ -541,6 +719,72 @@ export function MachineControlOverlay() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Laser Parameter Tuning Row (Công suất P, Tốc độ v, Tần số f, Năng lượng đường E_line) */}
+        <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex flex-col md:flex-row items-center gap-3 text-xs">
+          <div className="flex items-center space-x-1.5 text-slate-400 font-mono text-[11px] flex-shrink-0">
+            <Sliders className="w-3.5 h-3.5 text-lab-cyan" />
+            <span>Thông số công nghệ:</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 flex-1 w-full">
+            {/* P slider */}
+            <div className="flex flex-col gap-1">
+              <div className="flex justify-between text-[10px] font-mono">
+                <span className="text-slate-400">Công suất (P):</span>
+                <span className="text-amber-300 font-bold">{laserPowerWatts} W</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="100"
+                step="1"
+                value={laserPowerWatts}
+                onChange={(e) => setLaserPowerWatts(parseInt(e.target.value))}
+                className="accent-amber-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              />
+            </div>
+
+            {/* v slider */}
+            <div className="flex flex-col gap-1">
+              <div className="flex justify-between text-[10px] font-mono">
+                <span className="text-slate-400">Tốc độ (v):</span>
+                <span className="text-cyan-300 font-bold">{scanSpeedMmS} mm/s</span>
+              </div>
+              <input
+                type="range"
+                min="30"
+                max="800"
+                step="10"
+                value={scanSpeedMmS}
+                onChange={(e) => setScanSpeedMmS(parseInt(e.target.value))}
+                className="accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              />
+            </div>
+
+            {/* f slider */}
+            <div className="flex flex-col gap-1">
+              <div className="flex justify-between text-[10px] font-mono">
+                <span className="text-slate-400">Tần số xung (f):</span>
+                <span className="text-emerald-300 font-bold">{pulseFrequencyKhz} kHz</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="80"
+                step="1"
+                value={pulseFrequencyKhz}
+                onChange={(e) => setPulseFrequencyKhz(parseInt(e.target.value))}
+                className="accent-emerald-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono flex-shrink-0">
+            <span className="text-slate-400">E_line:</span>
+            <span className="text-amber-400 font-bold">{(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm</span>
           </div>
         </div>
 

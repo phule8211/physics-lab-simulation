@@ -251,8 +251,13 @@ export function PlayerController() {
         const y = Math.max(0.2, lookAt[1] + r * Math.sin(orbitPitch.current));
         const z = lookAt[2] + r * Math.cos(orbitPitch.current) * Math.cos(orbitYaw.current);
 
+        // Frame offset: Shift focal target rightwards so the machine is centered in the visible left 60% of screen (avoiding KnowledgePanel occlusion)
+        const forward = new THREE.Vector3(lookAt[0] - x, 0, lookAt[2] - z).normalize();
+        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+        const adjustedLookAt = new THREE.Vector3(lookAt[0], lookAt[1], lookAt[2]).addScaledVector(right, 0.32 * r);
+
         camera.position.lerp(new THREE.Vector3(x, y, z), 0.15);
-        camera.lookAt(lookAt[0], lookAt[1], lookAt[2]);
+        camera.lookAt(adjustedLookAt.x, adjustedLookAt.y, adjustedLookAt.z);
       }
       return;
     }
