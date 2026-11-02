@@ -283,27 +283,47 @@ export function WorkshopEnvironment() {
           />
         </mesh>
 
-        {/* Overhead Glowing Signboard */}
-        <group position={[0, 3.6, 0.12]}>
+        {/* Overhead Cleanroom Illuminated Lightbox Signboard */}
+        <group position={[0, 3.46, 0.12]}>
+          {/* Beveled dark industrial aluminum chassis */}
           <mesh castShadow>
-            <boxGeometry args={[3.4, 0.5, 0.06]} />
-            <meshStandardMaterial color="#090d16" roughness={0.4} metalness={0.6} />
+            <boxGeometry args={[3.6, 0.44, 0.08]} />
+            <meshStandardMaterial color="#0b1120" roughness={0.3} metalness={0.8} />
           </mesh>
+          {/* Glowing neon amber status accent indicator */}
+          <mesh position={[0, 0.21, 0.042]}>
+            <boxGeometry args={[3.5, 0.02, 0.01]} />
+            <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1.0} />
+          </mesh>
+          {/* Cyan neon border trim */}
+          <mesh position={[0, 0, 0.041]}>
+            <planeGeometry args={[3.54, 0.38]} />
+            <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.6} />
+          </mesh>
+          {/* Inner dark matte faceplate */}
+          <mesh position={[0, 0, 0.042]}>
+            <planeGeometry args={[3.48, 0.32]} />
+            <meshStandardMaterial color="#030712" roughness={0.3} metalness={0.5} />
+          </mesh>
+          {/* Vietnamese Room Title */}
           <SafeText
-            position={[0, 0.08, 0.035]}
-            fontSize={0.13}
+            position={[0, 0.055, 0.045]}
+            fontSize={0.12}
             color="#38bdf8"
             anchorX="center"
             anchorY="middle"
+            letterSpacing={0.03}
           >
             PHÒNG PHỦ SƠN BỀ MẶT & SẤY UV
           </SafeText>
+          {/* Technical Subtitle */}
           <SafeText
-            position={[0, -0.1, 0.035]}
-            fontSize={0.085}
+            position={[0, -0.075, 0.045]}
+            fontSize={0.075}
             color="#fbbf24"
             anchorX="center"
             anchorY="middle"
+            letterSpacing={0.05}
           >
             COATING & FINISHING CLEANROOM
           </SafeText>
@@ -391,8 +411,8 @@ export function WorkshopEnvironment() {
         />
       </mesh>
 
-      {/* Vertical Aluminum Panel Divider Trims along North Wall */}
-      {[-7.5, -5, -2.5, 0, 2.5, 5, 7.5].map((x) => (
+      {/* Vertical Aluminum Panel Divider Trims along North Wall (skipping open doorway x in [-1.8, 1.8]) */}
+      {[-7.5, -5, -2.5, 2.5, 5, 7.5].map((x) => (
         <mesh key={`trim-north-${x}`} position={[x, 2.25, -7.89]}>
           <boxGeometry args={[0.04, 4.5, 0.02]} />
           <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.25} />
@@ -505,15 +525,24 @@ export function WorkshopEnvironment() {
       {/* =========================================================================
           6. LAB SIGNAGE & POSTERS (Typography with Emissive Glow)
          ========================================================================= */}
-      {/* Main Lab Title Header Sign on North Wall */}
-      <group position={[0, 3.4, -7.88]}>
+      {/* Main Lab Title Header Sign along Upper Wall Frieze (Clear of Doorway) */}
+      <group position={[0, 4.14, -7.88]}>
         <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[10.5, 1.1]} />
-          <meshStandardMaterial color="#090d16" roughness={0.2} metalness={0.6} />
+          <planeGeometry args={[10.6, 0.52]} />
+          <meshStandardMaterial color="#070d18" roughness={0.25} metalness={0.6} />
+        </mesh>
+        {/* Top & Bottom glowing cyan border lines */}
+        <mesh position={[0, 0.25, 0.005]}>
+          <planeGeometry args={[10.6, 0.016]} />
+          <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.9} />
+        </mesh>
+        <mesh position={[0, -0.25, 0.005]}>
+          <planeGeometry args={[10.6, 0.016]} />
+          <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.9} />
         </mesh>
         <SafeText
-          position={[0, 0.22, 0.01]}
-          fontSize={0.36}
+          position={[0, 0.075, 0.01]}
+          fontSize={0.22}
           color="#38bdf8"
           anchorX="center"
           anchorY="middle"
@@ -522,11 +551,12 @@ export function WorkshopEnvironment() {
           ADVANCED PHOTONICS & LASER LAB
         </SafeText>
         <SafeText
-          position={[0, -0.18, 0.01]}
-          fontSize={0.19}
+          position={[0, -0.10, 0.01]}
+          fontSize={0.12}
           color="#94a3b8"
           anchorX="center"
           anchorY="middle"
+          letterSpacing={0.02}
         >
           PHÒNG THÍ NGHIỆM VẬT LÝ QUANG HỌC & GIA CÔNG LASER 3D
         </SafeText>
