@@ -11,7 +11,6 @@ import {
   MousePointer,
   Activity,
   CheckCircle2,
-  Smartphone,
 } from 'lucide-react';
 
 export function HelpGuideModal() {
@@ -75,19 +74,6 @@ export function HelpGuideModal() {
         { key: 'X', desc: 'Bật / Tắt chế độ X-Ray nhìn thấu cấu tạo quang học máy' },
         { key: 'P', desc: 'Bật / Tắt bảng chẩn đoán hiệu năng WebGL 60 FPS & Draw Calls' },
         { key: 'H', desc: 'Mở / Đóng bảng hướng dẫn phím tắt này' },
-      ],
-    },
-    {
-      title: 'Điều Khiển Trên Thiết Bị Di Động (Mobile & Cảm Ứng)',
-      icon: Smartphone,
-      color: 'text-emerald-400',
-      shortcuts: [
-        { key: 'Cần gạt ảo (Trái)', desc: 'Chạm và kéo joystick góc dưới trái để di chuyển 360° tự do' },
-        { key: 'Vuốt màn hình (Phải)', desc: 'Vuốt ngón tay trên nửa phải màn hình để xoay camera 360°' },
-        { key: 'Nút [E] Tương tác', desc: 'Chạm nút [E] để mở máy, nói chuyện KS. Dũng, rót nước' },
-        { key: 'Nút [Nhảy] & [Chạy]', desc: 'Chạm nút mũi tên để nhảy lên, chạm nút sấm sét để bật chạy nhanh' },
-        { key: 'Nút [T1 ⇄ T2]', desc: 'Chuyển đổi tức thời giữa Tầng 1 (Xưởng laser) và Tầng 2 (Phòng sạch)' },
-        { key: 'Trạm máy nhanh ▾', desc: 'Chạm nút trên cùng bên trái để chuyển nhanh tới 5 cỗ máy laser' },
       ],
     },
   ];
@@ -171,11 +157,8 @@ export function HelpGuideModal() {
         </div>
 
         {/* Footer */}
-        <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2.5 flex-shrink-0 text-xs font-mono text-slate-400">
-          <div className="flex flex-col text-left">
-            <span>Nhấn phím <kbd className="text-lab-cyan">ESC</kbd> hoặc <kbd className="text-lab-cyan">H</kbd> để đóng</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Bản quyền & Phát triển: Lê Ngọc Phú & Đinh Thiên Ân (dthienan762@gmail.com)</span>
-          </div>
+        <div className="pt-4 border-t border-slate-800 flex items-center justify-between flex-shrink-0 text-xs font-mono text-slate-400">
+          <span>Nhấn phím <kbd className="text-lab-cyan">ESC</kbd> hoặc <kbd className="text-lab-cyan">H</kbd> để đóng</span>
           <button
             onClick={closeHelpModal}
             className="px-5 py-2 rounded-xl bg-lab-cyan hover:bg-cyan-400 text-slate-950 font-bold transition-all shadow-lg shadow-lab-cyan/20"

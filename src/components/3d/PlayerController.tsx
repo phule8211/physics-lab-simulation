@@ -7,9 +7,7 @@ import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
 import { MachineId, StationId } from '../../types/lab';
 import { getGroundHeightAt, SECOND_FLOOR_STATIONS, LAB_TABLES, WALL_SWITCHES } from '../../data/staircaseConfig';
-import { mobileInputState } from '../../utils/mobileInput';
 import { sound } from '../../utils/audioSystem';
-
 const EYE_HEIGHT = 1.7;
 const WALK_SPEED = 4.2;
 const SPRINT_SPEED = 7.5;
@@ -39,20 +37,7 @@ export function PlayerController() {
     isEquipmentModalOpen,
     isSinkModalOpen,
     isWorkbenchModalOpen,
-    isTouchDevice,
-    setIsTouchDevice,
-    deviceMode,
-    isDeviceSelectModalOpen,
   } = useLabStore();
-
-  useEffect(() => {
-    const isTouch =
-      typeof window !== 'undefined' &&
-      ('ontouchstart' in window ||
-        navigator.maxTouchPoints > 0 ||
-        window.matchMedia('(pointer: coarse)').matches);
-    setIsTouchDevice(isTouch);
-  }, [setIsTouchDevice]);
 
   const isAnyModalOpen =
     isDesignModalOpen ||
@@ -63,7 +48,6 @@ export function PlayerController() {
     isEquipmentModalOpen ||
     isSinkModalOpen ||
     isWorkbenchModalOpen ||
-    isDeviceSelectModalOpen ||
     activeStationId !== null ||
     mode === 'INSPECTING';
 
@@ -151,8 +135,7 @@ export function PlayerController() {
         store.isChemicalModalOpen ||
         store.isEquipmentModalOpen ||
         store.isSinkModalOpen ||
-        store.isWorkbenchModalOpen ||
-        store.isDeviceSelectModalOpen;
+        store.isWorkbenchModalOpen;
 
       const requestLock = () => {
         try {
@@ -218,9 +201,6 @@ export function PlayerController() {
           requestLock();
         } else if (store.isHelpModalOpen) {
           store.closeHelpModal();
-          requestLock();
-        } else if (store.isDeviceSelectModalOpen) {
-          store.closeDeviceSelectModal();
           requestLock();
         } else if (currentMode === 'INSPECTING') {
           exitInspection();
@@ -376,8 +356,7 @@ export function PlayerController() {
         store.isChemicalModalOpen ||
         store.isEquipmentModalOpen ||
         store.isSinkModalOpen ||
-        store.isWorkbenchModalOpen ||
-        store.isDeviceSelectModalOpen;
+        store.isWorkbenchModalOpen;
 
       if (isAnyModalCurrentlyOpen) {
         lastClientX = null;
@@ -451,8 +430,7 @@ export function PlayerController() {
         store.isChemicalModalOpen ||
         store.isEquipmentModalOpen ||
         store.isSinkModalOpen ||
-        store.isWorkbenchModalOpen ||
-        store.isDeviceSelectModalOpen;
+        store.isWorkbenchModalOpen;
 
       if (isAnyModalCurrentlyOpen) return;
 
@@ -522,7 +500,6 @@ export function PlayerController() {
         store.isEquipmentModalOpen ||
         store.isSinkModalOpen ||
         store.isWorkbenchModalOpen ||
-        store.isDeviceSelectModalOpen ||
         store.mode === 'INSPECTING';
 
       if (store.mode === 'WALKING' && !isAnyModalCurrentlyOpen) {
@@ -575,27 +552,6 @@ useFrame((_, delta) => {
     verticalVelocity.current = 0;
     isJumping.current = false;
     useLabStore.getState().clearTeleportTarget();
-  }
-
-  // Handle Touch Screen Look Delta (Yaw & Pitch)
-  if (mobileInputState.lookDelta.dx !== 0 || mobileInputState.lookDelta.dy !== 0) {
-    if (mode === 'WALKING') {
-      const lookSensitivity = 0.0035;
-      const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-      euler.setFromQuaternion(camera.quaternion);
-      euler.y -= mobileInputState.lookDelta.dx * lookSensitivity;
-      euler.x -= mobileInputState.lookDelta.dy * lookSensitivity;
-      euler.x = Math.max(-1.42, Math.min(1.42, euler.x));
-      camera.quaternion.setFromEuler(euler);
-    } else if (mode === 'INSPECTING') {
-      orbitYaw.current -= mobileInputState.lookDelta.dx * 0.006;
-      orbitPitch.current = Math.max(
-        0.05,
-        Math.min(Math.PI / 2.3, orbitPitch.current + mobileInputState.lookDelta.dy * 0.006)
-      );
-    }
-    mobileInputState.lookDelta.dx = 0;
-    mobileInputState.lookDelta.dy = 0;
   }
 
   // MODE 1: INSPECTION TRANSITION (LERP TO / FROM STATION)
@@ -676,7 +632,7 @@ useFrame((_, delta) => {
   // MODE 3: NORMAL FIRST-PERSON WALKING
   if (mode === 'WALKING') {
     const moveDirection = new THREE.Vector3();
-    const isSprinting = keys.current.sprint || mobileInputState.sprint;
+    const isSprinting = keys.current.sprint;
     const currentSpeed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
 
     // Extract forward and right vectors from camera (ignoring vertical pitch)
@@ -694,20 +650,10 @@ useFrame((_, delta) => {
     if (keys.current.right) moveDirection.add(right);
     if (keys.current.left) moveDirection.sub(right);
 
-    // Integrate Mobile Virtual Joystick analog input:
-    // move.y > 0 is forward, move.y < 0 is backward
-    // move.x > 0 is strafe right, move.x < 0 is strafe left
-    if (mobileInputState.move.x !== 0 || mobileInputState.move.y !== 0) {
-      moveDirection.addScaledVector(forward, mobileInputState.move.y);
-      moveDirection.addScaledVector(right, mobileInputState.move.x);
-    }
-
     if (moveDirection.lengthSq() > 0) {
-      const joyMag = Math.hypot(mobileInputState.move.x, mobileInputState.move.y);
-      const analogScale = joyMag > 0 ? Math.min(1, Math.max(0.35, joyMag)) : 1;
       moveDirection.normalize();
-      velocity.current.x = moveDirection.x * currentSpeed * analogScale;
-      velocity.current.z = moveDirection.z * currentSpeed * analogScale;
+      velocity.current.x = moveDirection.x * currentSpeed;
+      velocity.current.z = moveDirection.z * currentSpeed;
     } else {
       velocity.current.x *= Math.max(0, 1 - dt * 12);
       velocity.current.z *= Math.max(0, 1 - dt * 12);
@@ -741,11 +687,10 @@ useFrame((_, delta) => {
     setCameraHeading(heading);
 
     // Jump & gravity physics
-    if ((keys.current.jump || mobileInputState.jump) && !isJumping.current) {
+    if (keys.current.jump && !isJumping.current) {
       isJumping.current = true;
       verticalVelocity.current = 4.2;
     }
-    mobileInputState.jump = false;
 
     if (isJumping.current) {
       verticalVelocity.current -= 14 * dt;
