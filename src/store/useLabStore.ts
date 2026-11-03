@@ -11,6 +11,7 @@ import {
   autoFitToolpaths,
 } from '../data/vectorDesigns';
 import { sound } from '../utils/audioSystem';
+import { setMobileSprint } from '../utils/mobileInput';
 
 export interface ActionToast {
   id: number;
@@ -207,6 +208,15 @@ interface LabState {
   heldItem: HeldItemType;
   setHeldItem: (item: HeldItemType) => void;
 
+  // Mobile & Virtual Controls State
+  isTouchDevice: boolean;
+  setIsTouchDevice: (isTouch: boolean) => void;
+  isMobileSprint: boolean;
+  toggleMobileSprint: () => void;
+  teleportTarget: [number, number, number] | null;
+  teleportTo: (pos: [number, number, number]) => void;
+  clearTeleportTarget: () => void;
+
   // CAD Vector Design actions
   openDesignModal: () => void;
   closeDesignModal: () => void;
@@ -245,6 +255,22 @@ export const useLabStore = create<LabState>((set, get) => ({
   activeTab: 'PHYSICS_PRINCIPLE',
   isMachineRunning: true,
   soundEnabled: true,
+
+  // Mobile & Virtual Controls State
+  isTouchDevice: false,
+  setIsTouchDevice: (isTouch: boolean) => set({ isTouchDevice: isTouch }),
+  isMobileSprint: false,
+  toggleMobileSprint: () => {
+    const next = !get().isMobileSprint;
+    setMobileSprint(next);
+    set({ isMobileSprint: next });
+  },
+  teleportTarget: null,
+  teleportTo: (pos: [number, number, number]) => {
+    sound.playWhoosh();
+    set({ teleportTarget: pos });
+  },
+  clearTeleportTarget: () => set({ teleportTarget: null }),
 
   // Aptomat Circuit Breaker State (Công tắc Aptomat chiếu sáng xưởng)
   isAptomatOn: true,

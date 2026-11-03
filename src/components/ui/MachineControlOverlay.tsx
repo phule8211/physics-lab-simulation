@@ -110,7 +110,7 @@ export function MachineControlOverlay() {
     // Only show toast if there is a message
     if (!actionMessage) return null;
     return (
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto max-w-[92vw] sm:max-w-md w-full px-2">
         <ToastNotification message={actionMessage} onClose={clearActionMessage} />
       </div>
     );
@@ -891,11 +891,11 @@ function ToastNotification({
   return (
     <div
       role="alert"
-      className={`p-3.5 rounded-2xl border shadow-2xl flex items-start justify-between gap-3 backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 ${styles[message.type]}`}
+      className={`p-2.5 sm:p-3.5 rounded-2xl border shadow-2xl flex items-start justify-between gap-2.5 backdrop-blur-xl animate-in slide-in-from-top-4 duration-200 ${styles[message.type]}`}
     >
-      <div className="flex items-start space-x-2.5">
+      <div className="flex items-start space-x-2 sm:space-x-2.5">
         {icons[message.type]}
-        <p className="text-xs md:text-sm font-medium leading-relaxed">{message.text}</p>
+        <p className="text-[11px] sm:text-xs md:text-sm font-medium leading-relaxed">{message.text}</p>
       </div>
       <button
         onClick={onClose}

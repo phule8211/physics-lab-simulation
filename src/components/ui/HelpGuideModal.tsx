@@ -11,6 +11,7 @@ import {
   MousePointer,
   Activity,
   CheckCircle2,
+  Smartphone,
 } from 'lucide-react';
 
 export function HelpGuideModal() {
@@ -75,6 +76,19 @@ export function HelpGuideModal() {
         { key: 'H', desc: 'Mở / Đóng bảng hướng dẫn phím tắt này' },
       ],
     },
+    {
+      title: 'Điều Khiển Trên Thiết Bị Di Động (Mobile & Cảm Ứng)',
+      icon: Smartphone,
+      color: 'text-emerald-400',
+      shortcuts: [
+        { key: 'Cần gạt ảo (Trái)', desc: 'Chạm và kéo joystick góc dưới trái để di chuyển 360° tự do' },
+        { key: 'Vuốt màn hình (Phải)', desc: 'Vuốt ngón tay trên nửa phải màn hình để xoay camera 360°' },
+        { key: 'Nút [E] Tương tác', desc: 'Chạm nút [E] để mở máy, nói chuyện KS. Dũng, rót nước' },
+        { key: 'Nút [Nhảy] & [Chạy]', desc: 'Chạm nút mũi tên để nhảy lên, chạm nút sấm sét để bật chạy nhanh' },
+        { key: 'Nút [T1 ⇄ T2]', desc: 'Chuyển đổi tức thời giữa Tầng 1 (Xưởng laser) và Tầng 2 (Phòng sạch)' },
+        { key: 'Trạm máy nhanh ▾', desc: 'Chạm nút trên cùng bên trái để chuyển nhanh tới 5 cỗ máy laser' },
+      ],
+    },
   ];
 
   return (
@@ -82,12 +96,12 @@ export function HelpGuideModal() {
       role="dialog"
       aria-modal="true"
       aria-label="Hướng dẫn điều khiển & phím tắt phòng thí nghiệm"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none"
       onClick={closeHelpModal}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl p-6 text-slate-100 flex flex-col max-h-[90vh] overflow-hidden"
+        className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl p-4 sm:p-6 text-slate-100 flex flex-col max-h-[90vh] overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800 flex-shrink-0">

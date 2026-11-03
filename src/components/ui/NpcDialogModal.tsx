@@ -152,13 +152,13 @@ export function NpcDialogModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn select-none">
       <div className="relative w-full max-w-4xl bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
         {/* Left Sidebar: Character Portrait & Status */}
-        <div className="w-full md:w-80 bg-gradient-to-b from-slate-800/90 to-slate-950 p-6 flex flex-col items-center justify-between border-b md:border-b-0 md:border-r border-slate-700/60">
-          <div className="flex flex-col items-center text-center">
+        <div className="w-full md:w-80 bg-gradient-to-b from-slate-800/90 to-slate-950 p-3.5 sm:p-6 flex flex-row md:flex-col items-center justify-between border-b md:border-b-0 md:border-r border-slate-700/60 flex-shrink-0">
+          <div className="flex flex-row md:flex-col items-center text-left md:text-center space-x-3 md:space-x-0 w-full">
             {/* Portrait Frame */}
-            <div className="relative w-28 h-28 rounded-full p-1 bg-gradient-to-br from-lab-cyan via-blue-500 to-indigo-600 shadow-xl shadow-lab-cyan/20 mb-4">
+            <div className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full p-1 bg-gradient-to-br from-lab-cyan via-blue-500 to-indigo-600 shadow-xl shadow-lab-cyan/20 flex-shrink-0 md:mb-4">
               <div className="w-full h-full rounded-full bg-slate-900 overflow-hidden flex items-center justify-center border-2 border-slate-800">
                 {/* Stylized Avatar Illustration */}
-                <div className="relative flex flex-col items-center justify-center">
+                <div className="relative flex flex-col items-center justify-center scale-75 sm:scale-90 md:scale-100">
                   <div className="w-12 h-12 rounded-full bg-amber-200 border-2 border-slate-700 relative">
                     {/* Glasses */}
                     <div className="absolute top-4 left-1.5 right-1.5 h-3 rounded-sm border border-cyan-400 bg-cyan-400/30" />
@@ -167,24 +167,26 @@ export function NpcDialogModal() {
                   <div className="w-20 h-10 bg-slate-100 rounded-t-2xl mt-1 border-t-2 border-slate-300" />
                 </div>
               </div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center text-white text-xs shadow-md">
-                <Award className="w-4 h-4" />
+              <div className="absolute bottom-0 right-0 w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center text-white text-[10px] sm:text-xs shadow-md">
+                <Award className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
 
-            <h2 className="text-lg font-bold text-white tracking-wide">
-              KS. Nguyễn Văn Dũng
-            </h2>
-            <span className="text-xs text-lab-cyan font-mono font-medium mt-0.5">
-              Kỹ sư Trưởng / Cố vấn Kỹ thuật
-            </span>
-            <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
-              Chuyên gia Quang học Laser & Công nghệ Bán dẫn Nano với 15 năm kinh nghiệm nghiên cứu và vận hành xưởng mô phỏng.
-            </p>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm sm:text-base md:text-lg font-bold text-white tracking-wide truncate">
+                KS. Nguyễn Văn Dũng
+              </h2>
+              <span className="text-[10px] sm:text-xs text-lab-cyan font-mono font-medium block mt-0.5 truncate">
+                Kỹ sư Trưởng / Cố vấn Kỹ thuật
+              </span>
+              <p className="hidden md:block text-[11px] text-slate-400 mt-2 leading-relaxed">
+                Chuyên gia Quang học Laser & Công nghệ Bán dẫn Nano với 15 năm kinh nghiệm nghiên cứu và vận hành xưởng mô phỏng.
+              </p>
+            </div>
           </div>
 
           {/* Quick Stats Pill */}
-          <div className="w-full bg-slate-900/80 rounded-2xl p-3 border border-slate-800 text-left space-y-1.5 mt-4">
+          <div className="hidden md:block w-full bg-slate-900/80 rounded-2xl p-3 border border-slate-800 text-left space-y-1.5 mt-4">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-400">Trạng thái:</span>
               <span className="text-emerald-400 font-mono font-semibold flex items-center space-x-1">
@@ -200,7 +202,7 @@ export function NpcDialogModal() {
         </div>
 
         {/* Right Content: Dialogue & Topic Selection */}
-        <div className="flex-1 flex flex-col p-6 overflow-y-auto">
+        <div className="flex-1 flex flex-col p-3.5 sm:p-6 overflow-y-auto">
           {/* Modal Header */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-800">
             <div className="flex items-center space-x-2">

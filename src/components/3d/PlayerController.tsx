@@ -8,6 +8,7 @@ import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
 import { MachineId, StationId } from '../../types/lab';
 import { getGroundHeightAt, SECOND_FLOOR_STATIONS } from '../../data/staircaseConfig';
+import { mobileInputState } from '../../utils/mobileInput';
 
 const EYE_HEIGHT = 1.7;
 const WALK_SPEED = 4.2;
@@ -39,7 +40,18 @@ export function PlayerController() {
     isChemicalModalOpen,
     isEquipmentModalOpen,
     isSinkModalOpen,
+    isTouchDevice,
+    setIsTouchDevice,
   } = useLabStore();
+
+  useEffect(() => {
+    const isTouch =
+      typeof window !== 'undefined' &&
+      ('ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        window.matchMedia('(pointer: coarse)').matches);
+    setIsTouchDevice(isTouch);
+  }, [setIsTouchDevice]);
 
   const isAnyModalOpen =
     isDesignModalOpen ||
@@ -296,6 +308,38 @@ export function PlayerController() {
 useFrame((_, delta) => {
   const dt = Math.min(delta, 0.1);
 
+  // Check if any teleportation is requested (e.g. from Mobile Floor toggle or Station quick select)
+  const currentTeleport = useLabStore.getState().teleportTarget;
+  if (currentTeleport) {
+    position.current.set(currentTeleport[0], currentTeleport[1], currentTeleport[2]);
+    camera.position.set(currentTeleport[0], currentTeleport[1], currentTeleport[2]);
+    velocity.current.set(0, 0, 0);
+    verticalVelocity.current = 0;
+    isJumping.current = false;
+    useLabStore.getState().clearTeleportTarget();
+  }
+
+  // Handle Touch Screen Look Delta (Yaw & Pitch)
+  if (mobileInputState.lookDelta.dx !== 0 || mobileInputState.lookDelta.dy !== 0) {
+    if (mode === 'WALKING') {
+      const lookSensitivity = 0.0035;
+      const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+      euler.setFromQuaternion(camera.quaternion);
+      euler.y -= mobileInputState.lookDelta.dx * lookSensitivity;
+      euler.x -= mobileInputState.lookDelta.dy * lookSensitivity;
+      euler.x = Math.max(-1.42, Math.min(1.42, euler.x));
+      camera.quaternion.setFromEuler(euler);
+    } else if (mode === 'INSPECTING') {
+      orbitYaw.current -= mobileInputState.lookDelta.dx * 0.006;
+      orbitPitch.current = Math.max(
+        0.05,
+        Math.min(Math.PI / 2.3, orbitPitch.current + mobileInputState.lookDelta.dy * 0.006)
+      );
+    }
+    mobileInputState.lookDelta.dx = 0;
+    mobileInputState.lookDelta.dy = 0;
+  }
+
   // MODE 1: INSPECTION TRANSITION (LERP TO / FROM STATION)
   if (mode === 'TRANSITIONING') {
     transitionProgress.current += dt * 1.6; // ~0.65s transition
@@ -374,7 +418,8 @@ useFrame((_, delta) => {
   // MODE 3: NORMAL FIRST-PERSON WALKING
   if (mode === 'WALKING') {
     const moveDirection = new THREE.Vector3();
-    const currentSpeed = keys.current.sprint ? SPRINT_SPEED : WALK_SPEED;
+    const isSprinting = keys.current.sprint || mobileInputState.sprint;
+    const currentSpeed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
 
     // Extract forward and right vectors from camera (ignoring vertical pitch)
     const forward = new THREE.Vector3();
@@ -391,10 +436,20 @@ useFrame((_, delta) => {
     if (keys.current.right) moveDirection.add(right);
     if (keys.current.left) moveDirection.sub(right);
 
+    // Integrate Mobile Virtual Joystick analog input:
+    // move.y > 0 is forward, move.y < 0 is backward
+    // move.x > 0 is strafe right, move.x < 0 is strafe left
+    if (mobileInputState.move.x !== 0 || mobileInputState.move.y !== 0) {
+      moveDirection.addScaledVector(forward, mobileInputState.move.y);
+      moveDirection.addScaledVector(right, mobileInputState.move.x);
+    }
+
     if (moveDirection.lengthSq() > 0) {
+      const joyMag = Math.hypot(mobileInputState.move.x, mobileInputState.move.y);
+      const analogScale = joyMag > 0 ? Math.min(1, Math.max(0.35, joyMag)) : 1;
       moveDirection.normalize();
-      velocity.current.x = moveDirection.x * currentSpeed;
-      velocity.current.z = moveDirection.z * currentSpeed;
+      velocity.current.x = moveDirection.x * currentSpeed * analogScale;
+      velocity.current.z = moveDirection.z * currentSpeed * analogScale;
     } else {
       velocity.current.x *= Math.max(0, 1 - dt * 12);
       velocity.current.z *= Math.max(0, 1 - dt * 12);
@@ -428,10 +483,11 @@ useFrame((_, delta) => {
     setCameraHeading(heading);
 
     // Jump & gravity physics
-    if (keys.current.jump && !isJumping.current) {
+    if ((keys.current.jump || mobileInputState.jump) && !isJumping.current) {
       isJumping.current = true;
       verticalVelocity.current = 4.2;
     }
+    mobileInputState.jump = false;
 
     if (isJumping.current) {
       verticalVelocity.current -= 14 * dt;
@@ -523,7 +579,7 @@ useFrame((_, delta) => {
 
   return (
     <>
-      {mode === 'WALKING' && !isAnyModalOpen && (
+      {mode === 'WALKING' && !isAnyModalOpen && !isTouchDevice && (
         <PointerLockControls ref={controlsRef} />
       )}
     </>

@@ -59,15 +59,15 @@ export function CompassWidget() {
   return (
     <div className="flex flex-col items-end pointer-events-auto select-none space-y-1.5 animate-fadeIn">
       {/* Compass Circular HUD Dial */}
-      <div className="glass-panel px-3 py-2.5 rounded-2xl border border-slate-700/80 shadow-2xl backdrop-blur-md flex items-center space-x-3">
+      <div className="glass-panel px-2 py-1.5 sm:px-3 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-700/80 shadow-2xl backdrop-blur-md flex items-center space-x-2 sm:space-x-3">
         {/* Rotating Circular Compass Rose */}
-        <div className="relative w-16 h-16 flex items-center justify-center">
+        <div className="relative w-11 h-11 sm:w-16 sm:h-16 flex items-center justify-center flex-shrink-0">
           {/* Outer glow ring */}
           <div className="absolute inset-0 rounded-full border border-slate-700/60 bg-slate-900/80 shadow-inner" />
 
           {/* Fixed lubber line / heading indicator (top arrow pointing forward) */}
           <div className="absolute top-0.5 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
-            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]" />
+            <div className="w-0 h-0 border-l-[3px] sm:border-l-[4px] border-l-transparent border-r-[3px] sm:border-r-[4px] border-r-transparent border-t-[5px] sm:border-t-[6px] border-t-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]" />
           </div>
 
           {/* Rotating Compass Ring (rotates with -cameraHeading so N stays aligned with 3D North) */}
@@ -130,30 +130,30 @@ export function CompassWidget() {
         </div>
 
         {/* Textual Heading & Floor Readout */}
-        <div className="flex flex-col min-w-[110px]">
+        <div className="flex flex-col min-w-[70px] sm:min-w-[110px]">
           {/* Degree & Cardinal Direction */}
-          <div className="flex items-baseline space-x-1.5">
-            <span className="text-base font-bold font-mono text-white tracking-tight">
+          <div className="flex items-baseline space-x-1 sm:space-x-1.5">
+            <span className="text-sm sm:text-base font-bold font-mono text-white tracking-tight">
               {String(cameraHeading).padStart(3, '0')}°
             </span>
-            <span className="text-xs font-semibold text-lab-cyan uppercase font-mono">
+            <span className="text-[11px] sm:text-xs font-semibold text-lab-cyan uppercase font-mono">
               {cardinal.split(' ')[0]}
             </span>
           </div>
 
           {/* Current Floor & Elevation Badge */}
-          <div className="flex items-center space-x-1.5 mt-0.5">
+          <div className="flex items-center space-x-1 sm:space-x-1.5 mt-0.5">
             <span
-              className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded flex items-center space-x-1 border ${
+              className={`text-[9px] sm:text-[10px] font-mono font-bold px-1 sm:px-1.5 py-0.5 rounded flex items-center border ${
                 currentFloor === 2
                   ? 'bg-amber-950/60 text-amber-300 border-amber-500/50'
                   : 'bg-cyan-950/60 text-cyan-300 border-cyan-500/50'
               }`}
             >
-              <Layers className="w-2.5 h-2.5 inline mr-1" />
-              TẦNG {currentFloor}
+              <Layers className="w-2.5 h-2.5 inline mr-0.5 sm:mr-1" />
+              T{currentFloor}
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-[9px] sm:text-[10px] text-slate-400 font-mono">
               +{playerElevation.toFixed(1)}m
             </span>
           </div>
@@ -162,7 +162,7 @@ export function CompassWidget() {
 
       {/* Dynamic Direction Landmark Banner */}
       <div
-        className={`glass-panel px-2.5 py-1 rounded-lg border text-[11px] font-medium flex items-center space-x-1.5 shadow-md ${landmarkInfo.bg} ${landmarkInfo.border} ${landmarkInfo.color}`}
+        className={`hidden sm:flex glass-panel px-2.5 py-1 rounded-lg border text-[11px] font-medium items-center space-x-1.5 shadow-md ${landmarkInfo.bg} ${landmarkInfo.border} ${landmarkInfo.color}`}
       >
         <Navigation className="w-3 h-3 flex-shrink-0 animate-pulse" />
         <span className="truncate max-w-[220px]">{landmarkInfo.label}</span>

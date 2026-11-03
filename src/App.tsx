@@ -13,10 +13,11 @@ import { NpcDialogModal } from './components/ui/NpcDialogModal';
 import { ChemicalDispenserModal } from './components/ui/ChemicalDispenserModal';
 import { LabEquipmentRackModal } from './components/ui/LabEquipmentRackModal';
 import { WaterSinkModal } from './components/ui/WaterSinkModal';
+import { MobileVirtualControls } from './components/ui/MobileVirtualControls';
 
 export function App() {
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-lab-dark select-none">
+    <main className="relative w-screen h-screen overflow-hidden bg-lab-dark select-none touch-none">
       {/* 3D WebGL Canvas Layer */}
       <CanvasContainer />
 
@@ -25,6 +26,9 @@ export function App() {
 
       {/* Mobile-First Floating Navigation Bar */}
       <MobileNavBar />
+
+      {/* Mobile Dual-Touch Virtual Joystick & Action Buttons */}
+      <MobileVirtualControls />
 
       {/* Inspection Sidebar Knowledge Panel (Direct root mount for uninterrupted scroll & tab clicks) */}
       <KnowledgePanel />

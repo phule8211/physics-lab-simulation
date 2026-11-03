@@ -62,6 +62,7 @@ export function CrosshairHUD() {
     openHelpModal,
     toggleStats,
     isStatsVisible,
+    isTouchDevice,
   } = useLabStore();
 
   const isGroundStation = hoveredStationId && hoveredStationId in STATIONS;
@@ -81,39 +82,39 @@ export function CrosshairHUD() {
     : null;
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4 md:p-6 overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-2.5 sm:p-4 md:p-6 overflow-hidden">
       {/* =========================================================================
           TOP HEADER: Lab Title & Controls
          ========================================================================= */}
       <header role="banner" className="flex items-start justify-between w-full">
         {/* Lab Title Badge */}
-        <div className="glass-panel rounded-xl px-4 py-3 flex items-center space-x-3 pointer-events-auto border border-slate-700/60 shadow-lg">
-          <div className="w-9 h-9 rounded-lg bg-lab-cyan/20 border border-lab-cyan/40 flex items-center justify-center text-lab-cyan">
-            <Compass className="w-5 h-5 animate-spin" style={{ animationDuration: '20s' }} />
+        <div className="glass-panel rounded-xl px-2.5 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3 pointer-events-auto border border-slate-700/60 shadow-lg max-w-[200px] sm:max-w-none">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-lab-cyan/20 border border-lab-cyan/40 flex items-center justify-center text-lab-cyan flex-shrink-0">
+            <Compass className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" style={{ animationDuration: '20s' }} />
           </div>
-          <div>
+          <div className="overflow-hidden">
             <div className="flex items-center space-x-2">
-              <h1 className="text-sm font-bold tracking-wide text-lab-text">
+              <h1 className="text-xs sm:text-sm font-bold tracking-wide text-lab-text truncate">
                 VIRTUAL LASER LAB 3D
               </h1>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
+              <span className="hidden sm:inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
                 Phase 4 Complete
               </span>
             </div>
-            <p className="text-xs text-lab-muted">
+            <p className="hidden md:block text-xs text-lab-muted">
               Xưởng mô phỏng nguyên lý máy laser & cảm biến quang học
             </p>
           </div>
         </div>
 
         {/* Top Right Controls & 3D Compass HUD */}
-        <div className="flex flex-col items-end space-y-2 pointer-events-auto">
+        <div className="flex flex-col items-end space-y-1.5 sm:space-y-2 pointer-events-auto">
           {/* Quick Toolbar (Mute sound, Diagnostics, Help, Simulation Toggle) */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Performance Stats HUD Toggle */}
             <button
               onClick={toggleStats}
-              className={`glass-pill px-2.5 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 border transition-all duration-200 ${
+              className={`hidden sm:flex glass-pill px-2.5 py-2 rounded-lg text-xs font-medium items-center space-x-1.5 border transition-all duration-200 ${
                 isStatsVisible
                   ? 'text-emerald-400 border-emerald-500/50 bg-emerald-500/10'
                   : 'text-slate-400 border-slate-700/80 hover:text-white hover:bg-slate-800/60'
@@ -122,16 +123,18 @@ export function CrosshairHUD() {
               title="Chỉ số hiệu năng WebGL / FPS (P)"
             >
               <Activity className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline font-mono text-[11px]">FPS</span>
+              <span className="font-mono text-[11px]">FPS</span>
             </button>
 
             {/* Cat Hands Held Item Quick Selector Dropdown */}
-            <CatHandsDropdown />
+            <div className="hidden sm:block">
+              <CatHandsDropdown />
+            </div>
 
             {/* Help Shortcuts Modal */}
             <button
               onClick={openHelpModal}
-              className="glass-pill p-2 rounded-lg border text-slate-400 border-slate-700/80 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
+              className="glass-pill p-1.5 sm:p-2 rounded-lg border text-slate-400 border-slate-700/80 hover:text-white hover:bg-slate-800/60 transition-all duration-200"
               aria-label="Mở bảng hướng dẫn thao tác & phím tắt (Phím H)"
               title="Hướng dẫn & Phím tắt (H)"
             >
@@ -140,7 +143,7 @@ export function CrosshairHUD() {
 
             <button
               onClick={toggleMachineRunning}
-              className={`glass-pill px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-200 ${
+              className={`glass-pill p-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-200 ${
                 isMachineRunning
                   ? 'text-lab-cyan border-lab-cyan/50 hover:bg-lab-cyan/10'
                   : 'text-lab-muted border-slate-700 hover:text-white'
@@ -155,7 +158,7 @@ export function CrosshairHUD() {
 
             <button
               onClick={toggleSound}
-              className={`glass-pill p-2 rounded-lg border transition-all duration-200 ${
+              className={`glass-pill p-1.5 sm:p-2 rounded-lg border transition-all duration-200 ${
                 soundEnabled
                   ? 'text-lab-cyan border-lab-cyan/40 hover:bg-lab-cyan/10'
                   : 'text-slate-500 border-slate-800 hover:text-white'
@@ -203,10 +206,15 @@ export function CrosshairHUD() {
                   <span className="text-[10px] text-lab-cyan font-mono mt-1">
                     {hoveredInfo.sub}
                   </span>
-                  {!isPointerLocked && (
-                    <div className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
+                  {!isPointerLocked && !isTouchDevice && (
+                    <div className="hidden sm:flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
                       <MousePointerClick className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 animate-pulse" />
                       <span>Ấn chuột trái thì sẽ mất cursor để điều khiển bằng W, A, S, D</span>
+                    </div>
+                  )}
+                  {isTouchDevice && (
+                    <div className="flex sm:hidden items-center space-x-1.5 text-[10px] text-cyan-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
+                      <span>Chạm nút [E] để tương tác</span>
                     </div>
                   )}
                 </div>
@@ -231,13 +239,13 @@ export function CrosshairHUD() {
 
       {/* Floating CTA Banner when Cutting Job is Finished (100%) */}
       {cutProgress >= 100 && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+        <div className="fixed bottom-36 sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[92vw]">
           <button
             onClick={() => {
               if (document.pointerLockElement) document.exitPointerLock();
               openSpecimenModal();
             }}
-            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 hover:from-emerald-500 hover:to-cyan-400 text-white font-bold text-xs flex items-center space-x-2.5 shadow-2xl shadow-emerald-500/50 border border-emerald-300 active:scale-95 animate-bounce"
+            className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 hover:from-emerald-500 hover:to-cyan-400 text-white font-bold text-xs flex items-center space-x-2 shadow-2xl shadow-emerald-500/50 border border-emerald-300 active:scale-95 animate-bounce"
             title="Lấy mẫu sản phẩm ra khỏi máy để quan sát 360° (Phím G)"
           >
             <PackageCheck className="w-4 h-4 text-emerald-100 flex-shrink-0" />
