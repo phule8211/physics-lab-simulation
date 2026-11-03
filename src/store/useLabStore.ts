@@ -194,6 +194,11 @@ interface LabState {
   clearActionMessage: () => void;
   setActionMessage: (text: string, type?: 'info' | 'warning' | 'error' | 'success') => void;
 
+  // Aptomat Circuit Breaker State (Công tắc Aptomat chiếu sáng xưởng)
+  isAptomatOn: boolean;
+  toggleAptomat: () => void;
+  setAptomat: (on: boolean) => void;
+
   // CAD Vector Design actions
   openDesignModal: () => void;
   closeDesignModal: () => void;
@@ -232,6 +237,36 @@ export const useLabStore = create<LabState>((set, get) => ({
   activeTab: 'PHYSICS_PRINCIPLE',
   isMachineRunning: true,
   soundEnabled: true,
+
+  // Aptomat Circuit Breaker State (Công tắc Aptomat chiếu sáng xưởng)
+  isAptomatOn: true,
+  toggleAptomat: () => {
+    const next = !get().isAptomatOn;
+    sound.playRelayClick();
+    set({
+      isAptomatOn: next,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: next
+          ? 'ĐÃ ĐÓNG APTOMAT (ON) — 4 cụm đèn LED xưởng đã bật nguồn!'
+          : 'ĐÃ NGẮT APTOMAT (OFF) — Hệ thống đèn chiếu sáng xưởng đã ngắt điện an toàn!',
+        type: next ? 'success' : 'warning',
+      },
+    });
+  },
+  setAptomat: (on: boolean) => {
+    sound.playRelayClick();
+    set({
+      isAptomatOn: on,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: on
+          ? 'ĐÃ ĐÓNG APTOMAT (ON) — 4 cụm đèn LED xưởng đã bật nguồn!'
+          : 'ĐÃ NGẮT APTOMAT (OFF) — Hệ thống đèn chiếu sáng xưởng đã ngắt điện an toàn!',
+        type: on ? 'success' : 'warning',
+      },
+    });
+  },
 
   // Default lid closed, default wood plywood
   isLidOpen: false,

@@ -1,12 +1,14 @@
 import React from 'react';
 import * as THREE from 'three';
+import { useLabStore } from '../../../store/useLabStore';
 
 interface SingleTubeFixtureProps {
   position: [number, number, number];
   length?: number;
+  isOn?: boolean;
 }
 
-function SingleTubeFixture({ position, length = 5.2 }: SingleTubeFixtureProps) {
+function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFixtureProps) {
   const [posX, posY, posZ] = position;
   const ceilingY = 6.75;
   const cableHeight = ceilingY - posY;
@@ -49,9 +51,9 @@ function SingleTubeFixture({ position, length = 5.2 }: SingleTubeFixtureProps) {
         >
           <cylinderGeometry args={[0.022, 0.022, length - 0.12, 16]} />
           <meshStandardMaterial
-            color="#ffffff"
-            emissive="#f8fafc"
-            emissiveIntensity={3.6}
+            color={isOn ? '#ffffff' : '#64748b'}
+            emissive={isOn ? '#f8fafc' : '#0f172a'}
+            emissiveIntensity={isOn ? 3.6 : 0.02}
             toneMapped={false}
             roughness={0.1}
           />
@@ -62,12 +64,12 @@ function SingleTubeFixture({ position, length = 5.2 }: SingleTubeFixtureProps) {
       <mesh position={[0, -0.05, 0]}>
         <boxGeometry args={[length - 0.08, 0.015, 0.18]} />
         <meshStandardMaterial
-          color="#f8fafc"
-          emissive="#ffffff"
-          emissiveIntensity={1.8}
+          color={isOn ? '#f8fafc' : '#334155'}
+          emissive={isOn ? '#ffffff' : '#020617'}
+          emissiveIntensity={isOn ? 1.8 : 0}
           toneMapped={false}
           transparent
-          opacity={0.85}
+          opacity={isOn ? 0.85 : 0.4}
           roughness={0.2}
         />
       </mesh>
@@ -77,7 +79,7 @@ function SingleTubeFixture({ position, length = 5.2 }: SingleTubeFixtureProps) {
         <pointLight
           key={`emitter-${i}`}
           position={[lightX, -0.2, 0]}
-          intensity={2.4}
+          intensity={isOn ? 2.4 : 0}
           distance={11}
           decay={1.8}
           color="#f8fafc"
@@ -93,8 +95,12 @@ function SingleTubeFixture({ position, length = 5.2 }: SingleTubeFixtureProps) {
  * - Northeast: [ 4.5, 5.6, -3.2]
  * - Southwest: [-4.5, 5.6,  3.2]
  * - Southeast: [ 4.5, 5.6,  3.2]
+ *
+ * Controllable via the Aptomat (MCB) circuit breaker switch on the workshop wall.
  */
 export function FourLongLedTubeLights() {
+  const isAptomatOn = useLabStore((state) => state.isAptomatOn);
+
   const fixtures: [number, number, number][] = [
     [-4.5, 5.6, -3.2], // Northwest quadrant (CO2 Laser & Workbenches)
     [4.5, 5.6, -3.2],  // Northeast quadrant (UV Laser & Chemical Racks)
@@ -105,7 +111,12 @@ export function FourLongLedTubeLights() {
   return (
     <group name="FourLongLedTubeLights">
       {fixtures.map((pos, idx) => (
-        <SingleTubeFixture key={`led-tube-${idx}`} position={pos} length={5.2} />
+        <SingleTubeFixture
+          key={`led-tube-${idx}`}
+          position={pos}
+          length={5.2}
+          isOn={isAptomatOn}
+        />
       ))}
     </group>
   );

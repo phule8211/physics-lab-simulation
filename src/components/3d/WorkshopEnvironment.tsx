@@ -10,6 +10,7 @@ import { ChemicalReagentRack } from './ChemicalReagentRack';
 import { LabEquipmentRack } from './LabEquipmentRack';
 import { LabSinkAndFaucet } from './LabSinkAndFaucet';
 import { FourLongLedTubeLights } from './environment/FourLongLedTubeLights';
+import { AptomatCircuitBreaker } from './environment/AptomatCircuitBreaker';
 
 function SafeText(props: any) {
   return (
@@ -342,6 +343,9 @@ export function WorkshopEnvironment() {
           </SafeText>
         </group>
       </group>
+
+      {/* Industrial Wall-Mounted Aptomat (MCB 63A) Circuit Breaker Switch for Workshop Lighting Grid */}
+      <AptomatCircuitBreaker position={[-2.4, 1.55, -7.88]} rotation={[0, 0, 0]} />
 
       {/* =========================================================================
           COATING & FINISHING CLEANROOM ARCHITECTURE (x: [-5, 5], z: [-8, -16])
