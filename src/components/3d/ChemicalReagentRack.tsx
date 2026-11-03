@@ -206,3 +206,4 @@ export function ChemicalReagentRack() {
     </group>
   );
 }
+

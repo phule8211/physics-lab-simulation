@@ -214,3 +214,4 @@ export function ComputerDeskWithPCAndLaptop() {
     </group>
   );
 }
+
