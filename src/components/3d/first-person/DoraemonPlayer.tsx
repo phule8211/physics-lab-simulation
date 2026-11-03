@@ -403,6 +403,7 @@ interface FullBodyDoraemonProps {
   isMoving: boolean;
   heldItem: HeldItemType;
   materialType: string;
+  tapProgress?: number;
 }
 
 function FullBodyDoraemon({
@@ -410,6 +411,7 @@ function FullBodyDoraemon({
   isMoving,
   heldItem,
   materialType,
+  tapProgress = 0,
 }: FullBodyDoraemonProps) {
   const rootRef = useRef<THREE.Group>(null);
   const currentYawRef = useRef<number>(0);
@@ -449,8 +451,8 @@ function FullBodyDoraemon({
   const rightLegAngle = isMoving ? -Math.sin(walkCycle) * 0.45 : 0;
   const leftFootLift = isMoving ? Math.max(0, Math.sin(walkCycle) * 0.035) : 0;
   const rightFootLift = isMoving ? Math.max(0, -Math.sin(walkCycle) * 0.035) : 0;
-  const leftArmAngle = isMoving ? -Math.sin(walkCycle) * 0.45 : 0;
-  const rightArmAngle = isMoving ? Math.sin(walkCycle) * 0.45 : 0;
+  const leftArmAngle = (isMoving ? -Math.sin(walkCycle) * 0.45 : 0) + tapProgress * 0.35;
+  const rightArmAngle = (isMoving ? Math.sin(walkCycle) * 0.45 : 0) + tapProgress * 0.75;
   const tailWiggle = isMoving ? Math.sin(walkCycle * 2) * 0.35 : Math.sin(Date.now() * 0.002) * 0.08;
   const idleBob = Math.sin(Date.now() * 0.0025) * 0.005;
 
@@ -698,18 +700,27 @@ export function DoraemonPlayer() {
   const swayY = useRef(0);
   const prevCamRot = useRef(new THREE.Euler().copy(camera.rotation));
   const tapAnim = useRef(0);
+  const prevTapTrigger = useRef(playerWorldState.handTapTrigger);
 
-  // Mouse click tap animation on first-person paws
+  // Mouse click & KeyE tap animation on first-person paws / hands
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 0 && document.pointerLockElement) {
+      if (e.button === 0) {
+        tapAnim.current = 1.0;
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'KeyE') {
         tapAnim.current = 1.0;
       }
     };
 
     window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -757,6 +768,11 @@ export function DoraemonPlayer() {
         swayX.current = THREE.MathUtils.damp(swayX.current, -deltaYaw * 0.1, 10, dt);
         swayY.current = THREE.MathUtils.damp(swayY.current, deltaPitch * 0.1, 10, dt);
 
+        if (playerWorldState.handTapTrigger !== prevTapTrigger.current) {
+          prevTapTrigger.current = playerWorldState.handTapTrigger;
+          tapAnim.current = 1.0;
+        }
+
         if (tapAnim.current > 0) {
           tapAnim.current = THREE.MathUtils.damp(tapAnim.current, 0, 8, dt);
         }
@@ -787,6 +803,7 @@ export function DoraemonPlayer() {
           isMoving={isMoving}
           heldItem={heldItem}
           materialType={selectedMaterial}
+          tapProgress={tapAnim.current}
         />
       )}
 

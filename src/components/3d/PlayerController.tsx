@@ -6,8 +6,9 @@ import { useLabStore, playerWorldState } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
 import { MachineId, StationId } from '../../types/lab';
-import { getGroundHeightAt, SECOND_FLOOR_STATIONS, LAB_TABLES } from '../../data/staircaseConfig';
+import { getGroundHeightAt, SECOND_FLOOR_STATIONS, LAB_TABLES, WALL_SWITCHES } from '../../data/staircaseConfig';
 import { mobileInputState } from '../../utils/mobileInput';
+import { sound } from '../../utils/audioSystem';
 
 const EYE_HEIGHT = 1.7;
 const WALK_SPEED = 4.2;
@@ -92,6 +93,44 @@ export function PlayerController() {
   const orbitPitch = useRef(0.25);
   const orbitRadius = useRef(2.5);
 
+  // Universal hand interaction handler: works whether hands are free or holding an item
+  const executeInteraction = (targetId: StationId) => {
+    const store = useLabStore.getState();
+    playerWorldState.handTapTrigger++;
+
+    if (targetId === 'aptomat_tube_lights') {
+      store.toggleAptomat();
+      sound.playRelayClick();
+    } else if (targetId === 'aptomat_ceiling_lamps') {
+      store.toggleCeilingLampsAptomat();
+      sound.playRelayClick();
+    } else if (targetId === 'npc_dung') {
+      if (document.pointerLockElement) document.exitPointerLock();
+      store.openNpcDialog();
+    } else if (targetId === 'chemical_rack') {
+      if (document.pointerLockElement) document.exitPointerLock();
+      store.openChemicalModal();
+    } else if (targetId === 'equipment_rack') {
+      if (document.pointerLockElement) document.exitPointerLock();
+      store.openEquipmentModal();
+    } else if (targetId === 'lab_sink') {
+      if (document.pointerLockElement) document.exitPointerLock();
+      store.openSinkModal();
+    } else if (targetId === 'computer_desk') {
+      if (document.pointerLockElement) document.exitPointerLock();
+      store.openDesignModal();
+    } else if (typeof targetId === 'string' && targetId.startsWith('table_')) {
+      if (document.pointerLockElement) document.exitPointerLock();
+      store.openWorkbenchModal(targetId);
+    } else if (targetId in STATIONS) {
+      setSavedPlayerPosition([position.current.x, position.current.y, position.current.z]);
+      if (document.pointerLockElement) {
+        document.exitPointerLock();
+      }
+      enterInspection(targetId as MachineId);
+    }
+  };
+
   // Keyboard shortcut listener (E, ESC, 1, 2, 3, 4)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -152,31 +191,7 @@ export function PlayerController() {
       if (e.code === 'KeyE') {
         const hovered = store.hoveredStationId;
         if (hovered && currentMode === 'WALKING') {
-          if (hovered === 'npc_dung') {
-            if (document.pointerLockElement) document.exitPointerLock();
-            store.openNpcDialog();
-          } else if (hovered === 'chemical_rack') {
-            if (document.pointerLockElement) document.exitPointerLock();
-            store.openChemicalModal();
-          } else if (hovered === 'equipment_rack') {
-            if (document.pointerLockElement) document.exitPointerLock();
-            store.openEquipmentModal();
-          } else if (hovered === 'lab_sink') {
-            if (document.pointerLockElement) document.exitPointerLock();
-            store.openSinkModal();
-          } else if (hovered === 'computer_desk') {
-            if (document.pointerLockElement) document.exitPointerLock();
-            store.openDesignModal();
-          } else if (typeof hovered === 'string' && hovered.startsWith('table_')) {
-            if (document.pointerLockElement) document.exitPointerLock();
-            store.openWorkbenchModal(hovered);
-          } else if (hovered in STATIONS) {
-            setSavedPlayerPosition([position.current.x, position.current.y, position.current.z]);
-            if (document.pointerLockElement) {
-              document.exitPointerLock();
-            }
-            enterInspection(hovered as MachineId);
-          }
+          executeInteraction(hovered);
         }
       } else if (e.code === 'Escape') {
         // Auto-lock pointer upon stopping machine usage or closing panels
@@ -510,10 +525,17 @@ export function PlayerController() {
         store.isDeviceSelectModalOpen ||
         store.mode === 'INSPECTING';
 
-      if (store.mode === 'WALKING' && !isAnyModalCurrentlyOpen && !document.pointerLockElement) {
-        try {
-          gl.domElement.requestPointerLock();
-        } catch {}
+      if (store.mode === 'WALKING' && !isAnyModalCurrentlyOpen) {
+        if (store.hoveredStationId) {
+          executeInteraction(store.hoveredStationId);
+          return;
+        }
+
+        if (!document.pointerLockElement) {
+          try {
+            gl.domElement.requestPointerLock();
+          } catch {}
+        }
       }
     };
 
@@ -803,6 +825,33 @@ useFrame((_, delta) => {
         const isFacing = dist < 2.4 ? dot > 0.1 : dot > 0.35;
         if (isFacing) {
           nearbyCandidates.push({ id: st.id, dist });
+        }
+      }
+    }
+
+    // Ground floor Wall Switches (Aptomat CB-01 & CB-02 on North Wall)
+    if (position.current.y < 2.5) {
+      for (const sw of Object.values(WALL_SWITCHES)) {
+        const dx = position.current.x - sw.position[0];
+        const dz = position.current.z - sw.position[2];
+        const dist = Math.sqrt(dx * dx + dz * dz);
+
+        if (dist < 3.2) {
+          const dirToSwitch = new THREE.Vector3(
+            sw.position[0] - position.current.x,
+            0,
+            sw.position[2] - position.current.z
+          ).normalize();
+
+          const viewDir = new THREE.Vector3();
+          camera.getWorldDirection(viewDir);
+          viewDir.y = 0;
+          viewDir.normalize();
+
+          const dot = viewDir.dot(dirToSwitch);
+          if (dot > 0.15) {
+            nearbyCandidates.push({ id: sw.id, dist });
+          }
         }
       }
     }

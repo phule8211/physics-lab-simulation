@@ -558,7 +558,12 @@ export function KnowledgePanel() {
                   <div className="grid grid-cols-3 gap-1.5">
                     {(['WOOD', 'ACRYLIC', 'STEEL', 'ALUMINUM', 'SILICON', 'GLASS'] as MaterialType[]).map((matKey) => {
                       const matItem = MATERIALS_CATALOG[matKey];
-                      const inter = matItem.interactions[activeStationId];
+                      const inter = matItem?.interactions?.[activeStationId] || {
+                        status: 'COMPATIBLE' as const,
+                        statusText: 'KHẢ DỤNG',
+                        badgeColor: '#10b981',
+                        effectDescription: 'Tương thích gia công tiêu chuẩn.',
+                      };
                       const isSel = selectedMaterial === matKey;
 
                       return (
@@ -574,9 +579,9 @@ export function KnowledgePanel() {
                           <div className="flex items-center space-x-1.5 font-medium">
                             <span
                               className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: matItem.color }}
+                              style={{ backgroundColor: matItem?.color || '#cbd5e1' }}
                             />
-                            <span className="truncate">{matItem.name.split(' ')[0]}</span>
+                            <span className="truncate">{matItem?.name ? matItem.name.split(' ')[0] : matKey}</span>
                           </div>
                           <span
                             className="text-[9px] font-mono mt-1 font-semibold truncate"
@@ -599,15 +604,15 @@ export function KnowledgePanel() {
                     <span
                       className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded"
                       style={{
-                        color: MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.badgeColor,
-                        backgroundColor: `${MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.badgeColor}20`,
+                        color: MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.badgeColor || '#10b981',
+                        backgroundColor: `${MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.badgeColor || '#10b981'}20`,
                       }}
                     >
-                      {MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.statusText}
+                      {MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.statusText || 'KHẢ DỤNG'}
                     </span>
                   </div>
                   <p className="text-slate-300 text-[11px] leading-relaxed">
-                    {MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.effectDescription}
+                    {MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.effectDescription || 'Tương thích hoạt động bình thường.'}
                   </p>
                 </div>
               </div>

@@ -6,7 +6,8 @@ export type SecondFloorStationId =
   | 'chemical_rack'
   | 'equipment_rack'
   | `table_${string}`;
-export type StationId = MachineId | SecondFloorStationId;
+export type WallSwitchId = 'aptomat_tube_lights' | 'aptomat_ceiling_lamps';
+export type StationId = MachineId | SecondFloorStationId | WallSwitchId;
 
 export type AppMode = 'WALKING' | 'TRANSITIONING' | 'INSPECTING';
 

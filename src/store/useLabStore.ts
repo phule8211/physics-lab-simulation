@@ -125,9 +125,7 @@ export const playerWorldState = {
 
 
   isMoving: false,
-
-
-
+  handTapTrigger: 0,
 };
 
 
@@ -3668,26 +3666,11 @@ export const useLabStore = create<LabState>((set, get) => ({
 
 
     const machineId = activeStationId || 'CO2_LASER';
-
-
-
-    const matConfig = MATERIALS_CATALOG[selectedMaterial];
-
-
-
-    const interaction = matConfig.interactions[machineId];
-
-
-
-
-
-
+    const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
+    const interaction = matConfig?.interactions?.[machineId];
 
     // 2. Physical Reflectivity / Damage check
-
-
-
-    if (interaction.status === 'BLOCKED_REFLECTIVE') {
+    if (interaction && interaction.status === 'BLOCKED_REFLECTIVE') {
 
 
 
@@ -3736,10 +3719,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 
 
     // 3. Ineffective check
-
-
-
-    if (interaction.status === 'INEFFECTIVE') {
+    if (interaction && interaction.status === 'INEFFECTIVE') {
 
 
 

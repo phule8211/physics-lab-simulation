@@ -226,32 +226,23 @@ export function NpcInstructorDung() {
 
       if (rightShoulderRef.current) {
 
-        rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, -0.55, dt * 6);
-
-        rightShoulderRef.current.rotation.z = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.z, 0.32, dt * 6);
+        rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.45, dt * 6);
+        rightShoulderRef.current.rotation.z = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.z, 0.28, dt * 6);
 
       }
 
       if (rightElbowRef.current) {
-
-        rightElbowRef.current.rotation.x = THREE.MathUtils.lerp(rightElbowRef.current.rotation.x, -0.48, dt * 6);
-
+        rightElbowRef.current.rotation.x = THREE.MathUtils.lerp(rightElbowRef.current.rotation.x, 0.52, dt * 6);
       }
 
       // Left arm holding clipboard with Lego claw hand, elbow bent forward
-
       if (leftShoulderRef.current) {
-
-        leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, -0.25, dt * 6);
-
-        leftShoulderRef.current.rotation.z = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.z, -0.32, dt * 6);
-
+        leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.22, dt * 6);
+        leftShoulderRef.current.rotation.z = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.z, -0.28, dt * 6);
       }
 
       if (leftElbowRef.current) {
-
-        leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, -0.48, dt * 6);
-
+        leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.48, dt * 6);
       }
 
       // Head nods gently towards player
@@ -335,33 +326,19 @@ export function NpcInstructorDung() {
           const armSwing = 0.42;
 
           if (leftShoulderRef.current) {
-
-            leftShoulderRef.current.rotation.x = -Math.sin(p) * armSwing;
-
-            leftShoulderRef.current.rotation.z = -0.32; // Lego outward flare
-
+            leftShoulderRef.current.rotation.x = 0.18 - Math.sin(p) * armSwing;
+            leftShoulderRef.current.rotation.z = -0.28; // Lego outward flare
           }
-
           if (rightShoulderRef.current) {
-
-            rightShoulderRef.current.rotation.x = Math.sin(p) * armSwing;
-
-            rightShoulderRef.current.rotation.z = 0.32; // Lego outward flare
-
+            rightShoulderRef.current.rotation.x = 0.18 + Math.sin(p) * armSwing;
+            rightShoulderRef.current.rotation.z = 0.28; // Lego outward flare
           }
-
           if (leftElbowRef.current) {
-
             // Constant forward bend (Lego posture) with subtle swing
-
-            leftElbowRef.current.rotation.x = -0.48 - Math.sin(p) * 0.05;
-
+            leftElbowRef.current.rotation.x = 0.48 + Math.sin(p) * 0.05;
           }
-
           if (rightElbowRef.current) {
-
-            rightElbowRef.current.rotation.x = -0.48 + Math.sin(p) * 0.05;
-
+            rightElbowRef.current.rotation.x = 0.48 - Math.sin(p) * 0.05;
           }
 
           // Head looks ahead with subtle sway
@@ -405,83 +382,53 @@ export function NpcInstructorDung() {
           // Holding test tube / beaker in left hand, gently swirling with right hand
 
           if (leftShoulderRef.current) {
-
-            leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, -0.75, dt * 4);
-
+            leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.65, dt * 4);
             leftShoulderRef.current.rotation.z = -0.2;
-
           }
 
           if (leftElbowRef.current) {
-
-            leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.85, dt * 4);
-
+            leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.75, dt * 4);
           }
 
           if (rightShoulderRef.current) {
-
-            rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, -0.65, dt * 4);
-
+            rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.55, dt * 4);
             rightShoulderRef.current.rotation.z = 0.25;
-
           }
 
           if (rightElbowRef.current) {
-
             rightElbowRef.current.rotation.x = 0.75 + Math.sin(time * 3.5) * 0.15; // swirling motion
-
           }
 
           if (headRef.current) {
-
             headRef.current.rotation.x = 0.22 + Math.sin(time * 1.5) * 0.04; // inspecting liquid level
-
           }
 
         } else if (expType === 'LAPTOP_CAD') {
-
           // Both arms forward typing on keyboard
-
           if (leftShoulderRef.current) {
-
-            leftShoulderRef.current.rotation.x = -0.55 + Math.sin(time * 8) * 0.04;
-
+            leftShoulderRef.current.rotation.x = 0.55 + Math.sin(time * 8) * 0.04;
             leftShoulderRef.current.rotation.z = -0.15;
-
           }
 
           if (rightShoulderRef.current) {
-
-            rightShoulderRef.current.rotation.x = -0.55 + Math.cos(time * 8) * 0.04;
-
+            rightShoulderRef.current.rotation.x = 0.55 + Math.cos(time * 8) * 0.04;
             rightShoulderRef.current.rotation.z = 0.15;
-
           }
 
           if (leftElbowRef.current) leftElbowRef.current.rotation.x = 0.8;
-
           if (rightElbowRef.current) rightElbowRef.current.rotation.x = 0.8;
-
           if (headRef.current) headRef.current.rotation.x = 0.18; // looking at laptop screen
 
         } else {
-
           // Inspecting equipment / patrol overview
-
           if (leftShoulderRef.current) {
-
-            leftShoulderRef.current.rotation.x = -0.3;
-
+            leftShoulderRef.current.rotation.x = 0.25;
             leftShoulderRef.current.rotation.z = -0.12;
-
           }
 
           if (rightShoulderRef.current) {
-
-            rightShoulderRef.current.rotation.x = -0.2 + Math.sin(time * 1.2) * 0.1;
-
+            rightShoulderRef.current.rotation.x = 0.25 + Math.sin(time * 1.2) * 0.1;
             rightShoulderRef.current.rotation.z = 0.2;
-
           }
 
           if (headRef.current) {
@@ -732,21 +679,14 @@ export function NpcInstructorDung() {
 
           {/* LEFT ARM HIERARCHY: CLASSIC LEGO MINIFIGURE ARM (Khuỷu tay gập về trước, bàn tay Lego C-Clamp) */}
 
-          <group ref={leftShoulderRef} position={[-0.23, 0.28, 0]} rotation={[0, 0, -0.32]}>
-
+          <group ref={leftShoulderRef} position={[-0.23, 0.28, 0]} rotation={[0.2, 0, -0.25]}>
             {/* Lego Upper Arm Sleeve */}
-
             <mesh position={[0, -0.13, 0]} castShadow>
-
               <cylinderGeometry args={[0.052, 0.048, 0.26, 16]} />
-
               <meshStandardMaterial color="#f8fafc" roughness={0.35} />
-
             </mesh>
-
             {/* Lego Left Elbow Joint (Cố định gập về trước ~28 độ) */}
-
-            <group ref={leftElbowRef} position={[0, -0.26, 0]} rotation={[-0.48, 0.1, 0]}>
+            <group ref={leftElbowRef} position={[0, -0.26, 0]} rotation={[0.48, -0.1, 0]}>
 
               {/* Lego Forearm Sleeve */}
 
@@ -820,21 +760,14 @@ export function NpcInstructorDung() {
 
           {/* RIGHT ARM HIERARCHY: CLASSIC LEGO MINIFIGURE ARM (Khuỷu tay gập về trước, bàn tay Lego C-Clamp) */}
 
-          <group ref={rightShoulderRef} position={[0.23, 0.28, 0]} rotation={[0, 0, 0.32]}>
-
+          <group ref={rightShoulderRef} position={[0.23, 0.28, 0]} rotation={[0.2, 0, 0.25]}>
             {/* Lego Upper Arm Sleeve */}
-
             <mesh position={[0, -0.13, 0]} castShadow>
-
               <cylinderGeometry args={[0.052, 0.048, 0.26, 16]} />
-
               <meshStandardMaterial color="#f8fafc" roughness={0.35} />
-
             </mesh>
-
             {/* Lego Right Elbow Joint (Cố định gập về trước ~28 độ) */}
-
-            <group ref={rightElbowRef} position={[0, -0.26, 0]} rotation={[-0.48, -0.1, 0]}>
+            <group ref={rightElbowRef} position={[0, -0.26, 0]} rotation={[0.48, 0.1, 0]}>
 
               {/* Lego Forearm Sleeve */}
 

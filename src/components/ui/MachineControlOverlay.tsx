@@ -563,16 +563,15 @@ export function MachineControlOverlay() {
     );
   }
 
-  const currentMatConfig = MATERIALS_CATALOG[selectedMaterial];
-  const interaction = currentMatConfig?.interactions?.[currentStationId];
-  if (!interaction) {
-    if (!actionMessage) return null;
-    return (
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
-        <ToastNotification message={actionMessage} onClose={clearActionMessage} />
-      </div>
-    );
-  }
+  const currentMatConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
+  const interaction = currentMatConfig?.interactions?.[currentStationId] || {
+    status: 'COMPATIBLE' as const,
+    statusText: 'KHẢ DỤNG',
+    badgeColor: '#10b981',
+    effectDescription: 'Tương thích gia công tiêu chuẩn.',
+    sparkColor: '#fbbf24',
+    canCutOrEngrave: true,
+  };
   const isReflective = interaction.status === 'BLOCKED_REFLECTIVE';
   const isIneffective = interaction.status === 'INEFFECTIVE';
 
@@ -736,9 +735,9 @@ export function MachineControlOverlay() {
               </span>
               <span
                 className="font-semibold"
-                style={{ color: interaction.badgeColor }}
+                style={{ color: interaction?.badgeColor || '#10b981' }}
               >
-                {interaction.statusText}
+                {interaction?.statusText || 'KHẢ DỤNG'}
               </span>
             </div>
 
@@ -746,7 +745,7 @@ export function MachineControlOverlay() {
             <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-thin">
               {materialsList.map((mType) => {
                 const mat = MATERIALS_CATALOG[mType];
-                const matInter = mat.interactions[currentStationId];
+                const matInter = mat?.interactions?.[currentStationId];
                 const isSelected = selectedMaterial === mType;
 
                 return (
@@ -761,12 +760,12 @@ export function MachineControlOverlay() {
                   >
                     <span
                       className="w-2.5 h-2.5 rounded-full border border-black/40 flex-shrink-0"
-                      style={{ backgroundColor: mat.color }}
+                      style={{ backgroundColor: mat?.color || '#cbd5e1' }}
                     />
-                    <span className="whitespace-nowrap">{mat.name.split(' ')[0]}</span>
+                    <span className="whitespace-nowrap">{mat?.name ? mat.name.split(' ')[0] : mType}</span>
                     <span
                       className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: matInter.badgeColor }}
+                      style={{ backgroundColor: matInter?.badgeColor || '#10b981' }}
                     />
                   </button>
                 );

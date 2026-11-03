@@ -22,6 +22,26 @@ export const MEZZANINE_CONFIG = {
 };
 
 /**
+ * Industrial Aptomat Wall Sub-Panels on North Wall
+ * CB-01: 4 Long Tube Lights at [-2.4, 1.55, -7.88]
+ * CB-02: 8 Ceiling Troffer Lamps at [-1.95, 1.55, -7.88]
+ */
+export const WALL_SWITCHES = {
+  aptomat_tube_lights: {
+    id: 'aptomat_tube_lights' as const,
+    name: 'Aptomat 4 Đèn Dài (CB-01)',
+    shortName: 'CB-01 (4 Đèn Dài)',
+    position: [-2.4, 1.55, -7.88] as [number, number, number],
+  },
+  aptomat_ceiling_lamps: {
+    id: 'aptomat_ceiling_lamps' as const,
+    name: 'Aptomat 8 Đèn Trần (CB-02)',
+    shortName: 'CB-02 (8 Đèn Trần)',
+    position: [-1.95, 1.55, -7.88] as [number, number, number],
+  },
+} as const;
+
+/**
  * Switchback Staircase Geometric Parameters
  * Entirely positioned in the SOUTH (Z >= 0.0), ascending towards +Z (South)
  * completely clear of all cutting machines (CO2, UV are at Z = -4) and Sensor Station (X >= 4.5)

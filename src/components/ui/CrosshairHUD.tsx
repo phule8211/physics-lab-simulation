@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { useLabStore, StationId } from '../../store/useLabStore';
+import { useLabStore, StationId, MachineId, playerWorldState } from '../../store/useLabStore';
+import { sound } from '../../utils/audioSystem';
 
 import { STATIONS } from '../../data/labConfig';
 import { LAB_TABLES } from '../../data/staircaseConfig';
@@ -146,18 +147,19 @@ export function CrosshairHUD() {
     openDesignModal,
 
     isThirdPersonView,
-
     toggleThirdPersonView,
-
     nearbyStations,
-
     activeTargetIndex,
-
     cycleInteractiveTarget,
-
+    isAptomatOn,
+    toggleAptomat,
+    isCeilingLampsAptomatOn,
+    toggleCeilingLampsAptomat,
   } = useLabStore();
 
-    const getTargetDisplayName = (id: StationId): string => {
+  const getTargetDisplayName = (id: StationId): string => {
+    if (id === 'aptomat_tube_lights') return 'Aptomat 4 Đèn Dài (CB-01)';
+    if (id === 'aptomat_ceiling_lamps') return 'Aptomat 8 Đèn Trần (CB-02)';
     if (id in STATIONS) return STATIONS[id].shortName;
     if (id in SECOND_FLOOR_HUD_INFO) return SECOND_FLOOR_HUD_INFO[id].shortName;
     if (typeof id === 'string' && id.startsWith('table_')) {
@@ -167,12 +169,26 @@ export function CrosshairHUD() {
     return id;
   };
 
+  const isAptomatTube = hoveredStationId === 'aptomat_tube_lights';
+  const isAptomatCeiling = hoveredStationId === 'aptomat_ceiling_lamps';
   const isGroundStation = hoveredStationId && hoveredStationId in STATIONS;
   const isSecondFloor = hoveredStationId && hoveredStationId in SECOND_FLOOR_HUD_INFO;
   const isTableStation = Boolean(hoveredStationId && typeof hoveredStationId === 'string' && hoveredStationId.startsWith('table_'));
   const matchedTable = isTableStation ? LAB_TABLES.find((t) => t.id === hoveredStationId) : null;
 
-  const hoveredInfo = isGroundStation
+  const hoveredInfo = isAptomatTube
+    ? {
+        name: 'Aptomat 4 Đèn Dài (CB-01)',
+        sub: isAptomatOn ? 'Nguồn điện: ĐANG BẬT [ON] • Cấp điện 4 đèn tuýp dài' : 'Nguồn điện: ĐÃ NGẮT [OFF] • Phòng tối 45%',
+        action: `Dùng tay gạt ${isAptomatOn ? 'TẮT' : 'BẬT'} 4 đèn dài (CB-01)`,
+      }
+    : isAptomatCeiling
+    ? {
+        name: 'Aptomat 8 Đèn Âm Trần (CB-02)',
+        sub: isCeilingLampsAptomatOn ? 'Nguồn điện: ĐANG BẬT [ON] • Cấp điện 8 đèn trần cleanroom' : 'Nguồn điện: ĐÃ NGẮT [OFF] • Phòng tối 55%',
+        action: `Dùng tay gạt ${isCeilingLampsAptomatOn ? 'TẮT' : 'BẬT'} 8 đèn trần (CB-02)`,
+      }
+    : isGroundStation
     ? {
         name: STATIONS[hoveredStationId].shortName,
         sub: STATIONS[hoveredStationId].wavelength,
@@ -191,6 +207,32 @@ export function CrosshairHUD() {
         action: `Làm thí nghiệm tại ${matchedTable.name}`,
       }
     : null;
+
+  const handleHUDInteract = () => {
+    if (!hoveredStationId) return;
+    playerWorldState.handTapTrigger++;
+    if (hoveredStationId === 'aptomat_tube_lights') {
+      toggleAptomat();
+      sound.playRelayClick();
+    } else if (hoveredStationId === 'aptomat_ceiling_lamps') {
+      toggleCeilingLampsAptomat();
+      sound.playRelayClick();
+    } else if (hoveredStationId === 'npc_dung') {
+      openNpcDialog();
+    } else if (hoveredStationId === 'chemical_rack') {
+      openChemicalModal();
+    } else if (hoveredStationId === 'equipment_rack') {
+      openEquipmentModal();
+    } else if (hoveredStationId === 'lab_sink') {
+      openSinkModal();
+    } else if (hoveredStationId === 'computer_desk') {
+      openDesignModal();
+    } else if (typeof hoveredStationId === 'string' && hoveredStationId.startsWith('table_')) {
+      openWorkbenchModal(hoveredStationId);
+    } else if (hoveredStationId in STATIONS) {
+      enterInspection(hoveredStationId as MachineId);
+    }
+  };
 
   return (
 
@@ -437,8 +479,14 @@ export function CrosshairHUD() {
                 </div>
 
                 {/* Floating Interactive Tooltip with Distance */}
-
-                <div className="absolute top-12 flex flex-col items-center bg-slate-950/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-lab-cyan/60 shadow-2xl shadow-lab-cyan/30 whitespace-nowrap animate-bounce">
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleHUDInteract();
+                  }}
+                  className="absolute top-12 flex flex-col items-center bg-slate-950/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-lab-cyan/60 shadow-2xl shadow-lab-cyan/30 whitespace-nowrap animate-bounce pointer-events-auto cursor-pointer hover:border-cyan-300 hover:scale-105 transition-all"
+                  title="Nhấn chuột hoặc phím [E] để tương tác"
+                >
 
                   <div className="flex items-center space-x-2">
 
