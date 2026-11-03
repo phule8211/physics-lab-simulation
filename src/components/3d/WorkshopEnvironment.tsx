@@ -199,16 +199,16 @@ export function WorkshopEnvironment() {
       <SafetyZoneBorder position={[6, 0.005, 4]} width={4.2} depth={3.4} />
 
       {/* =========================================================================
-          4. WALLS & MODULAR CLEANROOM PANELS (PBR with Aluminum Trims)
+          4. WALLS & MODULAR CLEANROOM PANELS (PBR White Wall Paint with Aluminum Trims)
          ========================================================================= */}
       {/* North Wall: Left section (x: -10 to -1.8) */}
       <mesh position={[-5.9, 3.5, -8]} receiveShadow>
         <boxGeometry args={[8.2, 7.0, 0.2]} />
         <meshStandardMaterial
-          color="#1e293b"
-          roughness={0.6}
-          metalness={0.25}
-          envMapIntensity={0.6}
+          color="#f8fafc"
+          roughness={0.45}
+          metalness={0.08}
+          envMapIntensity={0.5}
         />
       </mesh>
 
@@ -216,10 +216,10 @@ export function WorkshopEnvironment() {
       <mesh position={[5.9, 3.5, -8]} receiveShadow>
         <boxGeometry args={[8.2, 7.0, 0.2]} />
         <meshStandardMaterial
-          color="#1e293b"
-          roughness={0.6}
-          metalness={0.25}
-          envMapIntensity={0.6}
+          color="#f8fafc"
+          roughness={0.45}
+          metalness={0.08}
+          envMapIntensity={0.5}
         />
       </mesh>
 
@@ -227,10 +227,10 @@ export function WorkshopEnvironment() {
       <mesh position={[0, 5.1, -8]} receiveShadow>
         <boxGeometry args={[3.6, 3.8, 0.2]} />
         <meshStandardMaterial
-          color="#1e293b"
-          roughness={0.6}
-          metalness={0.25}
-          envMapIntensity={0.6}
+          color="#f8fafc"
+          roughness={0.45}
+          metalness={0.08}
+          envMapIntensity={0.5}
         />
       </mesh>
 
@@ -344,7 +344,7 @@ export function WorkshopEnvironment() {
       {/* West Wall of Coating Room with Glass Observation Panel */}
       <mesh position={[-5, 2.25, -12]} receiveShadow>
         <boxGeometry args={[0.2, 4.5, 8]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.25} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.45} metalness={0.08} />
       </mesh>
       {/* Observation Window Glass Pane */}
       <mesh position={[-4.89, 2.0, -12]}>
@@ -360,23 +360,23 @@ export function WorkshopEnvironment() {
       {/* East Wall of Coating Room */}
       <mesh position={[5, 2.25, -12]} receiveShadow>
         <boxGeometry args={[0.2, 4.5, 8]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.25} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.45} metalness={0.08} />
       </mesh>
 
       {/* North Back Wall of Coating Room */}
       <mesh position={[0, 2.25, -16]} receiveShadow>
         <boxGeometry args={[10, 4.5, 0.2]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.6} metalness={0.25} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.45} metalness={0.08} />
       </mesh>
 
       {/* South Wall (Front - expanded to Z = 12.0) */}
       <mesh position={[0, 3.5, 12]} receiveShadow>
         <boxGeometry args={[20, 7.0, 0.2]} />
         <meshStandardMaterial
-          color="#1e293b"
-          roughness={0.6}
-          metalness={0.25}
-          envMapIntensity={0.6}
+          color="#f8fafc"
+          roughness={0.45}
+          metalness={0.08}
+          envMapIntensity={0.5}
         />
       </mesh>
 
@@ -384,10 +384,10 @@ export function WorkshopEnvironment() {
       <mesh position={[-10, 3.5, 2]} receiveShadow>
         <boxGeometry args={[0.2, 7.0, 20]} />
         <meshStandardMaterial
-          color="#1e293b"
-          roughness={0.6}
-          metalness={0.25}
-          envMapIntensity={0.6}
+          color="#f8fafc"
+          roughness={0.45}
+          metalness={0.08}
+          envMapIntensity={0.5}
         />
       </mesh>
 
@@ -395,10 +395,10 @@ export function WorkshopEnvironment() {
       <mesh position={[10, 3.5, 2]} receiveShadow>
         <boxGeometry args={[0.2, 7.0, 20]} />
         <meshStandardMaterial
-          color="#1e293b"
-          roughness={0.6}
-          metalness={0.25}
-          envMapIntensity={0.6}
+          color="#f8fafc"
+          roughness={0.45}
+          metalness={0.08}
+          envMapIntensity={0.5}
         />
       </mesh>
 

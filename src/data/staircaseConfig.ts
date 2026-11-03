@@ -31,76 +31,39 @@ export const MEZZANINE_CONFIG = {
  * Flight 2: Starts at X = 1.85, Z = 2.70, climbs along +Z to Z = 4.68, Y = 3.06m (lands on 2nd floor mezzanine)
  */
 export const STAIRCASE_GEOMETRY = {
-  stepCountPerFlight: 9,
-  treadWidth: 1.15,
-  treadDepth: 0.22,
-  stepRise: 0.17, // 9 * 0.17 = 1.53m per flight
-
-  // Flight 1: Lower Flight (going along +Z from Z = 0.0 to Z = 1.98, Y = 0 to 1.53)
-  flight1: {
-    startX: 2.85,
-    startZ: 0.0,
-    directionZ: 1, // climbs South towards +Z
-    startY: 0,
-    endY: 1.53,
-    steps: 9,
-  },
-
-  // Mid Landing
-  landing: {
-    minX: 1.25,
-    maxX: 3.45,
-    minZ: 1.98,
-    maxZ: 2.70,
-    y: 1.53,
-  },
-
-  // Flight 2: Upper Flight (parallel switchback, going along +Z from Z = 2.70 to Z = 4.68, Y = 1.53 to 3.06)
-  flight2: {
-    startX: 1.85,
-    startZ: 2.70,
-    directionZ: 1, // climbs South towards +Z
-    startY: 1.53,
-    endY: 3.06,
-    steps: 9,
-  },
+  steps: 18,
+  treadWidth: 2.2, // Wide grand straight staircase (2.2m)
+  treadDepth: 0.255, // 18 * 0.255 = 4.59m (~4.6m run)
+  stepRise: 0.17, // 18 * 0.17 = 3.06m rise
+  startX: 2.4, // Center on X = 2.4 (runs from X = 1.3 to X = 3.5)
+  startZ: 0.0,
+  endZ: 4.6,
+  startY: 0.0,
+  endY: 3.06,
 };
 
 /**
  * Calculates the walking ground surface Y coordinate under player position (x, z)
  * Supports:
  * 1. Ground floor (Y = 0)
- * 2. Staircase Flight 1 (smooth step height Y = 0 to 1.53)
- * 3. Mid-landing (Y = 1.53)
- * 4. Staircase Flight 2 (smooth step height Y = 1.53 to 3.06)
- * 5. 2nd Floor Mezzanine (Y = 3.06) up to Z = 11.6
+ * 2. Wide Single Straight Staircase (Smooth monotonic ramp from Y = 0 to 3.06m)
+ * 3. 2nd Floor Mezzanine Deck (Y = 3.06m) up to Z = 11.6
  */
 export function getGroundHeightAt(x: number, z: number): number {
   const mez = MEZZANINE_CONFIG.bounds;
 
-  // 1. Check if on Flight 1 (Lower flight climbing South from Z = 0.0 to 1.98)
-  if (x >= 2.2 && x <= 3.5 && z >= -0.1 && z <= 2.05) {
-    const progress = Math.max(0, Math.min(1, Math.max(0, z) / 1.98));
-    return progress * 1.53;
+  // 1. Check if on the Straight Grand Staircase (Width 2.2m centered at X = 2.4, Z from -0.1 to 4.65)
+  if (x >= 1.25 && x <= 3.55 && z >= -0.15 && z <= 4.65) {
+    const progress = Math.max(0, Math.min(1, Math.max(0, z) / 4.6));
+    return progress * 3.06;
   }
 
-  // 2. Check if on Mid-Landing (Y = 1.53)
-  if (x >= 1.25 && x <= 3.5 && z >= 1.98 && z <= 2.70) {
-    return 1.53;
-  }
-
-  // 3. Check if on Flight 2 (Upper flight climbing South from Z = 2.70 to 4.68)
-  if (x >= 1.25 && x <= 2.45 && z >= 2.65 && z <= 4.75) {
-    const progress = Math.max(0, Math.min(1, (z - 2.70) / 1.98));
-    return 1.53 + progress * 1.53;
-  }
-
-  // 4. Check if on 2nd Floor Mezzanine (excluding stairwell opening)
+  // 2. Check if on 2nd Floor Mezzanine (Z: 3.2 to 11.6, X: -9.5 to 9.5)
   if (x >= mez.minX && x <= mez.maxX && z >= mez.minZ && z <= mez.maxZ) {
-    // If inside the stairwell opening below the top landing, keep flight 2 height
-    if (x >= 1.25 && x <= 2.45 && z < 4.68) {
-      const progress = Math.max(0, Math.min(1, (z - 2.70) / 1.98));
-      return 1.53 + progress * 1.53;
+    // If inside the stairwell opening below the top step (x in [1.25, 3.55], z < 4.6)
+    if (x >= 1.25 && x <= 3.55 && z < 4.6) {
+      const progress = Math.max(0, Math.min(1, Math.max(0, z) / 4.6));
+      return progress * 3.06;
     }
     return MEZZANINE_CONFIG.floorY; // 3.06
   }
@@ -109,10 +72,6 @@ export function getGroundHeightAt(x: number, z: number): number {
   return 0;
 }
 
-/**
- * 10 Wooden Lab Tables Layout & Coordinates
- * Arranged neatly across the 2nd floor research gallery with wide, comfortable walkways
- */
 export interface LabTableConfig {
   id: string;
   name: string;
@@ -296,7 +255,7 @@ export const EXTRA_COLLIDERS: AABBBox[] = [
   {
     id: 'collider_mezzanine_rail_right',
     name: 'Lan Can Tầng 2 Phải',
-    min: [2.45, MEZZANINE_CONFIG.floorY, 3.1],
+    min: [3.55, MEZZANINE_CONFIG.floorY, 3.1],
     max: [9.5, MEZZANINE_CONFIG.floorY + 1.2, 3.3],
   },
   // Side Railing along Flight 2 stair opening from Z = 3.2 to Z = 4.68 at X = 1.25
@@ -304,14 +263,14 @@ export const EXTRA_COLLIDERS: AABBBox[] = [
     id: 'collider_stair_side_rail_left',
     name: 'Lan Can Hông Trái Giếng Thang',
     min: [1.15, MEZZANINE_CONFIG.floorY, 3.15],
-    max: [1.27, MEZZANINE_CONFIG.floorY + 1.2, 4.68],
+    max: [1.27, MEZZANINE_CONFIG.floorY + 1.2, 4.6],
   },
   // Side Railing along Flight 2 stair opening from Z = 3.2 to Z = 4.68 at X = 2.45
   {
     id: 'collider_stair_side_rail_right',
     name: 'Lan Can Hông Phải Giếng Thang',
-    min: [2.43, MEZZANINE_CONFIG.floorY, 3.15],
-    max: [2.55, MEZZANINE_CONFIG.floorY + 1.2, 4.68],
+    min: [3.53, MEZZANINE_CONFIG.floorY, 3.15],
+    max: [3.65, MEZZANINE_CONFIG.floorY + 1.2, 4.6],
   },
 
   // 2. Giant Shelf Collider

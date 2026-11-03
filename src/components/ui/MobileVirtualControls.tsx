@@ -49,6 +49,8 @@ export function MobileVirtualControls() {
     setSavedPlayerPosition,
     isMobileSprint,
     toggleMobileSprint,
+    isThirdPersonView,
+    toggleThirdPersonView,
   } = useLabStore();
 
   const isAnyModalOpen =
@@ -344,6 +346,20 @@ export function MobileVirtualControls() {
 
           {/* Action Row: Jump, Sprint Toggle, Floor Toggle */}
           <div className="flex items-center space-x-2">
+            {/* Doraemon 3D Full Body View Toggle [Phím 9] */}
+            <button
+              onClick={toggleThirdPersonView}
+              className={`p-3 rounded-2xl border transition-all active:scale-90 shadow-xl flex items-center justify-center ${
+                isThirdPersonView
+                  ? 'bg-sky-500/30 border-sky-400 text-sky-300 shadow-sky-500/40'
+                  : 'bg-slate-900/85 backdrop-blur-xl border-slate-700/80 text-slate-400 hover:text-white'
+              }`}
+              aria-label={isThirdPersonView ? 'Đang nhìn toàn thân Doraemon' : 'Xem toàn thân Doraemon'}
+              title="Xem Doraemon 3D [9]"
+            >
+              <Eye className={`w-5 h-5 ${isThirdPersonView ? 'text-sky-400 animate-pulse' : 'text-slate-400'}`} />
+            </button>
+
             {/* Quick Floor Switch Teleport (Tầng 1 ⇄ Tầng 2) */}
             <button
               onClick={handleFloorSwitch}

@@ -22,6 +22,16 @@ export interface ActionToast {
 export type HeldItemType = 'NONE' | 'WORKPIECE' | 'BEAKER' | 'TEST_TUBE' | 'PIPETTE' | 'CALIPER';
 export type DeviceMode = 'desktop' | 'mobile';
 
+// Shared mutable player world transform for 60 FPS 3D avatars without React render churn
+export const playerWorldState = {
+  x: 0,
+  y: 1.7,
+  z: 5,
+  yaw: 0,
+  moveAngle: 0,
+  isMoving: false,
+};
+
 interface LabState {
   // Navigation & Core State
   mode: AppMode;
@@ -223,6 +233,10 @@ interface LabState {
   teleportTo: (pos: [number, number, number]) => void;
   clearTeleportTarget: () => void;
 
+  // Third-person camera view (Nhìn toàn bộ nhân vật Doraemon)
+  isThirdPersonView: boolean;
+  toggleThirdPersonView: () => void;
+
   // CAD Vector Design actions
   openDesignModal: () => void;
   closeDesignModal: () => void;
@@ -297,6 +311,23 @@ export const useLabStore = create<LabState>((set, get) => ({
     set({ teleportTarget: pos });
   },
   clearTeleportTarget: () => set({ teleportTarget: null }),
+
+  // Third-person camera view (Bấm phím 9 để xem toàn bộ Doraemon)
+  isThirdPersonView: false,
+  toggleThirdPersonView: () => {
+    sound.playClick();
+    const next = !get().isThirdPersonView;
+    set({
+      isThirdPersonView: next,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: next
+          ? 'Đã bật góc nhìn toàn thân Doraemon 3D [Phím 9]'
+          : 'Đã quay lại góc nhìn thứ nhất (Tay Doraemon) [Phím 9]',
+        type: 'info',
+      },
+    });
+  },
 
   // Aptomat Circuit Breaker State (Công tắc Aptomat chiếu sáng xưởng)
   isAptomatOn: true,

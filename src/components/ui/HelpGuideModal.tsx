@@ -47,6 +47,7 @@ export function HelpGuideModal() {
         { key: 'W / A / S / D', desc: 'Di chuyển tiến, lùi, sang trái, sang phải' },
         { key: 'Shift + W', desc: 'Chạy nhanh trong phòng thí nghiệm (7.5 m/s)' },
         { key: 'Space', desc: 'Nhảy nhẹ vượt chướng ngại vật' },
+        { key: '9', desc: 'Bật / Tắt góc nhìn toàn thân Doraemon 3D (Third-person view)' },
         { key: 'Chuột trái', desc: 'Click màn hình để khóa góc nhìn (PointerLock), rê chuột để nhìn' },
       ],
     },

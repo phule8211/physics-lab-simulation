@@ -14,6 +14,9 @@ import {
   Activity,
   Monitor,
   Smartphone,
+  Sliders,
+  Layers,
+  Eye,
 } from 'lucide-react';
 import { CompassWidget } from './CompassWidget';
 import { CatHandsDropdown } from './CatHandsDropdown';
@@ -67,6 +70,8 @@ export function CrosshairHUD() {
     isTouchDevice,
     deviceMode,
     openDeviceSelectModal,
+    isThirdPersonView,
+    toggleThirdPersonView,
   } = useLabStore();
 
   const isGroundStation = hoveredStationId && hoveredStationId in STATIONS;
@@ -283,83 +288,139 @@ export function CrosshairHUD() {
       )}
 
       {/* =========================================================================
-          BOTTOM FOOTER: Navigation Guide & Hotkeys [1, 2, 3, 4] (WALKING mode)
+          TWO VERTICAL SIDE DOCKS (WALKING mode):
+          1. Left Column: Workshop Controls Hotkeys [WASD, Chuột, E, 9, O, C, T, P/5, G]
+          2. Right Column: Workstations Quick Selection [1-5]
          ========================================================================= */}
       {mode === 'WALKING' && !hoveredStationId && (
-        <footer role="contentinfo" className="hidden md:flex items-end justify-between w-full">
-          {/* Controls Instructions Card */}
-          <div className="glass-pill rounded-xl px-4 py-2.5 flex flex-wrap items-center gap-3 text-xs text-slate-300 pointer-events-auto shadow-lg">
-            <div className="flex items-center space-x-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-lab-cyan">
-                WASD
-              </span>
-              <span className="text-lab-muted">Di chuyển</span>
-            </div>
-
-            <div className="flex items-center space-x-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-lab-cyan">
-                E
-              </span>
-              <span className="text-lab-muted">Khám phá máy</span>
-            </div>
-
-            <div className="flex items-center space-x-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-amber-400">
-                O
-              </span>
-              <span className="text-lab-muted">Mở/Đóng nắp</span>
-            </div>
-
-            <div className="flex items-center space-x-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-emerald-400">
-                C
-              </span>
-              <span className="text-lab-muted">Cắt/Khắc</span>
-            </div>
-
-            <div className="flex items-center space-x-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-violet-400">
-                T
-              </span>
-              <span className="text-lab-muted">Thiết kế hình</span>
-            </div>
-
-            <div className="flex items-center space-x-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-cyan-400">
-                P / 5
-              </span>
-              <span className="text-lab-muted">Phòng Phủ Sơn</span>
-            </div>
-
-            {cutProgress >= 100 && (
-              <div className="flex items-center space-x-1.5 animate-pulse">
-                <span className="px-1.5 py-0.5 rounded bg-emerald-600 border border-emerald-400 font-mono font-bold text-white shadow-sm">
-                  G
-                </span>
-                <span className="text-emerald-400 font-bold">Lấy mẫu ra xem</span>
+        <>
+          {/* CỘT DỌC BÊN TRÁI: ĐIỀU KHIỂN & PHÍM TẮT */}
+          <aside
+            aria-label="Bảng phím tắt điều khiển xưởng"
+            className="hidden md:flex fixed left-4 bottom-6 z-20 flex-col items-start gap-1 pointer-events-auto"
+          >
+            <div className="glass-panel backdrop-blur-md bg-slate-950/85 border border-slate-700/80 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-1.5 min-w-[210px]">
+              <div className="flex items-center space-x-1.5 px-1 pb-1 border-b border-slate-800 text-[10px] font-mono font-bold tracking-wider uppercase text-lab-cyan">
+                <Sliders className="w-3.5 h-3.5 text-lab-cyan" />
+                <span>ĐIỀU KHIỂN XƯỞNG</span>
               </div>
-            )}
 
-                <div className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-lg transition-all ${!isPointerLocked && hoveredInfo
-                    ? 'bg-amber-950/60 border border-amber-500/50'
-                    : ''
-                  }`}>
-                  <span className={`px-1.5 py-0.5 rounded font-mono font-bold text-xs ${!isPointerLocked && hoveredInfo
-                      ? 'bg-amber-400 text-slate-950 animate-pulse'
-                      : 'bg-slate-800 border border-slate-700 text-lab-cyan'
-                    }`}>
-                    CHUỘT TRÁI
+              {/* WASD */}
+              <div className="flex items-center space-x-2 text-xs text-slate-300 px-1">
+                <span className="w-12 text-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-lab-cyan text-[11px]">
+                  WASD
+                </span>
+                <span className="text-lab-muted text-[11px]">Di chuyển</span>
+              </div>
+
+              {/* CHUỘT TRÁI */}
+              <div className={`flex items-center space-x-2 text-xs px-1 py-0.5 rounded-lg transition-all ${
+                !isPointerLocked && hoveredInfo ? 'bg-amber-950/60 border border-amber-500/50' : ''
+              }`}>
+                <span className={`w-12 text-center px-1 py-0.5 rounded font-mono font-bold text-[10px] ${
+                  !isPointerLocked && hoveredInfo
+                    ? 'bg-amber-400 text-slate-950 animate-pulse'
+                    : 'bg-slate-800 border border-slate-700 text-lab-cyan'
+                }`}>
+                  CHUỘT
+                </span>
+                <span className={`text-[11px] truncate max-w-[130px] ${
+                  !isPointerLocked && hoveredInfo ? 'text-amber-200 font-semibold' : 'text-lab-muted'
+                }`}>
+                  {isPointerLocked ? 'Đã khoá nhìn' : 'Ấn để lái WASD'}
+                </span>
+              </div>
+
+              {/* E */}
+              <div className="flex items-center space-x-2 text-xs text-slate-300 px-1">
+                <span className="w-12 text-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-lab-cyan text-[11px]">
+                  E
+                </span>
+                <span className="text-lab-muted text-[11px]">Khám phá máy</span>
+              </div>
+
+              {/* 9: Doraemon 3D Full Body View */}
+              <button
+                onClick={toggleThirdPersonView}
+                className={`flex items-center space-x-2 text-xs px-1 py-1 rounded-lg transition-all border text-left active:scale-95 ${
+                  isThirdPersonView
+                    ? 'bg-sky-500/20 border-sky-400/60 text-sky-300 shadow-md shadow-sky-500/20'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-sky-500/50 hover:text-white'
+                }`}
+                title="Bấm phím [9] để chuyển giữa góc nhìn thứ nhất và góc nhìn toàn thân Doraemon"
+              >
+                <span className={`w-12 text-center px-1.5 py-0.5 rounded font-mono font-bold text-[11px] ${
+                  isThirdPersonView ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-800 border border-slate-700 text-sky-400'
+                }`}>
+                  9
+                </span>
+                <span className="text-[11px] font-medium flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{isThirdPersonView ? 'Góc nhìn Doraemon' : 'Xem Doraemon 3D'}</span>
+                </span>
+              </button>
+
+              {/* O */}
+              <div className="flex items-center space-x-2 text-xs text-slate-300 px-1">
+                <span className="w-12 text-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-amber-400 text-[11px]">
+                  O
+                </span>
+                <span className="text-lab-muted text-[11px]">Mở/Đóng nắp</span>
+              </div>
+
+              {/* C */}
+              <div className="flex items-center space-x-2 text-xs text-slate-300 px-1">
+                <span className="w-12 text-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-emerald-400 text-[11px]">
+                  C
+                </span>
+                <span className="text-lab-muted text-[11px]">Cắt/Khắc</span>
+              </div>
+
+              {/* T */}
+              <div className="flex items-center space-x-2 text-xs text-slate-300 px-1">
+                <span className="w-12 text-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-violet-400 text-[11px]">
+                  T
+                </span>
+                <span className="text-lab-muted text-[11px]">Thiết kế CAD</span>
+              </div>
+
+              {/* P / 5 */}
+              <div className="flex items-center space-x-2 text-xs text-slate-300 px-1">
+                <span className="w-12 text-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono font-bold text-cyan-400 text-[11px]">
+                  P / 5
+                </span>
+                <span className="text-lab-muted text-[11px]">Buồng Phủ Sơn</span>
+              </div>
+
+              {/* G (if cut finished) */}
+              {cutProgress >= 100 && (
+                <button
+                  onClick={() => {
+                    if (document.pointerLockElement) document.exitPointerLock();
+                    openSpecimenModal();
+                  }}
+                  className="flex items-center space-x-2 text-xs px-1 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 animate-pulse text-left"
+                >
+                  <span className="w-12 text-center px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-mono font-bold text-[11px]">
+                    G
                   </span>
-                    <span className={!isPointerLocked && hoveredInfo ? 'text-amber-200 font-semibold' : 'text-lab-muted'}>
-                      {isPointerLocked
-                        ? 'Đã ẩn cursor (WASD)'
-                        : 'Ấn chuột trái để ẩn cursor điều khiển WASD'}
-                    </span>
-                </div>
+                  <span className="text-[11px] font-bold">Lấy mẫu ra xem</span>
+                </button>
+              )}
             </div>
+          </aside>
 
-            {/* 4 Workstations Quick Selection Buttons with Key Numbers [1-4] */}
-            <div className="flex items-center space-x-2 pointer-events-auto overflow-x-auto max-w-[55vw]">
+          {/* CỘT DỌC BÊN PHẢI: TRẠM THÍ NGHIỆM [1-5] */}
+          <aside
+            aria-label="Bảng chọn nhanh trạm thí nghiệm"
+            className="hidden md:flex fixed right-4 bottom-6 z-20 flex-col items-end gap-1 pointer-events-auto"
+          >
+            <div className="glass-panel backdrop-blur-md bg-slate-950/85 border border-slate-700/80 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-1.5 min-w-[170px]">
+              <div className="flex items-center justify-between space-x-1.5 px-1 pb-1 border-b border-slate-800 text-[10px] font-mono font-bold tracking-wider uppercase text-cyan-400">
+                <span>TRẠM MÁY [1-5]</span>
+                <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              </div>
+
               {Object.values(STATIONS).map((st, idx) => (
                 <button
                   key={st.id}
@@ -374,28 +435,31 @@ export function CrosshairHUD() {
                       enterInspection(st.id);
                     }
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all duration-200 flex items-center space-x-2 active:scale-95 ${activeStationId === st.id
-                      ? 'bg-lab-cyan text-slate-950 font-bold border-lab-cyan shadow-lg shadow-lab-cyan/30 scale-105'
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-mono border transition-all duration-200 flex items-center justify-between space-x-2 active:scale-95 ${
+                    activeStationId === st.id
+                      ? 'bg-lab-cyan text-slate-950 font-bold border-lab-cyan shadow-lg shadow-lab-cyan/30 scale-102'
                       : hoveredStationId === st.id
-                        ? 'bg-lab-cyan/20 border-lab-cyan text-white shadow-lg shadow-lab-cyan/20'
-                        : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200'
-                    }`}
+                      ? 'bg-lab-cyan/20 border-lab-cyan text-white shadow-lg shadow-lab-cyan/20'
+                      : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+                  }`}
                   aria-label={`Xem chi tiết ${st.shortName} (Phím tắt: ${idx + 1})`}
                   title={`Phím tắt: [${idx + 1}]`}
                 >
+                  <span className="whitespace-nowrap font-sans font-medium text-[11px]">{st.shortName}</span>
                   <span
-                    className={`w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center ${activeStationId === st.id
+                    className={`w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center font-mono ${
+                      activeStationId === st.id
                         ? 'bg-slate-950 text-lab-cyan'
-                        : 'bg-slate-800 text-slate-300'
-                      }`}
+                        : 'bg-slate-800 text-slate-300 border border-slate-700'
+                    }`}
                   >
                     {idx + 1}
                   </span>
-                  <span className="whitespace-nowrap">{st.shortName}</span>
                 </button>
               ))}
             </div>
-        </footer>
+          </aside>
+        </>
       )}
     </div>
   );

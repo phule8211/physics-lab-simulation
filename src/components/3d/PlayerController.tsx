@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useKeyboardControls } from '../../hooks/useKeyboardControls';
-import { useLabStore } from '../../store/useLabStore';
+import { useLabStore, playerWorldState } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
 import { MachineId, StationId } from '../../types/lab';
@@ -195,6 +195,8 @@ export function PlayerController() {
       } else if (e.code === 'Digit5') {
         if (document.pointerLockElement) document.exitPointerLock();
         enterInspection('COATING_STATION');
+      } else if (e.code === 'Digit9') {
+        useLabStore.getState().toggleThirdPersonView();
       } else if (e.code === 'KeyP') {
         useLabStore.getState().toggleStats();
       } else if (e.code === 'KeyH') {
@@ -513,7 +515,37 @@ useFrame((_, delta) => {
       }
     }
 
-    camera.position.copy(position.current);
+    const isMoving =
+      velocity.current.x * velocity.current.x + velocity.current.z * velocity.current.z > 0.05;
+    playerWorldState.x = position.current.x;
+    playerWorldState.y = position.current.y;
+    playerWorldState.z = position.current.z;
+    playerWorldState.isMoving = isMoving;
+
+    const camYaw = Math.atan2(viewDir.x, viewDir.z);
+    playerWorldState.yaw = camYaw;
+
+    if (isMoving) {
+      playerWorldState.moveAngle = Math.atan2(velocity.current.x, velocity.current.z);
+    } else {
+      playerWorldState.moveAngle = camYaw;
+    }
+
+    const isThirdPerson = useLabStore.getState().isThirdPersonView;
+    if (isThirdPerson) {
+      // Third-person camera position: 2.4m behind the player, slightly elevated
+      const thirdPersonPos = new THREE.Vector3(
+        position.current.x - viewDir.x * 2.4,
+        position.current.y + 0.35,
+        position.current.z - viewDir.z * 2.4
+      );
+      // Soft clamp to room bounding box so camera never slips outside the workshop walls
+      thirdPersonPos.x = THREE.MathUtils.clamp(thirdPersonPos.x, -9.4, 9.4);
+      thirdPersonPos.z = THREE.MathUtils.clamp(thirdPersonPos.z, -15.4, 11.4);
+      camera.position.copy(thirdPersonPos);
+    } else {
+      camera.position.copy(position.current);
+    }
 
     // Proximity Raycasting to detect closest interactive workstation
     let closestStation: StationId | null = null;

@@ -28,19 +28,15 @@ export function useKeyboardControls() {
 
       switch (e.code) {
         case 'KeyW':
-        case 'ArrowUp':
           keys.current.forward = true;
           break;
         case 'KeyS':
-        case 'ArrowDown':
           keys.current.backward = true;
           break;
         case 'KeyA':
-        case 'ArrowLeft':
           keys.current.left = true;
           break;
         case 'KeyD':
-        case 'ArrowRight':
           keys.current.right = true;
           break;
         case 'ShiftLeft':
@@ -56,19 +52,15 @@ export function useKeyboardControls() {
     const handleKeyUp = (e: KeyboardEvent) => {
       switch (e.code) {
         case 'KeyW':
-        case 'ArrowUp':
           keys.current.forward = false;
           break;
         case 'KeyS':
-        case 'ArrowDown':
           keys.current.backward = false;
           break;
         case 'KeyA':
-        case 'ArrowLeft':
           keys.current.left = false;
           break;
         case 'KeyD':
-        case 'ArrowRight':
           keys.current.right = false;
           break;
         case 'ShiftLeft':

@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { WorkshopEnvironment } from './WorkshopEnvironment';
 import { ProceduralStation } from './fallbacks/ProceduralMachineBox';
 import { PlayerController } from './PlayerController';
-import { FirstPersonCatHands } from './first-person/FirstPersonCatHands';
+import { DoraemonPlayer } from './first-person/DoraemonPlayer';
 import { PostProcessingEffects } from './PostProcessingEffects';
 import { PerformanceTracker } from './PerformanceTracker';
 import { STATIONS } from '../../data/labConfig';
@@ -62,8 +62,8 @@ export function CanvasContainer() {
         {/* First-Person Controller with Collision & Inspection Lerp */}
         <PlayerController />
 
-        {/* First-Person Viewmodel: Orange Tabby Cat Hands (Tay mèo cam mướp) */}
-        <FirstPersonCatHands />
+        {/* Doraemon Player: First-Person Hands & 3rd-Person Full Body Avatar [Phím 9] */}
+        <DoraemonPlayer />
 
         {/* Cinematic Post-Processing: Bloom, SMAA Anti-Aliasing & Vignette */}
         <PostProcessingEffects />
