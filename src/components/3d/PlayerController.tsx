@@ -871,7 +871,8 @@ useFrame((_, delta) => {
         return new THREE.Vector3(pos[0], pos[1] + 1.2, pos[2]);
       }
       if (id === 'chemical_rack') {
-        return new THREE.Vector3(4.2, MEZZANINE_CONFIG.floorY + 1.1, 9.8);
+        const pos = SECOND_FLOOR_STATIONS.CHEMICAL_RACK.position;
+        return new THREE.Vector3(pos[0], MEZZANINE_CONFIG.floorY + 1.1, pos[2]);
       }
       if (id === 'equipment_rack') {
         return new THREE.Vector3(7.5, MEZZANINE_CONFIG.floorY + 1.1, 9.8);

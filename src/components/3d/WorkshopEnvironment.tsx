@@ -1357,7 +1357,7 @@ export function WorkshopEnvironment() {
 
       <NpcInstructorDung />
 
-      <ChemicalReagentRack position={[4.2, 3.06, 9.8]} rotation={[0, 0, 0]} />
+      <ChemicalReagentRack position={[5.4, 3.06, 9.8]} rotation={[0, 0, 0]} />
 
       <LabEquipmentRack />
 

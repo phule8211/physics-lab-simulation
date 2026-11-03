@@ -50,7 +50,7 @@ const NPC_PATROL_WAYPOINTS: Waypoint[] = [
   {
     name: 'Giá Hóa Chất Wafer',
     taskTitle: 'Đang chuẩn độ dung dịch ăn mòn wafer bán dẫn (HCl + HNO3)',
-    position: [4.2, MEZZANINE_CONFIG.floorY, 8.8],
+    position: [5.4, MEZZANINE_CONFIG.floorY, 8.8],
     targetYaw: 0,
     duration: 9,
     experimentType: 'ACID_TITRATION',

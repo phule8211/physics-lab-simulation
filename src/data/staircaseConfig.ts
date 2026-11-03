@@ -240,11 +240,11 @@ export const SECOND_FLOOR_STATIONS = {
     position: [0.0, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
     rotation: [0, 0, 0] as [number, number, number],
   },
-  // Chemical Reagent Storage Rack (HCl, HNO3, H2O2 & Large Beakers)
+  // Chemical Reagent Storage Rack (HCl, HNO3, H2O2 & Large Beakers) - Positioned directly West (-X) of Equipment Rack
   CHEMICAL_RACK: {
     id: 'chemical_rack',
     name: 'Giá Đỡ Hóa Chất Ăn Mòn Wafer (HCl, HNO3, H2O2)',
-    position: [4.2, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
+    position: [5.4, MEZZANINE_CONFIG.floorY, 9.8] as [number, number, number],
     rotation: [0, 0, 0] as [number, number, number],
   },
   // Laboratory Glassware & Equipment Rack (Large Beakers, Test Tubes, Pipettes)
@@ -351,8 +351,8 @@ export const EXTRA_COLLIDERS: AABBBox[] = [
   {
     id: 'collider_chemical_rack',
     name: 'Giá Đỡ Hóa Chất Wafer',
-    min: [3.4, MEZZANINE_CONFIG.floorY, 9.4],
-    max: [5.0, MEZZANINE_CONFIG.floorY + 1.5, 10.4],
+    min: [4.6, MEZZANINE_CONFIG.floorY, 9.4],
+    max: [6.2, MEZZANINE_CONFIG.floorY + 1.5, 10.4],
   },
   {
     id: 'collider_equipment_rack',

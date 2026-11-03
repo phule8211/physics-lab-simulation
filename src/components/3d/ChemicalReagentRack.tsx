@@ -13,7 +13,7 @@ interface ChemicalReagentRackProps {
 
 export function ChemicalReagentRack(props: ChemicalReagentRackProps = {}) {
   const rackConfig = SECOND_FLOOR_STATIONS?.CHEMICAL_RACK;
-  const position = props.position || rackConfig?.position || [4.2, 3.06, 9.8];
+  const position = props.position || rackConfig?.position || [5.4, 3.06, 9.8];
   const rotation = props.rotation || rackConfig?.rotation || [0, 0, 0];
   const scale = props.scale !== undefined ? props.scale : 1;
   const visible = props.visible !== undefined ? props.visible : true;

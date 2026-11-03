@@ -29,8 +29,6 @@ export function ChemicalDispenserModal() {
     }
   }, [isChemicalModalOpen]);
 
-  if (!isChemicalModalOpen) return null;
-
   const total = chemicalBeaker.hcl + chemicalBeaker.hno3 + chemicalBeaker.h2o2 + chemicalBeaker.water;
   const capacity = chemicalBeaker.capacity;
   const fillPercentage = Math.min(100, (total / capacity) * 100);
@@ -110,6 +108,8 @@ export function ChemicalDispenserModal() {
       description: 'Hỗn hợp đang được hòa trộn trong cốc thí nghiệm chịu nhiệt.',
     };
   }, [chemicalBeaker, total]);
+
+  if (!isChemicalModalOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn select-none">
