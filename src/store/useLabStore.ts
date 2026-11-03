@@ -18,6 +18,8 @@ export interface ActionToast {
   type: 'info' | 'warning' | 'error' | 'success';
 }
 
+export type HeldItemType = 'NONE' | 'WORKPIECE' | 'BEAKER' | 'TEST_TUBE' | 'PIPETTE' | 'CALIPER';
+
 interface LabState {
   // Navigation & Core State
   mode: AppMode;
@@ -201,6 +203,10 @@ interface LabState {
   toggleAptomat: () => void;
   setAptomat: (on: boolean) => void;
 
+  // Hands & Held Item Manipulation State (Cầm nắm & Thao tác vật dụng trên tay mèo)
+  heldItem: HeldItemType;
+  setHeldItem: (item: HeldItemType) => void;
+
   // CAD Vector Design actions
   openDesignModal: () => void;
   closeDesignModal: () => void;
@@ -266,6 +272,31 @@ export const useLabStore = create<LabState>((set, get) => ({
           ? 'ĐÃ ĐÓNG APTOMAT (ON) — 4 cụm đèn LED xưởng đã bật nguồn!'
           : 'ĐÃ NGẮT APTOMAT (OFF) — Hệ thống đèn chiếu sáng xưởng đã ngắt điện an toàn!',
         type: on ? 'success' : 'warning',
+      },
+    });
+  },
+
+  // Hands & Held Item Manipulation State
+  heldItem: 'NONE',
+  setHeldItem: (item: HeldItemType) => {
+    sound.playClick();
+    set({
+      heldItem: item,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text:
+          item === 'NONE'
+            ? '🐾 Đã cất dụng cụ — Đôi tay mèo cam ở trạng thái tự do'
+            : item === 'WORKPIECE'
+            ? '⚙️ Đang cầm trên tay mèo: Mẫu phôi bánh răng cơ khí gia công laser'
+            : item === 'BEAKER'
+            ? '🧪 Đang cầm trên tay mèo: Cốc đong chia vạch Borosilicate 250ml'
+            : item === 'TEST_TUBE'
+            ? '🧬 Đang cầm trên tay mèo: Ống nghiệm thủy tinh quang phổ'
+            : item === 'PIPETTE'
+            ? '💉 Đang cầm trên tay mèo: Ống hút định lượng Micropipette'
+            : '📏 Đang cầm trên tay mèo: Thước kẹp điện tử laser Caliper',
+        type: 'info',
       },
     });
   },
@@ -413,11 +444,11 @@ export const useLabStore = create<LabState>((set, get) => ({
     sound.playGlassClink();
     const current = get().collectedEquipment;
     if (type === 'BEAKER') {
-      set({ collectedEquipment: { ...current, beakers: current.beakers + 1 } });
+      set({ collectedEquipment: { ...current, beakers: current.beakers + 1 }, heldItem: 'BEAKER' });
     } else if (type === 'TEST_TUBE') {
-      set({ collectedEquipment: { ...current, testTubes: current.testTubes + 1 } });
+      set({ collectedEquipment: { ...current, testTubes: current.testTubes + 1 }, heldItem: 'TEST_TUBE' });
     } else if (type === 'PIPETTE') {
-      set({ collectedEquipment: { ...current, pipettes: current.pipettes + 1 } });
+      set({ collectedEquipment: { ...current, pipettes: current.pipettes + 1 }, heldItem: 'PIPETTE' });
     }
   },
   openEquipmentModal: () => {
@@ -833,7 +864,7 @@ export const useLabStore = create<LabState>((set, get) => ({
   openSpecimenModal: () => {
     sound.stopLaserHum();
     sound.playClick();
-    set({ isSpecimenModalOpen: true });
+    set({ isSpecimenModalOpen: true, heldItem: 'WORKPIECE' });
   },
 
   closeSpecimenModal: () => {
