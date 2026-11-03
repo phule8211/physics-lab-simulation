@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useKeyboardControls } from '../../hooks/useKeyboardControls';
 import { useLabStore, playerWorldState } from '../../store/useLabStore';
@@ -18,8 +17,6 @@ const INTERACTION_DISTANCE = 3.2;
 export function PlayerController() {
   const { camera, gl } = useThree();
   const keys = useKeyboardControls();
-  const controlsRef = useRef<any>(null);
-  const previousStationRef = useRef<string | null>(null);
 
   const {
     mode,
@@ -119,18 +116,10 @@ export function PlayerController() {
         store.isDeviceSelectModalOpen;
 
       const requestLock = () => {
-        if (controlsRef.current) {
-          try {
-            controlsRef.current.lock();
-          } catch {
-            try {
-              gl.domElement.requestPointerLock();
-            } catch {}
-          }
-        } else {
-          try {
-            gl.domElement.requestPointerLock();
-          } catch {}
+        try {
+          gl.domElement.requestPointerLock();
+        } catch {
+          // ignore
         }
       };
 
@@ -326,10 +315,175 @@ export function PlayerController() {
     };
   }, [gl]);
 
-  // Canvas click to lock pointer when walking
+  // Safe Camera Rotation Helper with strict NaN immunity & automatic recovery
+  const rotateCamera = (dx: number, dy: number, factor: number) => {
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+
+    const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    if (
+      Number.isFinite(camera.quaternion.x) &&
+      Number.isFinite(camera.quaternion.y) &&
+      Number.isFinite(camera.quaternion.z) &&
+      Number.isFinite(camera.quaternion.w)
+    ) {
+      euler.setFromQuaternion(camera.quaternion);
+    } else {
+      // Safe recovery if camera quaternion was ever corrupted with NaN
+      euler.set(0, THREE.MathUtils.degToRad(180), 0);
+    }
+
+    euler.y -= dx * factor;
+    euler.x -= dy * factor;
+    // Clamp pitch to avoid gimbal flip (-82° to +82°)
+    euler.x = Math.max(-1.43, Math.min(1.43, euler.x));
+
+    camera.quaternion.setFromEuler(euler);
+  };
+
+  // Unified Pointer, Mouse & Laptop Trackpad Look Controller
+  useEffect(() => {
+    let lastClientX: number | null = null;
+    let lastClientY: number | null = null;
+
+    const handlePointerMove = (e: MouseEvent | PointerEvent) => {
+      const store = useLabStore.getState();
+      if (store.mode !== 'WALKING') {
+        lastClientX = null;
+        lastClientY = null;
+        return;
+      }
+
+      const isAnyModalCurrentlyOpen =
+        store.isDesignModalOpen ||
+        store.isSpecimenModalOpen ||
+        store.isHelpModalOpen ||
+        store.isNpcDialogOpen ||
+        store.isChemicalModalOpen ||
+        store.isEquipmentModalOpen ||
+        store.isSinkModalOpen ||
+        store.isWorkbenchModalOpen ||
+        store.isDeviceSelectModalOpen;
+
+      if (isAnyModalCurrentlyOpen) {
+        lastClientX = null;
+        lastClientY = null;
+        return;
+      }
+
+      // If hovering over UI interactive controls when pointer is not locked, don't rotate
+      if (
+        !document.pointerLockElement &&
+        e.target instanceof HTMLElement &&
+        (e.target.closest('button') ||
+          e.target.closest('input') ||
+          e.target.closest('select') ||
+          e.target.closest('textarea') ||
+          e.target.closest('a') ||
+          e.target.closest('[role="dialog"]') ||
+          e.target.closest('.pointer-events-auto'))
+      ) {
+        lastClientX = null;
+        lastClientY = null;
+        return;
+      }
+
+      let dx = typeof e.movementX === 'number' && Number.isFinite(e.movementX) ? e.movementX : 0;
+      let dy = typeof e.movementY === 'number' && Number.isFinite(e.movementY) ? e.movementY : 0;
+
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+
+      // On laptop trackpads or when unlocked, if movementX/Y is 0, compute delta from client coordinates
+      if (!document.pointerLockElement || (dx === 0 && dy === 0)) {
+        if (
+          lastClientX !== null &&
+          lastClientY !== null &&
+          typeof currentX === 'number' &&
+          typeof currentY === 'number'
+        ) {
+          const clientDx = currentX - lastClientX;
+          const clientDy = currentY - lastClientY;
+          if (dx === 0 && dy === 0) {
+            dx = clientDx;
+            dy = clientDy;
+          }
+        }
+      }
+
+      if (typeof currentX === 'number') lastClientX = currentX;
+      if (typeof currentY === 'number') lastClientY = currentY;
+
+      // Filter out large single-frame teleports (e.g. pointer lock enter/exit jump)
+      if (Math.abs(dx) > 120 || Math.abs(dy) > 120) {
+        return;
+      }
+
+      if (dx !== 0 || dy !== 0) {
+        rotateCamera(dx, dy, 0.0022);
+      }
+    };
+
+    // Laptop trackpad two-finger swipe / pan gesture listener
+    const handleWheel = (e: WheelEvent) => {
+      const store = useLabStore.getState();
+      if (store.mode !== 'WALKING') return;
+
+      const isAnyModalCurrentlyOpen =
+        store.isDesignModalOpen ||
+        store.isSpecimenModalOpen ||
+        store.isHelpModalOpen ||
+        store.isNpcDialogOpen ||
+        store.isChemicalModalOpen ||
+        store.isEquipmentModalOpen ||
+        store.isSinkModalOpen ||
+        store.isWorkbenchModalOpen ||
+        store.isDeviceSelectModalOpen;
+
+      if (isAnyModalCurrentlyOpen) return;
+
+      // Don't capture if user is scrolling inside a scrollable modal/dialog
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target.closest('[role="dialog"]') ||
+          e.target.closest('.overflow-y-auto') ||
+          e.target.closest('.overflow-auto'))
+      ) {
+        return;
+      }
+
+      let deltaX = typeof e.deltaX === 'number' && Number.isFinite(e.deltaX) ? e.deltaX : 0;
+      let deltaY = typeof e.deltaY === 'number' && Number.isFinite(e.deltaY) ? e.deltaY : 0;
+
+      // If shiftKey is held, swap axis
+      if (e.shiftKey && deltaX === 0) {
+        deltaX = deltaY;
+        deltaY = 0;
+      }
+
+      // Normalize trackpad wheel sensitivity
+      deltaX = THREE.MathUtils.clamp(deltaX, -80, 80);
+      deltaY = THREE.MathUtils.clamp(deltaY, -80, 80);
+
+      if (deltaX !== 0 || deltaY !== 0) {
+        if (e.cancelable) e.preventDefault();
+        rotateCamera(deltaX, deltaY, 0.0016);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('mousemove', handlePointerMove, { passive: true });
+    window.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, [camera]);
+
+  // Canvas click to lock pointer when in walking mode
   useEffect(() => {
     const handleCanvasClick = (e: MouseEvent) => {
-      // If clicking interactive UI elements, don't lock
       if (
         e.target instanceof HTMLElement &&
         (e.target.closest('button') ||
@@ -344,7 +498,7 @@ export function PlayerController() {
       }
 
       const store = useLabStore.getState();
-      const anyModalCurrentlyOpen =
+      const isAnyModalCurrentlyOpen =
         store.isDesignModalOpen ||
         store.isSpecimenModalOpen ||
         store.isHelpModalOpen ||
@@ -356,20 +510,10 @@ export function PlayerController() {
         store.isDeviceSelectModalOpen ||
         store.mode === 'INSPECTING';
 
-      if (store.mode === 'WALKING' && !anyModalCurrentlyOpen && !document.pointerLockElement) {
-        if (controlsRef.current) {
-          try {
-            controlsRef.current.lock();
-          } catch {
-            try {
-              gl.domElement.requestPointerLock();
-            } catch {}
-          }
-        } else {
-          try {
-            gl.domElement.requestPointerLock();
-          } catch {}
-        }
+      if (store.mode === 'WALKING' && !isAnyModalCurrentlyOpen && !document.pointerLockElement) {
+        try {
+          gl.domElement.requestPointerLock();
+        } catch {}
       }
     };
 
@@ -377,97 +521,12 @@ export function PlayerController() {
     return () => window.removeEventListener('click', handleCanvasClick);
   }, [gl]);
 
-  // Fallback mouse look in WALKING mode when pointer lock is temporarily unengaged
-  useEffect(() => {
-    let lastX: number | null = null;
-    let lastY: number | null = null;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      // If native pointer lock is active, Drei PointerLockControls handles mouse look
-      if (document.pointerLockElement) {
-        lastX = null;
-        lastY = null;
-        return;
-      }
-
-      const store = useLabStore.getState();
-      if (store.mode !== 'WALKING') {
-        lastX = null;
-        lastY = null;
-        return;
-      }
-
-      const anyModalCurrentlyOpen =
-        store.isDesignModalOpen ||
-        store.isSpecimenModalOpen ||
-        store.isHelpModalOpen ||
-        store.isNpcDialogOpen ||
-        store.isChemicalModalOpen ||
-        store.isEquipmentModalOpen ||
-        store.isSinkModalOpen ||
-        store.isWorkbenchModalOpen ||
-        store.isDeviceSelectModalOpen;
-
-      if (anyModalCurrentlyOpen) {
-        lastX = null;
-        lastY = null;
-        return;
-      }
-
-      // If hovering over UI interactive controls, don't rotate camera
-      if (
-        e.target instanceof HTMLElement &&
-        (e.target.closest('button') ||
-          e.target.closest('input') ||
-          e.target.closest('select') ||
-          e.target.closest('textarea') ||
-          e.target.closest('a') ||
-          e.target.closest('[role="dialog"]') ||
-          e.target.closest('.pointer-events-auto'))
-      ) {
-        lastX = null;
-        lastY = null;
-        return;
-      }
-
-      const currentX = e.clientX;
-      const currentY = e.clientY;
-
-      let dx = e.movementX;
-      let dy = e.movementY;
-
-      if (dx === undefined || (dx === 0 && dy === 0 && lastX !== null)) {
-        dx = lastX !== null ? currentX - lastX : 0;
-        dy = lastY !== null ? currentY - lastY : 0;
-      }
-
-      lastX = currentX;
-      lastY = currentY;
-
-      if (Math.abs(dx) > 120 || Math.abs(dy) > 120) {
-        return;
-      }
-
-      if (dx !== 0 || dy !== 0) {
-        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-        euler.setFromQuaternion(camera.quaternion);
-        euler.y -= dx * 0.0024;
-        euler.x -= dy * 0.0024;
-        euler.x = Math.max(-1.42, Math.min(1.42, euler.x));
-        camera.quaternion.setFromEuler(euler);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [camera]);
-
   // Set initial camera position
   useEffect(() => {
     camera.position.set(position.current.x, position.current.y, position.current.z);
   }, [camera]);
 
-  // Handle pointer lock state changes via both Drei controls and native browser event
+  // Synchronize browser pointer lock state to Zustand store
   useEffect(() => {
     const handlePointerLockChange = () => {
       const isLocked = document.pointerLockElement !== null;
@@ -477,23 +536,10 @@ export function PlayerController() {
     document.addEventListener('pointerlockchange', handlePointerLockChange);
     handlePointerLockChange();
 
-    const onLock = () => setPointerLocked(true);
-    const onUnlock = () => setPointerLocked(false);
-
-    const controls = controlsRef.current;
-    if (controls) {
-      controls.addEventListener('lock', onLock);
-      controls.addEventListener('unlock', onUnlock);
-      }
-
-      return () => {
-        document.removeEventListener('pointerlockchange', handlePointerLockChange);
-        if (controls) {
-          controls.removeEventListener('lock', onLock);
-          controls.removeEventListener('unlock', onUnlock);
-    }
-  };
-}, [setPointerLocked]);
+    return () => {
+      document.removeEventListener('pointerlockchange', handlePointerLockChange);
+    };
+  }, [setPointerLocked]);
 
 useFrame((_, delta) => {
   const dt = Math.min(delta, 0.1);
@@ -805,15 +851,5 @@ useFrame((_, delta) => {
     }
   });
 
-  return (
-    <>
-      {mode === 'WALKING' && !isAnyModalOpen && deviceMode === 'desktop' && (
-        <PointerLockControls
-          ref={controlsRef}
-          onLock={() => setPointerLocked(true)}
-          onUnlock={() => setPointerLocked(false)}
-        />
-      )}
-    </>
-  );
+  return null;
 }
