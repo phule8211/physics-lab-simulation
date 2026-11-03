@@ -10,6 +10,7 @@ import { CO2LaserBeam } from '../visual-effects/CO2LaserBeam';
 import { UVLaserBeam } from '../visual-effects/UVLaserBeam';
 import { GalvoMirrorBeam } from '../visual-effects/GalvoMirrorBeam';
 import { SprayCoatingBooth } from './SprayCoatingBooth';
+import { MachinePowerSwitch } from '../environment/MachinePowerSwitch';
 
 function SafeText(props: any) {
   return (
@@ -107,12 +108,62 @@ export function ProceduralStation({ id, position, rotation = [0, 0, 0] }: Statio
         </mesh>
       )}
 
-      {/* Render the specific machine model based on ID */}
-      {id === 'CO2_LASER' && <CO2LaserMachine isSelected={isSelected} />}
-      {id === 'UV_LASER' && <UVLaserMachine isSelected={isSelected} />}
-      {id === 'FIBER_LASER' && <FiberLaserMachine isSelected={isSelected} />}
-      {id === 'SENSOR_STATION' && <SensorStationBench isSelected={isSelected} />}
-      {id === 'COATING_STATION' && <SprayCoatingBooth />}
+      {/* Render the specific machine model based on ID & mount its master power switch */}
+      {id === 'CO2_LASER' && (
+        <>
+          <CO2LaserMachine isSelected={isSelected} />
+          <MachinePowerSwitch
+            stationId="CO2_LASER"
+            position={[0.96, 0.88, 0.74]}
+            rotation={[0, 0, 0]}
+            scale={0.85}
+          />
+        </>
+      )}
+      {id === 'UV_LASER' && (
+        <>
+          <UVLaserMachine isSelected={isSelected} />
+          <MachinePowerSwitch
+            stationId="UV_LASER"
+            position={[0.78, 1.05, 0.65]}
+            rotation={[0, 0, 0]}
+            scale={0.85}
+          />
+        </>
+      )}
+      {id === 'FIBER_LASER' && (
+        <>
+          <FiberLaserMachine isSelected={isSelected} />
+          <MachinePowerSwitch
+            stationId="FIBER_LASER"
+            position={[0.75, 1.1, 0.62]}
+            rotation={[0, 0, 0]}
+            scale={0.85}
+          />
+        </>
+      )}
+      {id === 'SENSOR_STATION' && (
+        <>
+          <SensorStationBench isSelected={isSelected} />
+          <MachinePowerSwitch
+            stationId="SENSOR_STATION"
+            position={[0.88, 0.95, 0.45]}
+            rotation={[0, 0, 0]}
+            scale={0.85}
+          />
+        </>
+      )}
+      {id === 'COATING_STATION' && (
+        <>
+          <SprayCoatingBooth />
+          <MachinePowerSwitch
+            stationId="COATING_STATION"
+            position={[2.05, 1.35, 0.05]}
+            rotation={[0, 0, 0]}
+            scale={0.95}
+          />
+        </>
+      )}
     </group>
   );
 }

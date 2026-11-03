@@ -1,7 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useState, Suspense } from 'react';
 import * as THREE from 'three';
-import { useTexture } from '@react-three/drei';
+import { useTexture, Text } from '@react-three/drei';
 import { LAB_TABLES, LabTableConfig } from '../../data/staircaseConfig';
+import { useLabStore } from '../../store/useLabStore';
+
+function SafeText(props: any) {
+  return (
+    <Suspense fallback={null}>
+      <Text {...props} />
+    </Suspense>
+  );
+}
 
 /**
  * Procedural Laboratory Glassware & Props
@@ -344,6 +353,12 @@ function SpectrophotometerSetup() {
  */
 function WoodenLabTable({ config }: { config: LabTableConfig }) {
   const woodTexture = useTexture('/textures/wood.jpg');
+  const [hovered, setHovered] = useState(false);
+  const isTargeted = useLabStore((state) => state.hoveredStationId === config.id);
+  const isSelected = useLabStore((state) => state.selectedWorkbenchId === config.id && state.isWorkbenchModalOpen);
+  const openWorkbenchModal = useLabStore((state) => state.openWorkbenchModal);
+
+  const activeHighlight = hovered || isTargeted || isSelected;
 
   // Render appropriate scientific setup
   const renderProps = () => {
@@ -374,7 +389,51 @@ function WoodenLabTable({ config }: { config: LabTableConfig }) {
   };
 
   return (
-    <group position={config.position} rotation={config.rotation}>
+    <group
+      position={config.position}
+      rotation={config.rotation}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHovered(true);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setHovered(false);
+        document.body.style.cursor = 'auto';
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        openWorkbenchModal(config.id);
+      }}
+    >
+      {/* Floating 3D Interaction Prompt HUD */}
+      {activeHighlight && (
+        <group position={[0, 1.15, 0]}>
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[1.35, 0.24, 0.02]} />
+            <meshStandardMaterial color="#020617" roughness={0.2} metalness={0.9} />
+          </mesh>
+          <mesh position={[0, 0, -0.005]}>
+            <boxGeometry args={[1.38, 0.26, 0.015]} />
+            <meshBasicMaterial color="#38bdf8" />
+          </mesh>
+          <SafeText position={[0, 0.045, 0.015]} fontSize={0.055} color="#ffffff" anchorX="center" anchorY="middle">
+            {config.name}
+          </SafeText>
+          <SafeText position={[0, -0.045, 0.015]} fontSize={0.038} color="#38bdf8" anchorX="center" anchorY="middle">
+            [Click hoặc phím E để làm thí nghiệm]
+          </SafeText>
+        </group>
+      )}
+
+      {/* Interactive Glowing Boundary Outline around Table Base when active */}
+      {activeHighlight && (
+        <mesh position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[2.0, 1.05]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.25} />
+        </mesh>
+      )}
+
       {/* =======================================================================
           1. SOLID WOOD TABLETOP (Mặt bàn gỗ tự nhiên dày 6cm)
          ======================================================================= */}

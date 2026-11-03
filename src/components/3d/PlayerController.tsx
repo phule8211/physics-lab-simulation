@@ -7,7 +7,7 @@ import { useLabStore, playerWorldState } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
 import { MachineId, StationId } from '../../types/lab';
-import { getGroundHeightAt, SECOND_FLOOR_STATIONS } from '../../data/staircaseConfig';
+import { getGroundHeightAt, SECOND_FLOOR_STATIONS, LAB_TABLES } from '../../data/staircaseConfig';
 import { mobileInputState } from '../../utils/mobileInput';
 
 const EYE_HEIGHT = 1.7;
@@ -40,6 +40,7 @@ export function PlayerController() {
     isChemicalModalOpen,
     isEquipmentModalOpen,
     isSinkModalOpen,
+    isWorkbenchModalOpen,
     isTouchDevice,
     setIsTouchDevice,
     deviceMode,
@@ -63,6 +64,7 @@ export function PlayerController() {
     isChemicalModalOpen ||
     isEquipmentModalOpen ||
     isSinkModalOpen ||
+    isWorkbenchModalOpen ||
     isDeviceSelectModalOpen ||
     activeStationId !== null ||
     mode === 'INSPECTING';
@@ -155,6 +157,9 @@ export function PlayerController() {
           } else if (hovered === 'computer_desk') {
             if (document.pointerLockElement) document.exitPointerLock();
             store.openDesignModal();
+          } else if (typeof hovered === 'string' && hovered.startsWith('table_')) {
+            if (document.pointerLockElement) document.exitPointerLock();
+            store.openWorkbenchModal(hovered);
           } else if (hovered in STATIONS) {
             setSavedPlayerPosition([position.current.x, position.current.y, position.current.z]);
             if (document.pointerLockElement) {
@@ -176,6 +181,9 @@ export function PlayerController() {
           gl.domElement.requestPointerLock();
         } else if (store.isSinkModalOpen) {
           store.closeSinkModal();
+          gl.domElement.requestPointerLock();
+        } else if (store.isWorkbenchModalOpen) {
+          store.closeWorkbenchModal();
           gl.domElement.requestPointerLock();
         } else if (store.isDesignModalOpen) {
           store.closeDesignModal();
@@ -606,6 +614,16 @@ useFrame((_, delta) => {
         const dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < 2.8) {
           nearbyCandidates.push({ id: st.id, dist });
+        }
+      }
+
+      // Check proximity to all 10 Lab Workbenches
+      for (const tb of LAB_TABLES) {
+        const dx = position.current.x - tb.position[0];
+        const dz = position.current.z - tb.position[2];
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 2.2) {
+          nearbyCandidates.push({ id: tb.id as StationId, dist });
         }
       }
     }

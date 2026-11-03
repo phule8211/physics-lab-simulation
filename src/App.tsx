@@ -13,6 +13,7 @@ import { NpcDialogModal } from './components/ui/NpcDialogModal';
 import { ChemicalDispenserModal } from './components/ui/ChemicalDispenserModal';
 import { LabEquipmentRackModal } from './components/ui/LabEquipmentRackModal';
 import { WaterSinkModal } from './components/ui/WaterSinkModal';
+import { LabWorkbenchModal } from './components/ui/LabWorkbenchModal';
 import { MobileVirtualControls } from './components/ui/MobileVirtualControls';
 import { DeviceSelectModal } from './components/ui/DeviceSelectModal';
 
@@ -57,6 +58,7 @@ export function App() {
       <ChemicalDispenserModal />
       <LabEquipmentRackModal />
       <WaterSinkModal />
+      <LabWorkbenchModal />
 
       {/* Loading Progress Screen */}
       <LoadingScreen />
