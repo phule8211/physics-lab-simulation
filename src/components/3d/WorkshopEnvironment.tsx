@@ -590,24 +590,52 @@ export function WorkshopEnvironment() {
       {/* =========================================================================
           6. LAB SIGNAGE & POSTERS (Typography with Emissive Glow)
          ========================================================================= */}
-      {/* Main Lab Title Header Sign along South Entrance Wall (Facing inward toward the lab) */}
-      <group position={[0, 3.45, 7.88]} rotation={[0, Math.PI, 0]}>
-        <mesh position={[0, 0, -0.01]}>
-          <planeGeometry args={[11.2, 0.68]} />
-          <meshStandardMaterial color="#070d18" roughness={0.25} metalness={0.6} />
+      {/* Main Lab Title Header Sign Mounted on 2nd Floor Mezzanine South Wall (Overlooking 2nd Floor & Lab) */}
+      <group position={[0, 5.35, 11.86]} rotation={[0, Math.PI, 0]}>
+        {/* Stainless Steel / Anodized Aluminum Wall Mount Standoff Brackets */}
+        {[-5.4, -2.7, 0, 2.7, 5.4].map((bx) => (
+          <mesh key={`standoff_${bx}`} position={[bx, 0, -0.025]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.022, 0.022, 0.05, 16]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.95} roughness={0.2} />
+          </mesh>
+        ))}
+
+        {/* Industrial Dark Metallic Backing Plate */}
+        <mesh position={[0, 0, -0.012]} castShadow receiveShadow>
+          <boxGeometry args={[11.4, 0.82, 0.024]} />
+          <meshStandardMaterial color="#0b1329" roughness={0.3} metalness={0.8} />
         </mesh>
-        {/* Top & Bottom glowing cyan border lines */}
-        <mesh position={[0, 0.33, 0.005]}>
-          <planeGeometry args={[11.2, 0.018]} />
-          <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.9} />
+
+        {/* Glossy Dark Acrylic Front Display Panel */}
+        <mesh position={[0, 0, 0.005]}>
+          <planeGeometry args={[11.2, 0.74]} />
+          <meshStandardMaterial color="#050b14" roughness={0.12} metalness={0.7} />
         </mesh>
-        <mesh position={[0, -0.33, 0.005]}>
-          <planeGeometry args={[11.2, 0.018]} />
-          <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={0.9} />
+
+        {/* Top & Bottom Glowing Cyan Neon Edge Beams */}
+        <mesh position={[0, 0.36, 0.01]}>
+          <boxGeometry args={[11.2, 0.02, 0.015]} />
+          <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={1.5} />
         </mesh>
+        <mesh position={[0, -0.36, 0.01]}>
+          <boxGeometry args={[11.2, 0.02, 0.015]} />
+          <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={1.5} />
+        </mesh>
+
+        {/* Left & Right Glowing Endcaps */}
+        <mesh position={[-5.6, 0, 0.01]}>
+          <boxGeometry args={[0.02, 0.74, 0.015]} />
+          <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={1.5} />
+        </mesh>
+        <mesh position={[5.6, 0, 0.01]}>
+          <boxGeometry args={[0.02, 0.74, 0.015]} />
+          <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={1.5} />
+        </mesh>
+
+        {/* Primary English Header */}
         <SafeText
-          position={[0, 0.1, 0.01]}
-          fontSize={0.24}
+          position={[0, 0.12, 0.02]}
+          fontSize={0.27}
           color="#38bdf8"
           anchorX="center"
           anchorY="middle"
@@ -615,16 +643,27 @@ export function WorkshopEnvironment() {
         >
           ADVANCED PHOTONICS & LASER LAB
         </SafeText>
+
+        {/* Vietnamese Secondary Title */}
         <SafeText
-          position={[0, -0.12, 0.01]}
-          fontSize={0.13}
-          color="#94a3b8"
+          position={[0, -0.14, 0.02]}
+          fontSize={0.14}
+          color="#cbd5e1"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.02}
+          letterSpacing={0.03}
         >
           PHÒNG THÍ NGHIỆM VẬT LÝ QUANG HỌC & GIA CÔNG LASER 3D
         </SafeText>
+
+        {/* Dedicated Soft Sign Illumination Light */}
+        <pointLight
+          position={[0, 0, 0.5]}
+          intensity={1.6}
+          distance={6}
+          decay={2}
+          color="#38bdf8"
+        />
       </group>
 
       {/* Caution Class 4 Laser Sign on East Wall */}
