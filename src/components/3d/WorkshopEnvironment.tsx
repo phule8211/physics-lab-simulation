@@ -9,7 +9,8 @@ import { NpcInstructorDung } from './NpcInstructorDung';
 import { ChemicalReagentRack } from './ChemicalReagentRack';
 import { LabEquipmentRack } from './LabEquipmentRack';
 import { LabSinkAndFaucet } from './LabSinkAndFaucet';
-import { VolumetricLightShafts } from './visual-effects/VolumetricLightShafts';
+import { FourLongLedTubeLights } from './environment/FourLongLedTubeLights';
+import { AptomatCircuitBreaker } from './environment/AptomatCircuitBreaker';
 
 function SafeText(props: any) {
   return (
@@ -60,39 +61,39 @@ export function WorkshopEnvironment() {
       {/* Station 1 (CO2 Laser - 10.6um): Cool Cyan White */}
       <pointLight
         position={[-6, 4.0, -4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#38bdf8"
       />
       {/* Station 2 (UV Laser - 355nm): Violet/Cold Cleanroom White */}
       <pointLight
         position={[6, 4.0, -4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#c084fc"
       />
       {/* Station 3 (Fiber Laser - 1064nm): Warm Amber White */}
       <pointLight
         position={[-6, 4.0, 4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#fbbf24"
       />
       {/* Station 4 (Safety Sensor Station): Emerald Cleanroom Light */}
       <pointLight
         position={[6, 4.0, 4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#34d399"
       />
       {/* Station 5 (Spray Coating & UV Finishing Room): Clean White / Cool Cyan */}
       <pointLight
         position={[0, 4.0, -12.5]}
-        intensity={2.8}
+        intensity={2.2}
         distance={12}
         decay={2}
         color="#f8fafc"
@@ -158,11 +159,8 @@ export function WorkshopEnvironment() {
       </Suspense>
 
       {/* =========================================================================
-          3. FLOOR (Unreal Engine 5 Real-Time Glossy Reflector Floor & PBR Runners)
+          3. FLOOR (Ultra-Glossy Industrial Epoxy PBR with Expansion Tile Joints)
          ========================================================================= */}
-      {/* Volumetric Light Shafts (God Rays streaming down from skylight) */}
-      <VolumetricLightShafts />
-
       {/* Ambient Airborne Dust Motes (Simulates Unreal Engine Niagara Particle Field) */}
       <Sparkles
         count={85}
@@ -346,6 +344,9 @@ export function WorkshopEnvironment() {
         </group>
       </group>
 
+      {/* Industrial Wall-Mounted Aptomat (MCB 63A) Circuit Breaker Switch for Workshop Lighting Grid */}
+      <AptomatCircuitBreaker position={[-2.4, 1.55, -7.88]} rotation={[0, 0, 0]} />
+
       {/* =========================================================================
           COATING & FINISHING CLEANROOM ARCHITECTURE (x: [-5, 5], z: [-8, -16])
          ========================================================================= */}
@@ -515,7 +516,9 @@ export function WorkshopEnvironment() {
         />
       </mesh>
 
-      {/* =========================================================================
+
+      {/* 
+==================================================================
           5.1. HỆ THỐNG 8 BÓNG ĐÈN TRẦN PHÒNG THÍ NGHIỆM (CLEANROOM TROFFER LUMINAIRES)
           Bố trí cân đối 8 cụm quanh xưởng và khu vực mở rộng:
           - 4 bóng khu vực máy gia công tầng 1 (Tây Bắc, Đông Bắc, Tây Giữa, Đông Giữa)
@@ -579,6 +582,10 @@ export function WorkshopEnvironment() {
           />
         </group>
       ))}
+
+      {/* 4 Long Industrial LED Tube Lights Distributing Even Light Across the Workshop */}
+      <FourLongLedTubeLights />
+
 
       {/* =========================================================================
           6. LAB SIGNAGE & POSTERS (Typography with Emissive Glow)
