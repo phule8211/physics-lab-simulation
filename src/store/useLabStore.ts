@@ -134,6 +134,8 @@ interface LabState {
   // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
   isNpcDialogOpen: boolean;
   npcCurrentTopic: string | null;
+  npcDungPosition: [number, number, number];
+  setNpcDungPosition: (pos: [number, number, number]) => void;
   openNpcDialog: () => void;
   closeNpcDialog: () => void;
   setNpcTopic: (topic: string | null) => void;
@@ -299,6 +301,8 @@ export const useLabStore = create<LabState>((set, get) => ({
   // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
   isNpcDialogOpen: false,
   npcCurrentTopic: null,
+  npcDungPosition: [-4.6, 3.06, 9.6],
+  setNpcDungPosition: (pos) => set({ npcDungPosition: pos }),
   openNpcDialog: () => {
     sound.playClick();
     if (typeof document !== 'undefined' && document.pointerLockElement) {

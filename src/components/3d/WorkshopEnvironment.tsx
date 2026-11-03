@@ -515,28 +515,70 @@ export function WorkshopEnvironment() {
         />
       </mesh>
 
-      {/* Overhead Fluorescent Fixtures with Glowing Emissive Tubes */}
-      {[-6, 6].map((x) =>
-        [-4, 4].map((z) => (
-          <group key={`fixture-${x}-${z}`} position={[x, 6.85, z]}>
-            {/* Fixture casing */}
-            <mesh>
-              <boxGeometry args={[1.6, 0.1, 0.5]} />
-              <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.25} />
+      {/* =========================================================================
+          5.1. HỆ THỐNG 8 BÓNG ĐÈN TRẦN PHÒNG THÍ NGHIỆM (CLEANROOM TROFFER LUMINAIRES)
+          Bố trí cân đối 8 cụm quanh xưởng và khu vực mở rộng:
+          - 4 bóng khu vực máy gia công tầng 1 (Tây Bắc, Đông Bắc, Tây Giữa, Đông Giữa)
+          - 4 bóng khu vực tầng 2 và phòng nghiên cứu mở rộng (Tây Nam, Đông Nam, Bàn PC, Trạm Hóa Chất)
+         ========================================================================= */}
+      {[
+        { id: 'lamp_1_nw', pos: [-5.5, 6.85, -4.5] as [number, number, number], name: 'Đèn trần Laser CO2 (Tây Bắc)' },
+        { id: 'lamp_2_ne', pos: [5.5, 6.85, -4.5] as [number, number, number], name: 'Đèn trần Laser UV (Đông Bắc)' },
+        { id: 'lamp_3_mw', pos: [-5.5, 6.85, 0.5] as [number, number, number], name: 'Đèn trần Laser Fiber (Tây Giữa)' },
+        { id: 'lamp_4_me', pos: [5.5, 6.85, 0.5] as [number, number, number], name: 'Đèn trần Cảm Biến & Cầu Thang (Đông Giữa)' },
+        { id: 'lamp_5_sw', pos: [-5.5, 6.85, 5.5] as [number, number, number], name: 'Đèn trần Tầng 2 Bàn Thí Nghiệm (Tây Nam)' },
+        { id: 'lamp_6_se', pos: [5.5, 6.85, 5.5] as [number, number, number], name: 'Đèn trần Tầng 2 Bàn Quang Phổ (Đông Nam)' },
+        { id: 'lamp_7_ext_w', pos: [-4.0, 6.85, 10.0] as [number, number, number], name: 'Đèn trần Khu Mở Rộng Bàn PC (Nam Tây)' },
+        { id: 'lamp_8_ext_e', pos: [4.0, 6.85, 10.0] as [number, number, number], name: 'Đèn trần Khu Mở Rộng Giá Hóa Chất & Bồn Nước (Nam Đông)' },
+      ].map((lamp) => (
+        <group key={lamp.id} position={lamp.pos}>
+          {/* Steel suspension wire cables from structural I-beams */}
+          {[-0.85, 0.85].map((wx) => (
+            <mesh key={`wire_${wx}`} position={[wx, 0.12, 0]}>
+              <cylinderGeometry args={[0.005, 0.005, 0.24, 8]} />
+              <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
             </mesh>
-            {/* Emissive light tubes (Bloom glows through post-processing) */}
-            <mesh position={[0, -0.06, 0]}>
-              <boxGeometry args={[1.5, 0.04, 0.35]} />
-              <meshStandardMaterial
-                color="#ffffff"
-                emissive="#f8fafc"
-                emissiveIntensity={2.5}
-                toneMapped={false}
-              />
-            </mesh>
-          </group>
-        ))
-      )}
+          ))}
+
+          {/* Troffer housing casing (Anodized Aluminum) */}
+          <mesh castShadow>
+            <boxGeometry args={[2.0, 0.1, 0.55]} />
+            <meshStandardMaterial color="#1e293b" metalness={0.88} roughness={0.25} />
+          </mesh>
+
+          {/* Beveled edge border trim */}
+          <mesh position={[0, -0.045, 0]}>
+            <boxGeometry args={[2.04, 0.02, 0.59]} />
+            <meshStandardMaterial color="#0f172a" metalness={0.92} roughness={0.2} />
+          </mesh>
+
+          {/* Frosted Acrylic LED Diffuser Panel (High Lumen Cleanroom 5000K) */}
+          <mesh position={[0, -0.055, 0]}>
+            <boxGeometry args={[1.88, 0.02, 0.44]} />
+            <meshStandardMaterial
+              color="#ffffff"
+              emissive="#f8fafc"
+              emissiveIntensity={2.8}
+              toneMapped={false}
+            />
+          </mesh>
+
+          {/* Emergency Backup Power Status LED (Green indicator dot) */}
+          <mesh position={[0.92, -0.052, 0.22]}>
+            <sphereGeometry args={[0.012, 10, 10]} />
+            <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={2.0} toneMapped={false} />
+          </mesh>
+
+          {/* Real downlight illumination */}
+          <pointLight
+            position={[0, -0.2, 0]}
+            intensity={1.6}
+            distance={11.0}
+            decay={2.0}
+            color="#f8fafc"
+          />
+        </group>
+      ))}
 
       {/* =========================================================================
           6. LAB SIGNAGE & POSTERS (Typography with Emissive Glow)

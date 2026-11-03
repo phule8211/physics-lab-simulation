@@ -144,7 +144,20 @@ export function LabEquipmentRackModal() {
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+        <div className="p-5 border-t border-slate-800 bg-slate-950/50 flex flex-wrap items-center justify-between gap-3">
+          <button
+            onClick={() => {
+              takeEquipmentItem('BEAKER');
+              takeEquipmentItem('TEST_TUBE');
+              takeEquipmentItem('PIPETTE');
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all border border-slate-700 flex items-center space-x-2"
+            title="Lấy nhanh 1 Cốc to, 1 Tuýp nhỏ và 1 Micropipette"
+          >
+            <Plus className="w-4 h-4 text-emerald-400" />
+            <span>Lấy Trọn Bộ Dụng Cụ Cơ Bản (1 Cốc + 1 Tuýp + 1 Ống Hút)</span>
+          </button>
+
           <button
             onClick={() => {
               closeEquipmentModal();

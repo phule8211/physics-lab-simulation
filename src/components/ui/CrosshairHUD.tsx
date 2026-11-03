@@ -15,6 +15,34 @@ import {
 } from 'lucide-react';
 import { CompassWidget } from './CompassWidget';
 
+const SECOND_FLOOR_HUD_INFO: Record<string, { shortName: string; wavelength: string; hint: string }> = {
+  npc_dung: {
+    shortName: 'KS. Nguyễn Văn Dũng',
+    wavelength: 'Cố vấn Kỹ thuật & Nghiên cứu Bán dẫn',
+    hint: 'Trò chuyện với KS. Dũng',
+  },
+  chemical_rack: {
+    shortName: 'Giá Hóa Chất Wafer',
+    wavelength: 'HCl 37%, HNO3 68%, H2O2 30%, DI Water',
+    hint: 'Lấy hóa chất vào cốc to',
+  },
+  equipment_rack: {
+    shortName: 'Giá Dụng Cụ Thí Nghiệm',
+    wavelength: 'Cốc to 500mL, Tuýp nhỏ, Micropipette',
+    hint: 'Lấy dụng cụ thí nghiệm',
+  },
+  lab_sink: {
+    shortName: 'Bồn Nước & Vòi Cổ Ngỗng',
+    wavelength: 'Nước siêu sạch khử ion DI Water',
+    hint: 'Lấy nước & chỉnh lưu lượng',
+  },
+  computer_desk: {
+    shortName: 'Bàn Máy Tính & Laptop CAD',
+    wavelength: 'Hệ thống thiết kế G-Code & Giám sát',
+    hint: 'Mở Studio thiết kế CAD',
+  },
+};
+
 export function CrosshairHUD() {
   const {
     mode,
@@ -35,7 +63,21 @@ export function CrosshairHUD() {
     isStatsVisible,
   } = useLabStore();
 
-  const hoveredStation = hoveredStationId ? STATIONS[hoveredStationId] : null;
+  const isGroundStation = hoveredStationId && hoveredStationId in STATIONS;
+  const isSecondFloor = hoveredStationId && hoveredStationId in SECOND_FLOOR_HUD_INFO;
+  const hoveredInfo = isGroundStation
+    ? {
+        name: STATIONS[hoveredStationId].shortName,
+        sub: STATIONS[hoveredStationId].wavelength,
+        action: `Khám phá ${STATIONS[hoveredStationId].shortName}`,
+      }
+    : isSecondFloor
+    ? {
+        name: SECOND_FLOOR_HUD_INFO[hoveredStationId].shortName,
+        sub: SECOND_FLOOR_HUD_INFO[hoveredStationId].wavelength,
+        action: SECOND_FLOOR_HUD_INFO[hoveredStationId].hint,
+      }
+    : null;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4 md:p-6 overflow-hidden">
@@ -132,7 +174,7 @@ export function CrosshairHUD() {
       {mode === 'WALKING' && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="relative flex items-center justify-center">
-            {hoveredStation ? (
+            {hoveredInfo ? (
               // Active Crosshair when pointing at an interactive workstation
               <div className="relative flex items-center justify-center">
                 <div className="w-9 h-9 rounded-full border-2 border-lab-cyan animate-pulse flex items-center justify-center bg-lab-cyan/15 shadow-lg shadow-lab-cyan/30">
@@ -146,7 +188,7 @@ export function CrosshairHUD() {
                       [E]
                     </span>
                     <span className="text-xs font-bold text-white">
-                      Khám phá {hoveredStation.shortName}
+                      {hoveredInfo.action}
                     </span>
                     {hoveredDistance && (
                       <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40">
@@ -155,7 +197,7 @@ export function CrosshairHUD() {
                     )}
                   </div>
                   <span className="text-[10px] text-lab-cyan font-mono mt-1">
-                    {hoveredStation.wavelength}
+                    {hoveredInfo.sub}
                   </span>
                   {!isPointerLocked && (
                     <div className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
@@ -258,17 +300,17 @@ export function CrosshairHUD() {
               </div>
             )}
 
-                <div className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-lg transition-all ${!isPointerLocked && hoveredStation
+                <div className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-lg transition-all ${!isPointerLocked && hoveredInfo
                     ? 'bg-amber-950/60 border border-amber-500/50'
                     : ''
                   }`}>
-                  <span className={`px-1.5 py-0.5 rounded font-mono font-bold text-xs ${!isPointerLocked && hoveredStation
+                  <span className={`px-1.5 py-0.5 rounded font-mono font-bold text-xs ${!isPointerLocked && hoveredInfo
                       ? 'bg-amber-400 text-slate-950 animate-pulse'
                       : 'bg-slate-800 border border-slate-700 text-lab-cyan'
                     }`}>
                     CHUỘT TRÁI
                   </span>
-                    <span className={!isPointerLocked && hoveredStation ? 'text-amber-200 font-semibold' : 'text-lab-muted'}>
+                    <span className={!isPointerLocked && hoveredInfo ? 'text-amber-200 font-semibold' : 'text-lab-muted'}>
                       {isPointerLocked
                         ? 'Đã ẩn cursor (WASD)'
                         : 'Ấn chuột trái để ẩn cursor điều khiển WASD'}

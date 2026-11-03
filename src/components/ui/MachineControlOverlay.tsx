@@ -106,7 +106,7 @@ export function MachineControlOverlay() {
     }
   }, [actionMessage, clearActionMessage]);
 
-  if (!currentStationId) {
+  if (!currentStationId || !currentStation || !(currentStationId in STATIONS)) {
     // Only show toast if there is a message
     if (!actionMessage) return null;
     return (
@@ -470,7 +470,15 @@ export function MachineControlOverlay() {
   }
 
   const currentMatConfig = MATERIALS_CATALOG[selectedMaterial];
-  const interaction = currentMatConfig.interactions[currentStationId];
+  const interaction = currentMatConfig?.interactions?.[currentStationId];
+  if (!interaction) {
+    if (!actionMessage) return null;
+    return (
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+        <ToastNotification message={actionMessage} onClose={clearActionMessage} />
+      </div>
+    );
+  }
   const isReflective = interaction.status === 'BLOCKED_REFLECTIVE';
   const isIneffective = interaction.status === 'INEFFECTIVE';
 

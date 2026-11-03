@@ -466,9 +466,11 @@ useFrame((_, delta) => {
 
     // Check Second Floor Stations when player is on Floor 2 (Y > 2.0)
     if (position.current.y > 2.0) {
+      const npcPos = useLabStore.getState().npcDungPosition || SECOND_FLOOR_STATIONS.NPC_DUNG.position;
       for (const st of Object.values(SECOND_FLOOR_STATIONS)) {
-        const dx = position.current.x - st.position[0];
-        const dz = position.current.z - st.position[2];
+        const targetPos = st.id === 'npc_dung' ? npcPos : st.position;
+        const dx = position.current.x - targetPos[0];
+        const dz = position.current.z - targetPos[2];
         const dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < 2.8 && dist < minDistance) {
           minDistance = dist;
