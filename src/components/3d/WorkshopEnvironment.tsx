@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import * as THREE from 'three';
-import { Text, Environment, Lightformer, MeshReflectorMaterial, Sparkles } from '@react-three/drei';
+import { Text, Environment, Lightformer, Sparkles } from '@react-three/drei';
 import { StaircaseAndMezzanine } from './StaircaseAndMezzanine';
 import { LabWorkbenches } from './LabWorkbenches';
 import { GiantCeramicBottleShelf } from './GiantCeramicBottleShelf';
@@ -174,21 +174,17 @@ export function WorkshopEnvironment() {
         color="#bae6fd"
       />
 
-      {/* Main Epoxy Floor: Real-time Lumen-style specular reflections */}
+      {/* Main Epoxy Floor: Ultra-Glossy Laboratory Epoxy with Clearcoat & HDR Specular Sheen */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 2]} receiveShadow>
         <planeGeometry args={[20, 20]} />
-        <MeshReflectorMaterial
-          blur={[300, 100]}
-          resolution={1024}
-          mirror={0.65}
-          mixBlur={1.2}
-          mixStrength={2.4}
-          roughness={0.22}
-          depthScale={1.2}
-          minDepthThreshold={0.4}
-          maxDepthThreshold={1.4}
-          color="#091124"
-          metalness={0.35}
+        <meshPhysicalMaterial
+          color="#0b1329"
+          roughness={0.12}
+          metalness={0.25}
+          clearcoat={1.0}
+          clearcoatRoughness={0.08}
+          reflectivity={0.9}
+          envMapIntensity={1.8}
         />
       </mesh>
 
