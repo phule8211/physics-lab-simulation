@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import * as THREE from 'three';
-import { Text, Environment, Lightformer } from '@react-three/drei';
+import { Text, Environment, Lightformer, Sparkles } from '@react-three/drei';
 import { StaircaseAndMezzanine } from './StaircaseAndMezzanine';
 import { LabWorkbenches } from './LabWorkbenches';
 import { GiantCeramicBottleShelf } from './GiantCeramicBottleShelf';
@@ -9,6 +9,7 @@ import { NpcInstructorDung } from './NpcInstructorDung';
 import { ChemicalReagentRack } from './ChemicalReagentRack';
 import { LabEquipmentRack } from './LabEquipmentRack';
 import { LabSinkAndFaucet } from './LabSinkAndFaucet';
+import { VolumetricLightShafts } from './visual-effects/VolumetricLightShafts';
 
 function SafeText(props: any) {
   return (
@@ -157,16 +158,33 @@ export function WorkshopEnvironment() {
       </Suspense>
 
       {/* =========================================================================
-          3. FLOOR (High-Gloss Industrial Epoxy PBR with Expansion Tile Joints)
+          3. FLOOR (Unreal Engine 5 Real-Time Glossy Reflector Floor & PBR Runners)
          ========================================================================= */}
-      {/* Main Epoxy Floor: Low roughness gives high specular sheen of ceiling lights */}
+      {/* Volumetric Light Shafts (God Rays streaming down from skylight) */}
+      <VolumetricLightShafts />
+
+      {/* Ambient Airborne Dust Motes (Simulates Unreal Engine Niagara Particle Field) */}
+      <Sparkles
+        count={85}
+        scale={[18, 6.5, 18]}
+        position={[0, 3.2, 0]}
+        size={2.0}
+        speed={0.25}
+        opacity={0.4}
+        color="#bae6fd"
+      />
+
+      {/* Main Epoxy Floor: Ultra-Glossy Laboratory Epoxy with Clearcoat & HDR Specular Sheen */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 2]} receiveShadow>
         <planeGeometry args={[20, 20]} />
-        <meshStandardMaterial
-          color="#0f172a"
-          roughness={0.16}
-          metalness={0.18}
-          envMapIntensity={1.0}
+        <meshPhysicalMaterial
+          color="#0b1329"
+          roughness={0.12}
+          metalness={0.25}
+          clearcoat={1.0}
+          clearcoatRoughness={0.08}
+          reflectivity={0.9}
+          envMapIntensity={1.8}
         />
       </mesh>
 
