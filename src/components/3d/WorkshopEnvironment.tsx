@@ -9,7 +9,6 @@ import { NpcInstructorDung } from './NpcInstructorDung';
 import { ChemicalReagentRack } from './ChemicalReagentRack';
 import { LabEquipmentRack } from './LabEquipmentRack';
 import { LabSinkAndFaucet } from './LabSinkAndFaucet';
-import { VolumetricLightShafts } from './visual-effects/VolumetricLightShafts';
 
 function SafeText(props: any) {
   return (
@@ -158,11 +157,8 @@ export function WorkshopEnvironment() {
       </Suspense>
 
       {/* =========================================================================
-          3. FLOOR (Unreal Engine 5 Real-Time Glossy Reflector Floor & PBR Runners)
+          3. FLOOR (Ultra-Glossy Industrial Epoxy PBR with Expansion Tile Joints)
          ========================================================================= */}
-      {/* Volumetric Light Shafts (God Rays streaming down from skylight) */}
-      <VolumetricLightShafts />
-
       {/* Ambient Airborne Dust Motes (Simulates Unreal Engine Niagara Particle Field) */}
       <Sparkles
         count={85}
