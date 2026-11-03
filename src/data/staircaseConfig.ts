@@ -31,13 +31,13 @@ export const WALL_SWITCHES = {
     id: 'aptomat_tube_lights' as const,
     name: 'Aptomat 4 Đèn Dài (CB-01)',
     shortName: 'CB-01 (4 Đèn Dài)',
-    position: [-2.65, 1.55, -7.88] as [number, number, number],
+    position: [-2.38, 1.55, -7.88] as [number, number, number],
   },
   aptomat_ceiling_lamps: {
     id: 'aptomat_ceiling_lamps' as const,
     name: 'Aptomat 8 Đèn Trần (CB-02)',
     shortName: 'CB-02 (8 Đèn Trần)',
-    position: [-1.65, 1.55, -7.88] as [number, number, number],
+    position: [-1.92, 1.55, -7.88] as [number, number, number],
   },
 } as const;
 

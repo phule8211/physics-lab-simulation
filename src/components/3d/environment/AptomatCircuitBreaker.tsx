@@ -17,7 +17,7 @@ interface BaseBreakerBoxProps {
 }
 
 function BaseIndustrialBreakerBox({
-  position = [-2.65, 1.55, -7.88],
+  position = [-2.38, 1.55, -7.88],
   rotation = [0, 0, 0],
   isOn,
   onToggle,
@@ -193,42 +193,39 @@ function BaseIndustrialBreakerBox({
           className="cursor-pointer pointer-events-auto transition-all duration-200 transform hover:scale-105 select-none"
         >
           <div
-            className={`glass-panel px-3.5 py-2 rounded-2xl border shadow-2xl backdrop-blur-md flex items-center space-x-2.5 whitespace-nowrap bg-slate-950/90 ${
+            className={`glass-panel px-2.5 py-1.5 rounded-xl border shadow-xl backdrop-blur-md flex items-center space-x-2 whitespace-nowrap bg-slate-950/90 ${
               isOn
                 ? 'border-emerald-500/70 hover:border-emerald-400 hover:shadow-emerald-500/30'
                 : 'border-rose-500/70 hover:border-rose-400 hover:shadow-rose-500/30'
             }`}
           >
             <div
-              className={`w-7 h-7 rounded-full border flex items-center justify-center ${
+              className={`w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 ${
                 isOn
                   ? 'bg-emerald-500/20 border-emerald-500/70 text-emerald-400 animate-pulse'
                   : 'bg-rose-500/20 border-rose-500/70 text-rose-400'
               }`}
             >
-              <Zap className="w-4 h-4" />
+              <Zap className="w-3.5 h-3.5" />
             </div>
 
             <div className="flex flex-col text-left">
               <div className="flex items-center space-x-1.5">
-                <span className="text-xs font-bold text-white tracking-wide">
-                  {title}
-                </span>
-                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="text-[11px] font-bold text-white tracking-wide">
                   {code}
                 </span>
                 <span
-                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                  className={`text-[9px] font-semibold px-1 py-0.2 rounded-full ${
                     isOn
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                       : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
                   }`}
                 >
-                  {isOn ? 'BẬT (ON)' : 'NGẮT (OFF)'}
+                  {isOn ? 'ON' : 'OFF'}
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400">
-                Nhấn để {isOn ? 'Ngắt điện' : 'Đóng điện'} {tagLabel}
+              <span className="text-[9px] text-slate-300">
+                {title}
               </span>
             </div>
           </div>
@@ -245,7 +242,7 @@ export function AptomatCircuitBreaker(props: { position?: [number, number, numbe
   const { isAptomatOn, toggleAptomat } = useLabStore();
   return (
     <BaseIndustrialBreakerBox
-      position={props.position || [-2.65, 1.55, -7.88]}
+      position={props.position || [-2.38, 1.55, -7.88]}
       rotation={props.rotation}
       isOn={isAptomatOn}
       onToggle={toggleAptomat}
@@ -259,13 +256,13 @@ export function AptomatCircuitBreaker(props: { position?: [number, number, numbe
 
 /**
  * Aptomat 2: Điều khiển 8 Đèn Âm Trần (Cleanroom Troffer)
- * Đặt ngay bên cạnh Aptomat 1 trên tường phía Bắc (cách 1.0m)
+ * Đặt liền kề ngay bên phải Aptomat 1 trên tường phía Bắc (cách 10cm)
  */
 export function CeilingLampsAptomatBreaker(props: { position?: [number, number, number]; rotation?: [number, number, number] }) {
   const { isCeilingLampsAptomatOn, toggleCeilingLampsAptomat } = useLabStore();
   return (
     <BaseIndustrialBreakerBox
-      position={props.position || [-1.65, 1.55, -7.88]}
+      position={props.position || [-1.92, 1.55, -7.88]}
       rotation={props.rotation}
       isOn={isCeilingLampsAptomatOn}
       onToggle={toggleCeilingLampsAptomat}

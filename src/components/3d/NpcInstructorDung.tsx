@@ -199,24 +199,24 @@ export function NpcInstructorDung() {
 
       if (rightKneeRef.current) rightKneeRef.current.rotation.x = THREE.MathUtils.lerp(rightKneeRef.current.rotation.x, 0, dt * 8);
 
-      // Welcoming gesture: natural human right arm raised politely, elbows bent symmetrically inward
+      // Welcoming gesture: natural human right arm raised politely forward, elbows bent symmetrically inward
       if (rightShoulderRef.current) {
-        rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.42, dt * 6);
+        rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, -0.36, dt * 6);
         rightShoulderRef.current.rotation.z = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.z, 0.08, dt * 6);
       }
       if (rightElbowRef.current) {
-        rightElbowRef.current.rotation.x = THREE.MathUtils.lerp(rightElbowRef.current.rotation.x, 0.52, dt * 6);
+        rightElbowRef.current.rotation.x = THREE.MathUtils.lerp(rightElbowRef.current.rotation.x, -0.52, dt * 6);
         rightElbowRef.current.rotation.y = -0.16;
         rightElbowRef.current.rotation.z = -0.10;
       }
 
-      // Left arm holding clipboard with natural human posture
+      // Left arm holding clipboard with natural human posture forward
       if (leftShoulderRef.current) {
-        leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.20, dt * 6);
+        leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, -0.22, dt * 6);
         leftShoulderRef.current.rotation.z = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.z, -0.08, dt * 6);
       }
       if (leftElbowRef.current) {
-        leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.48, dt * 6);
+        leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, -0.48, dt * 6);
         leftElbowRef.current.rotation.y = 0.16;
         leftElbowRef.current.rotation.z = 0.10;
       }
@@ -296,24 +296,24 @@ export function NpcInstructorDung() {
             pelvisRef.current.position.y = 0.82 + Math.abs(Math.sin(p * 2)) * 0.04;
           }
 
-          // Natural human arm swing with symmetric forward/inward elbow curvature
-          const armSwing = 0.35;
+          // Natural human arm swing with symmetric forward/inward elbow curvature (never behind back)
+          const armSwing = 0.28;
 
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = 0.12 - Math.sin(p) * armSwing;
+            leftShoulderRef.current.rotation.x = -0.15 + Math.sin(p) * armSwing;
             leftShoulderRef.current.rotation.z = -0.06;
           }
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = 0.12 + Math.sin(p) * armSwing;
+            rightShoulderRef.current.rotation.x = -0.15 - Math.sin(p) * armSwing;
             rightShoulderRef.current.rotation.z = 0.06;
           }
           if (leftElbowRef.current) {
-            leftElbowRef.current.rotation.x = 0.42 + Math.sin(p) * 0.04;
+            leftElbowRef.current.rotation.x = -0.38 - Math.abs(Math.sin(p)) * 0.08;
             leftElbowRef.current.rotation.y = 0.16;
             leftElbowRef.current.rotation.z = 0.10;
           }
           if (rightElbowRef.current) {
-            rightElbowRef.current.rotation.x = 0.42 - Math.sin(p) * 0.04;
+            rightElbowRef.current.rotation.x = -0.38 - Math.abs(Math.cos(p)) * 0.08;
             rightElbowRef.current.rotation.y = -0.16;
             rightElbowRef.current.rotation.z = -0.10;
           }
@@ -355,25 +355,25 @@ export function NpcInstructorDung() {
         const expType = currentWp.experimentType;
 
         if (expType === 'ACID_TITRATION' || expType === 'DI_WATER_RINSE') {
-          // Holding test tube / beaker in left hand, gently swirling with right hand
+          // Holding test tube / beaker in left hand forward, gently swirling with right hand
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.55, dt * 4);
+            leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, -0.45, dt * 4);
             leftShoulderRef.current.rotation.z = -0.08;
           }
 
           if (leftElbowRef.current) {
-            leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.65, dt * 4);
+            leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, -0.65, dt * 4);
             leftElbowRef.current.rotation.y = 0.16;
             leftElbowRef.current.rotation.z = 0.10;
           }
 
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.48, dt * 4);
+            rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, -0.40, dt * 4);
             rightShoulderRef.current.rotation.z = 0.08;
           }
 
           if (rightElbowRef.current) {
-            rightElbowRef.current.rotation.x = 0.65 + Math.sin(time * 3.5) * 0.12; // swirling motion
+            rightElbowRef.current.rotation.x = -0.60 - Math.sin(time * 3.5) * 0.10; // swirling motion forward
             rightElbowRef.current.rotation.y = -0.16;
             rightElbowRef.current.rotation.z = -0.10;
           }
@@ -385,22 +385,22 @@ export function NpcInstructorDung() {
         } else if (expType === 'LAPTOP_CAD') {
           // Both arms forward typing on keyboard
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = 0.50 + Math.sin(time * 8) * 0.03;
+            leftShoulderRef.current.rotation.x = -0.45 - Math.sin(time * 8) * 0.03;
             leftShoulderRef.current.rotation.z = -0.06;
           }
 
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = 0.50 + Math.cos(time * 8) * 0.03;
+            rightShoulderRef.current.rotation.x = -0.45 - Math.cos(time * 8) * 0.03;
             rightShoulderRef.current.rotation.z = 0.06;
           }
 
           if (leftElbowRef.current) {
-            leftElbowRef.current.rotation.x = 0.70;
+            leftElbowRef.current.rotation.x = -0.65;
             leftElbowRef.current.rotation.y = 0.16;
             leftElbowRef.current.rotation.z = 0.10;
           }
           if (rightElbowRef.current) {
-            rightElbowRef.current.rotation.x = 0.70;
+            rightElbowRef.current.rotation.x = -0.65;
             rightElbowRef.current.rotation.y = -0.16;
             rightElbowRef.current.rotation.z = -0.10;
           }
@@ -409,23 +409,23 @@ export function NpcInstructorDung() {
         } else {
           // Inspecting equipment / patrol overview
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = 0.22;
+            leftShoulderRef.current.rotation.x = -0.18;
             leftShoulderRef.current.rotation.z = -0.06;
           }
 
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = 0.22 + Math.sin(time * 1.2) * 0.08;
+            rightShoulderRef.current.rotation.x = -0.18 - Math.sin(time * 1.2) * 0.06;
             rightShoulderRef.current.rotation.z = 0.06;
           }
 
           if (leftElbowRef.current) {
-            leftElbowRef.current.rotation.x = 0.45;
+            leftElbowRef.current.rotation.x = -0.38;
             leftElbowRef.current.rotation.y = 0.16;
             leftElbowRef.current.rotation.z = 0.10;
           }
 
           if (rightElbowRef.current) {
-            rightElbowRef.current.rotation.x = 0.45;
+            rightElbowRef.current.rotation.x = -0.38;
             rightElbowRef.current.rotation.y = -0.16;
             rightElbowRef.current.rotation.z = -0.10;
           }
@@ -477,6 +477,21 @@ export function NpcInstructorDung() {
 
       chestRef.current.rotation.x = Math.sin(time * 1.8) * 0.012;
 
+    }
+
+    // Anatomical safety clamping: Ensure elbow never hyperextends backwards (rotX <= -0.05)
+    // and shoulders remain strictly within natural forward-leaning bounds (rotX in [-1.2, 0.15])
+    if (leftElbowRef.current) {
+      leftElbowRef.current.rotation.x = THREE.MathUtils.clamp(leftElbowRef.current.rotation.x, -1.5, -0.05);
+    }
+    if (rightElbowRef.current) {
+      rightElbowRef.current.rotation.x = THREE.MathUtils.clamp(rightElbowRef.current.rotation.x, -1.5, -0.05);
+    }
+    if (leftShoulderRef.current) {
+      leftShoulderRef.current.rotation.x = THREE.MathUtils.clamp(leftShoulderRef.current.rotation.x, -1.2, 0.15);
+    }
+    if (rightShoulderRef.current) {
+      rightShoulderRef.current.rotation.x = THREE.MathUtils.clamp(rightShoulderRef.current.rotation.x, -1.2, 0.15);
     }
 
   });
@@ -675,14 +690,14 @@ export function NpcInstructorDung() {
 
           {/* LEFT ARM HIERARCHY: HUMAN-PROPORTIONED ARM (Khuỷu tay gập đối xứng tự nhiên, cẳng tay hướng vào trong) */}
 
-          <group ref={leftShoulderRef} position={[-0.23, 0.28, 0]} rotation={[0.15, 0, -0.06]}>
+          <group ref={leftShoulderRef} position={[-0.23, 0.28, 0]} rotation={[-0.15, 0, -0.06]}>
             {/* Upper Arm Sleeve */}
             <mesh position={[0, -0.13, 0]} castShadow>
               <cylinderGeometry args={[0.052, 0.048, 0.26, 16]} />
               <meshStandardMaterial color="#f8fafc" roughness={0.35} />
             </mesh>
             {/* Left Elbow Joint (Gập về trước đối xứng ~26 độ, nghiêng nhẹ vào trong) */}
-            <group ref={leftElbowRef} position={[0, -0.26, 0]} rotation={[0.45, 0.16, 0.10]}>
+            <group ref={leftElbowRef} position={[0, -0.26, 0]} rotation={[-0.45, 0.16, 0.10]}>
 
               {/* Lego Forearm Sleeve */}
 
@@ -756,14 +771,14 @@ export function NpcInstructorDung() {
 
           {/* RIGHT ARM HIERARCHY: HUMAN-PROPORTIONED ARM (Khuỷu tay gập đối xứng tự nhiên, cẳng tay hướng vào trong) */}
 
-          <group ref={rightShoulderRef} position={[0.23, 0.28, 0]} rotation={[0.15, 0, 0.06]}>
+          <group ref={rightShoulderRef} position={[0.23, 0.28, 0]} rotation={[-0.15, 0, 0.06]}>
             {/* Upper Arm Sleeve */}
             <mesh position={[0, -0.13, 0]} castShadow>
               <cylinderGeometry args={[0.052, 0.048, 0.26, 16]} />
               <meshStandardMaterial color="#f8fafc" roughness={0.35} />
             </mesh>
             {/* Right Elbow Joint (Gập về trước đối xứng ~26 độ, nghiêng nhẹ vào trong) */}
-            <group ref={rightElbowRef} position={[0, -0.26, 0]} rotation={[0.45, -0.16, -0.10]}>
+            <group ref={rightElbowRef} position={[0, -0.26, 0]} rotation={[-0.45, -0.16, -0.10]}>
 
               {/* Lego Forearm Sleeve */}
 

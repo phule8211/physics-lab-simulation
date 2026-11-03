@@ -282,76 +282,93 @@ export function CrosshairHUD() {
       </header>
 
       {/* =========================================================================
-          CENTER: Reticle & Interactive Prompt (Only in WALKING mode)
+          CENTER RETICLE / CROSSHAIR: Strictly locked to viewport center (50%, 50%)
          ========================================================================= */}
       {mode === 'WALKING' && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="relative flex items-center justify-center">
-            {hoveredInfo ? (
-              // Active Crosshair when pointing at an interactive workstation
-              <div className="relative flex items-center justify-center">
-                <div className="w-9 h-9 rounded-full border-2 border-lab-cyan animate-pulse flex items-center justify-center bg-lab-cyan/15 shadow-lg shadow-lab-cyan/30">
-                  <div className="w-2 h-2 rounded-full bg-lab-cyan" />
-                </div>
+        <div
+          className="fixed pointer-events-none z-20 flex flex-col items-center justify-center"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+          }}
+        >
+          {/* Interaction Reticle Dot & Animated Targeting Ring */}
+          <div className="relative flex items-center justify-center pointer-events-none select-none">
+            {/* Outer Target Ring (Expands & glows smoothly on hover) */}
+            <div
+              className={`absolute rounded-full border transition-all duration-150 ease-out pointer-events-none ${
+                hoveredInfo
+                  ? 'w-8 h-8 border-cyan-400/80 bg-cyan-400/15 scale-100 opacity-100 shadow-lg shadow-cyan-400/40 ring-1 ring-cyan-300/30'
+                  : 'w-4 h-4 border-transparent scale-50 opacity-0'
+              }`}
+            />
 
-                {/* Floating Interactive Tooltip with Distance */}
-                <div
+            {/* Core Reticle Dot: subtle 5-6px dot, smoothly scaling up and brightening on hover */}
+            <div
+              className={`rounded-full shadow-sm pointer-events-none transition-all duration-150 ease-out ${
+                hoveredInfo
+                  ? 'w-2 h-2 bg-cyan-300 scale-125 opacity-100 ring-2 ring-cyan-400/60 shadow-cyan-400/60'
+                  : 'w-1.5 h-1.5 bg-white/70 border border-slate-950/60 scale-100 opacity-60'
+              }`}
+            />
+          </div>
+
+          {/* Floating Interactive Tooltip with Distance (Positioned below center reticle) */}
+          {hoveredInfo && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handleHUDInteract();
+              }}
+              className="mt-8 flex flex-col items-center bg-slate-950/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-lab-cyan/60 shadow-2xl shadow-lab-cyan/30 whitespace-nowrap animate-bounce pointer-events-auto cursor-pointer hover:border-cyan-300 hover:scale-105 transition-all"
+              title="Nhấn chuột hoặc phím [E] để tương tác"
+            >
+              <div className="flex items-center space-x-2">
+                <span className="px-1.5 py-0.5 rounded bg-lab-cyan text-slate-950 font-bold text-xs font-mono">
+                  [E]
+                </span>
+                <span className="text-xs font-bold text-white">
+                  {hoveredInfo.action}
+                </span>
+                {hoveredDistance !== null && (
+                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40">
+                    {hoveredDistance}m
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] text-lab-cyan font-mono mt-1">
+                {hoveredInfo.sub}
+              </span>
+              {nearbyStations.length > 1 && (
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleHUDInteract();
+                    cycleInteractiveTarget();
                   }}
-                  className="absolute top-12 flex flex-col items-center bg-slate-950/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-lab-cyan/60 shadow-2xl shadow-lab-cyan/30 whitespace-nowrap animate-bounce pointer-events-auto cursor-pointer hover:border-cyan-300 hover:scale-105 transition-all"
-                  title="Nhấn chuột hoặc phím [E] để tương tác"
+                  className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80 hover:text-white transition-all cursor-pointer pointer-events-auto"
+                  title="Bấm phím [Tab] hoặc [Q] để đổi đối tượng tương tác"
                 >
-                  <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 rounded bg-lab-cyan text-slate-950 font-bold text-xs font-mono">
-                      [E]
-                    </span>
-                    <span className="text-xs font-bold text-white">
-                      {hoveredInfo.action}
-                    </span>
-                    {hoveredDistance && (
-                      <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40">
-                        {hoveredDistance}m
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-lab-cyan font-mono mt-1">
-                    {hoveredInfo.sub}
+                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold font-mono text-[10px]">
+                    [Tab / Q]
                   </span>
-                  {nearbyStations.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        cycleInteractiveTarget();
-                      }}
-                      className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80 hover:text-white transition-all cursor-pointer pointer-events-auto"
-                      title="Bấm phím [Tab] hoặc [Q] để đổi đối tượng tương tác"
-                    >
-                      <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold font-mono text-[10px]">
-                        [Tab / Q]
-                      </span>
-                      <span>
-                        Đổi mục tiêu ({activeTargetIndex + 1}/{nearbyStations.length}):
-                        <b className="text-white ml-1 font-sans">
-                          {getTargetDisplayName(nearbyStations[(activeTargetIndex + 1) % nearbyStations.length])}
-                        </b>
-                      </span>
-                    </button>
-                  )}
-                  {!isPointerLocked && (
-                    <div className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
-                      <MousePointerClick className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 animate-pulse" />
-                      <span>Ấn chuột trái thì sẽ mất cursor để điều khiển bằng W, A, S, D</span>
-                    </div>
-                  )}
+                  <span>
+                    Đổi mục tiêu ({activeTargetIndex + 1}/{nearbyStations.length}):
+                    <b className="text-white ml-1 font-sans">
+                      {getTargetDisplayName(nearbyStations[(activeTargetIndex + 1) % nearbyStations.length])}
+                    </b>
+                  </span>
+                </button>
+              )}
+              {!isPointerLocked && (
+                <div className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
+                  <MousePointerClick className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 animate-pulse" />
+                  <span>Ấn chuột trái thì sẽ mất cursor để điều khiển bằng W, A, S, D</span>
                 </div>
-              </div>
-            ) : (
-              // Default subtle crosshair dot
-              <div className="w-2 h-2 rounded-full bg-white/70 border border-slate-900 shadow-sm" />
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

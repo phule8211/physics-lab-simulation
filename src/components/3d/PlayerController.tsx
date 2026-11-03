@@ -849,19 +849,30 @@ useFrame((_, delta) => {
     });
     const nearbyIds = nearbyCandidates.map((c) => c.id);
 
-    // Sync nearby candidates to Zustand store
-    useLabStore.getState().setNearbyStations(nearbyIds);
-
     const storeState = useLabStore.getState();
+
+    // Performance optimization: Only sync nearbyStations when array contents change
+    const prevNearby = storeState.nearbyStations;
+    const isNearbyEqual =
+      prevNearby.length === nearbyIds.length &&
+      prevNearby.every((id, idx) => id === nearbyIds[idx]);
+    if (!isNearbyEqual) {
+      useLabStore.getState().setNearbyStations(nearbyIds);
+    }
+
     const activeIdx = Math.min(storeState.activeTargetIndex, Math.max(0, nearbyCandidates.length - 1));
     const activeCandidate = nearbyCandidates[activeIdx] || null;
     const closestStation: StationId | null = activeCandidate ? activeCandidate.id : null;
-    const activeDistance: number | null = activeCandidate ? activeCandidate.dist : null;
+    const activeDistance: number | null =
+      activeCandidate && activeCandidate.dist !== null ? Number(activeCandidate.dist.toFixed(1)) : null;
 
-    setHoveredStation(
-      closestStation,
-      closestStation && activeDistance !== null ? Number(activeDistance.toFixed(1)) : null
-    );
+    // Performance optimization: Only update hovered station when hovered target or 0.1m rounded distance changes
+    if (
+      storeState.hoveredStationId !== closestStation ||
+      storeState.hoveredDistance !== activeDistance
+    ) {
+      setHoveredStation(closestStation, activeDistance);
+    }
     }
   });
 

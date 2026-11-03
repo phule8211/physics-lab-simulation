@@ -112,19 +112,19 @@ export function ChemicalDispenserModal() {
   }, [chemicalBeaker, total]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn select-none">
-      <div className="relative w-full max-w-4xl bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md animate-fadeIn select-none">
+      <div className="relative w-full max-w-4xl bg-slate-900/95 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/50">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-              <FlaskConical className="w-5 h-5 animate-pulse" />
+        <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-slate-800 bg-slate-950/50 flex-shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 flex-shrink-0">
+              <FlaskConical className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-wide">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
                 GIÁ ĐỠ HÓA CHẤT & ĐONG DUNG DỊCH ĂN MÒN
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400">
                 Cho phép lấy HCl, HNO3, H2O2 và nước khử ion vào cốc thí nghiệm to (500mL)
               </p>
             </div>
@@ -134,35 +134,35 @@ export function ChemicalDispenserModal() {
               closeChemicalModal();
               document.querySelector('canvas')?.requestPointerLock();
             }}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Main Grid: Left is Beaker Visualizer, Right is Dispensing Controls */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 p-6 overflow-y-auto">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-3.5 sm:p-6 overflow-y-auto">
           {/* LEFT: 2D/3D Beaker Graphic & Liquid Composition */}
-          <div className="flex flex-col items-center justify-between p-6 rounded-3xl bg-slate-950/80 border border-slate-800">
+          <div className="flex flex-col items-center justify-between p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-slate-950/80 border border-slate-800">
             {/* Mixture Status Card */}
             <div className="w-full text-center space-y-1">
               <div className="flex items-center justify-center space-x-2">
-                <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border ${mixtureAnalysis.badgeColor}`}>
+                <span className={`text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full border ${mixtureAnalysis.badgeColor}`}>
                   {mixtureAnalysis.badge}
                 </span>
               </div>
-              <h3 className={`text-sm md:text-base ${mixtureAnalysis.color}`}>
+              <h3 className={`text-xs sm:text-sm md:text-base ${mixtureAnalysis.color}`}>
                 {mixtureAnalysis.name}
               </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              <p className="text-[11px] sm:text-xs text-slate-400 max-w-sm mx-auto">
                 {mixtureAnalysis.description}
               </p>
             </div>
 
             {/* Beaker Visual Flask with Fluid Level */}
-            <div className="relative w-44 h-60 my-6 rounded-b-3xl border-4 border-t-0 border-cyan-400/40 bg-slate-900/60 overflow-hidden flex flex-col justify-end p-1 shadow-2xl shadow-cyan-900/20">
+            <div className="relative w-36 h-48 sm:w-44 sm:h-56 my-3 sm:my-5 rounded-b-3xl border-4 border-t-0 border-cyan-400/40 bg-slate-900/60 overflow-hidden flex flex-col justify-end p-1 shadow-2xl shadow-cyan-900/20 flex-shrink-0">
               {/* Beaker Graduation Ticks */}
-              <div className="absolute inset-y-4 right-2 flex flex-col justify-between text-[10px] font-mono text-slate-500 pointer-events-none select-none">
+              <div className="absolute inset-y-3 sm:inset-y-4 right-1.5 sm:right-2 flex flex-col justify-between text-[9px] sm:text-[10px] font-mono text-slate-500 pointer-events-none select-none">
                 <span>- 500mL</span>
                 <span>- 400mL</span>
                 <span>- 300mL</span>
@@ -214,7 +214,7 @@ export function ChemicalDispenserModal() {
                 </span>
               </div>
 
-              <div className="h-3 w-full bg-slate-900 rounded-full overflow-hidden flex border border-slate-800">
+              <div className="h-2.5 sm:h-3 w-full bg-slate-900 rounded-full overflow-hidden flex border border-slate-800">
                 {chemicalBeaker.hcl > 0 && (
                   <div
                     style={{ width: `${(chemicalBeaker.hcl / capacity) * 100}%` }}
@@ -245,8 +245,8 @@ export function ChemicalDispenserModal() {
                 )}
               </div>
 
-              {/* Legend Badges */}
-              <div className="grid grid-cols-4 gap-1.5 pt-1 text-[11px] font-mono text-center">
+              {/* Legend Badges: 2 cols on mobile, 4 cols on desktop */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 text-[10px] sm:text-[11px] font-mono text-center">
                 <div className="p-1 rounded bg-slate-900 border border-cyan-500/30 text-cyan-300">
                   HCl: {chemicalBeaker.hcl}ml
                 </div>
@@ -264,30 +264,30 @@ export function ChemicalDispenserModal() {
           </div>
 
           {/* RIGHT: Chemical Dispensing Actions */}
-          <div className="flex flex-col justify-between space-y-4">
-            <div className="space-y-3.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+          <div className="flex flex-col justify-between space-y-3.5 sm:space-y-4">
+            <div className="space-y-3 sm:space-y-3.5">
+              <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-300">
                 CHỌN DUNG DỊCH ĐỂ RÓT VÀO CỐC TO
               </h4>
 
               {/* 1. Axit Clohidric (HCl 37%) */}
-              <div className="p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 space-y-2">
+              <div className="p-2.5 sm:p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="w-3 h-3 rounded-full bg-cyan-400" />
+                    <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-cyan-400" />
                     <span className="text-xs font-bold text-white">
                       Axit Clohidric (HCl 37%)
                     </span>
                   </div>
                   <span className="text-[10px] text-cyan-400 font-mono">Ăn mòn oxit</span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                   {[10, 25, 50, 100].map((amt) => (
                     <button
                       key={`hcl_${amt}`}
                       onClick={() => addChemicalToTestBeaker('HCl', amt)}
                       disabled={total >= capacity}
-                      className="flex-1 py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-900/60 text-cyan-200 border border-cyan-500/40 text-xs font-mono font-bold transition-all disabled:opacity-40"
+                      className="py-1.5 rounded-xl bg-slate-900 hover:bg-cyan-900/60 text-cyan-200 border border-cyan-500/40 text-[11px] sm:text-xs font-mono font-bold transition-all disabled:opacity-40"
                     >
                       +{amt}mL
                     </button>
@@ -296,23 +296,23 @@ export function ChemicalDispenserModal() {
               </div>
 
               {/* 2. Axit Nitric (HNO3 68%) */}
-              <div className="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-2">
+              <div className="p-2.5 sm:p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="w-3 h-3 rounded-full bg-amber-400" />
+                    <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-400" />
                     <span className="text-xs font-bold text-white">
                       Axit Nitric (HNO3 68%)
                     </span>
                   </div>
                   <span className="text-[10px] text-amber-400 font-mono">Oxy hóa cực mạnh</span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                   {[10, 25, 50, 100].map((amt) => (
                     <button
                       key={`hno3_${amt}`}
                       onClick={() => addChemicalToTestBeaker('HNO3', amt)}
                       disabled={total >= capacity}
-                      className="flex-1 py-1.5 rounded-xl bg-slate-900 hover:bg-amber-900/60 text-amber-200 border border-amber-500/40 text-xs font-mono font-bold transition-all disabled:opacity-40"
+                      className="py-1.5 rounded-xl bg-slate-900 hover:bg-amber-900/60 text-amber-200 border border-amber-500/40 text-[11px] sm:text-xs font-mono font-bold transition-all disabled:opacity-40"
                     >
                       +{amt}mL
                     </button>
@@ -321,23 +321,23 @@ export function ChemicalDispenserModal() {
               </div>
 
               {/* 3. Oxy Già (H2O2 30%) */}
-              <div className="p-3.5 rounded-2xl bg-blue-950/30 border border-blue-500/30 space-y-2">
+              <div className="p-2.5 sm:p-3.5 rounded-2xl bg-blue-950/30 border border-blue-500/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="w-3 h-3 rounded-full bg-blue-400" />
+                    <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-400" />
                     <span className="text-xs font-bold text-white">
                       Oxy Già (Hydrogen Peroxide H2O2 30%)
                     </span>
                   </div>
                   <span className="text-[10px] text-blue-400 font-mono">Tẩy rửa Wafer</span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                   {[10, 25, 50, 100].map((amt) => (
                     <button
                       key={`h2o2_${amt}`}
                       onClick={() => addChemicalToTestBeaker('H2O2', amt)}
                       disabled={total >= capacity}
-                      className="flex-1 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-900/60 text-blue-200 border border-blue-500/40 text-xs font-mono font-bold transition-all disabled:opacity-40"
+                      className="py-1.5 rounded-xl bg-slate-900 hover:bg-blue-900/60 text-blue-200 border border-blue-500/40 text-[11px] sm:text-xs font-mono font-bold transition-all disabled:opacity-40"
                     >
                       +{amt}mL
                     </button>
@@ -346,23 +346,23 @@ export function ChemicalDispenserModal() {
               </div>
 
               {/* 4. Nước Cất Khử Ion (DI Water) */}
-              <div className="p-3.5 rounded-2xl bg-sky-950/30 border border-sky-500/30 space-y-2">
+              <div className="p-2.5 sm:p-3.5 rounded-2xl bg-sky-950/30 border border-sky-500/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="w-3 h-3 rounded-full bg-sky-300" />
+                    <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-sky-300" />
                     <span className="text-xs font-bold text-white">
                       Nước Khử Ion Siêu Tinh Khiết (DI Water)
                     </span>
                   </div>
                   <span className="text-[10px] text-sky-300 font-mono">Pha loãng & Tráng</span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {[50, 100, 200].map((amt) => (
                     <button
                       key={`water_${amt}`}
                       onClick={() => addChemicalToTestBeaker('WATER', amt)}
                       disabled={total >= capacity}
-                      className="flex-1 py-1.5 rounded-xl bg-slate-900 hover:bg-sky-900/60 text-sky-200 border border-sky-500/40 text-xs font-mono font-bold transition-all disabled:opacity-40"
+                      className="py-1.5 rounded-xl bg-slate-900 hover:bg-sky-900/60 text-sky-200 border border-sky-500/40 text-[11px] sm:text-xs font-mono font-bold transition-all disabled:opacity-40"
                     >
                       +{amt}mL
                     </button>
@@ -372,10 +372,10 @@ export function ChemicalDispenserModal() {
             </div>
 
             {/* Action Bar */}
-            <div className="pt-2 flex items-center space-x-3">
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={resetChemicalBeaker}
-                className="flex-1 py-2.5 rounded-2xl bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-bold flex items-center justify-center space-x-2 transition-all"
+                className="w-full sm:flex-1 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-bold flex items-center justify-center space-x-2 transition-all"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Đổ Bỏ & Làm Sạch Cốc</span>
@@ -386,7 +386,7 @@ export function ChemicalDispenserModal() {
                   closeChemicalModal();
                   document.querySelector('canvas')?.requestPointerLock();
                 }}
-                className="flex-1 py-2.5 rounded-2xl bg-lab-cyan hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-lab-cyan/30"
+                className="w-full sm:flex-1 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-lab-cyan hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-lab-cyan/30"
               >
                 Hoàn Tất & Giữ Cốc
               </button>

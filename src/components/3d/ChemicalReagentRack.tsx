@@ -42,18 +42,59 @@ export function ChemicalReagentRack() {
         <meshStandardMaterial color="#64748b" metalness={0.92} roughness={0.2} />
       </mesh>
 
-      {/* Upright Chemical Bottle Riser Shelf */}
+      {/* Upright Chemical Bottle Riser Shelf (Top surface at Y = 1.24m) */}
       <mesh position={[0, 1.05, -0.16]} castShadow receiveShadow>
         <boxGeometry args={[1.4, 0.38, 0.3]} />
         <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.25} />
       </mesh>
 
+      {/* Designated Snap Slots for Chemical Bottles on Riser Shelf (Prevent z-fighting & define slot boundaries) */}
+      {/* Slot 1: HCl Coaster Ring */}
+      <mesh position={[-0.42, 1.242, -0.16]}>
+        <cylinderGeometry args={[0.078, 0.082, 0.006, 24]} />
+        <meshStandardMaterial color="#dc2626" roughness={0.5} />
+      </mesh>
+      <mesh position={[-0.42, 1.245, -0.16]}>
+        <cylinderGeometry args={[0.072, 0.072, 0.002, 24]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.8} />
+      </mesh>
+
+      {/* Slot 2: HNO3 Coaster Ring */}
+      <mesh position={[0.0, 1.242, -0.16]}>
+        <cylinderGeometry args={[0.078, 0.082, 0.006, 24]} />
+        <meshStandardMaterial color="#f59e0b" roughness={0.5} />
+      </mesh>
+      <mesh position={[0.0, 1.245, -0.16]}>
+        <cylinderGeometry args={[0.072, 0.072, 0.002, 24]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.8} />
+      </mesh>
+
+      {/* Slot 3: H2O2 Coaster Ring */}
+      <mesh position={[0.42, 1.242, -0.16]}>
+        <cylinderGeometry args={[0.078, 0.082, 0.006, 24]} />
+        <meshStandardMaterial color="#0284c7" roughness={0.5} />
+      </mesh>
+      <mesh position={[0.42, 1.245, -0.16]}>
+        <cylinderGeometry args={[0.072, 0.072, 0.002, 24]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.8} />
+      </mesh>
+
+      {/* Designated Anti-Static Silicone Mat under Beaker on Table Surface */}
+      <mesh position={[0, 0.866, 0.16]}>
+        <cylinderGeometry args={[0.11, 0.112, 0.004, 24]} />
+        <meshStandardMaterial color="#0369a1" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.868, 0.16]}>
+        <cylinderGeometry args={[0.098, 0.098, 0.002, 24]} />
+        <meshStandardMaterial color="#0284c7" roughness={0.7} />
+      </mesh>
+
       {/* =========================================================================
-          2. CHEMICAL REAGENT BOTTLES
+          2. CHEMICAL REAGENT BOTTLES (Flush Snapping at Y = 1.356m, No Mesh Clipping)
          ========================================================================= */}
       {/* BOTTLE 1: Axit Clohidric (HCl 37%) - Amber Glass Bottle, Red Cap */}
       <group
-        position={[-0.42, 1.25, -0.16]}
+        position={[-0.42, 1.356, -0.16]}
         onClick={(e) => {
           e.stopPropagation();
           openChemicalModal();
@@ -74,16 +115,16 @@ export function ChemicalReagentRack() {
           <cylinderGeometry args={[0.032, 0.032, 0.035, 16]} />
           <meshStandardMaterial color="#dc2626" roughness={0.3} />
         </mesh>
-        {/* Front Label: "HCl 37%" */}
-        <mesh position={[0, 0, 0.072]}>
-          <planeGeometry args={[0.09, 0.12]} />
-          <meshBasicMaterial color="#ffffff" />
+        {/* Front Label: "HCl 37%" - Curved conforming cylinder decal (zero z-fighting) */}
+        <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
+          <cylinderGeometry args={[0.0708, 0.0708, 0.11, 24, 1, true, -Math.PI / 4, Math.PI / 2]} />
+          <meshBasicMaterial color="#ffffff" side={2} />
         </mesh>
       </group>
 
       {/* BOTTLE 2: Axit Nitric (HNO3 68%) - Dark Brown Bottle, Yellow Cap */}
       <group
-        position={[0.0, 1.25, -0.16]}
+        position={[0.0, 1.356, -0.16]}
         onClick={(e) => {
           e.stopPropagation();
           openChemicalModal();
@@ -104,16 +145,16 @@ export function ChemicalReagentRack() {
           <cylinderGeometry args={[0.032, 0.032, 0.035, 16]} />
           <meshStandardMaterial color="#f59e0b" roughness={0.3} />
         </mesh>
-        {/* Front Label: "HNO3 68%" */}
-        <mesh position={[0, 0, 0.072]}>
-          <planeGeometry args={[0.09, 0.12]} />
-          <meshBasicMaterial color="#ffffff" />
+        {/* Front Label: "HNO3 68%" - Curved conforming cylinder decal (zero z-fighting) */}
+        <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
+          <cylinderGeometry args={[0.0708, 0.0708, 0.11, 24, 1, true, -Math.PI / 4, Math.PI / 2]} />
+          <meshBasicMaterial color="#ffffff" side={2} />
         </mesh>
       </group>
 
       {/* BOTTLE 3: Oxy Già (H2O2 30%) - Opaque White HDPE Bottle, Blue Cap */}
       <group
-        position={[0.42, 1.25, -0.16]}
+        position={[0.42, 1.356, -0.16]}
         onClick={(e) => {
           e.stopPropagation();
           openChemicalModal();
@@ -134,18 +175,18 @@ export function ChemicalReagentRack() {
           <cylinderGeometry args={[0.032, 0.032, 0.035, 16]} />
           <meshStandardMaterial color="#0284c7" roughness={0.3} />
         </mesh>
-        {/* Front Label: "H2O2 30%" */}
-        <mesh position={[0, 0, 0.072]}>
-          <planeGeometry args={[0.09, 0.12]} />
-          <meshBasicMaterial color="#ffffff" />
+        {/* Front Label: "H2O2 30%" - Curved conforming cylinder decal (zero z-fighting) */}
+        <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
+          <cylinderGeometry args={[0.0708, 0.0708, 0.11, 24, 1, true, -Math.PI / 4, Math.PI / 2]} />
+          <meshBasicMaterial color="#ffffff" side={2} />
         </mesh>
       </group>
 
       {/* =========================================================================
-          3. LARGE EXPERIMENT BEAKER (CỐC THÍ NGHIỆM TO 500ML TRÊN BÀN)
+          3. LARGE EXPERIMENT BEAKER (500ML BEAKER SNAPPING TO MAT AT Y = 0.978m)
          ========================================================================= */}
       <group
-        position={[0, 0.87, 0.16]}
+        position={[0, 0.978, 0.16]}
         onClick={(e) => {
           e.stopPropagation();
           openChemicalModal();

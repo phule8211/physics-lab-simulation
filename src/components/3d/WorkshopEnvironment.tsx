@@ -609,11 +609,11 @@ export function WorkshopEnvironment() {
 
 
 
-      {/* Industrial Wall-Mounted Aptomat Dual Sub-Panel: CB-01 (4 Đèn Dài) & CB-02 (8 Đèn Âm Trần) with 1.0m spacing */}
+      {/* Industrial Wall-Mounted Aptomat Dual Sub-Panel: CB-01 (4 Đèn Dài) & CB-02 (8 Đèn Âm Trần) placed side-by-side with realistic 10cm gap */}
 
-      <AptomatCircuitBreaker position={[-2.65, 1.55, -7.88]} rotation={[0, 0, 0]} />
+      <AptomatCircuitBreaker position={[-2.38, 1.55, -7.88]} rotation={[0, 0, 0]} />
 
-      <CeilingLampsAptomatBreaker position={[-1.65, 1.55, -7.88]} rotation={[0, 0, 0]} />
+      <CeilingLampsAptomatBreaker position={[-1.92, 1.55, -7.88]} rotation={[0, 0, 0]} />
 
 
 
