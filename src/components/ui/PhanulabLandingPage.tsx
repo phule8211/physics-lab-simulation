@@ -5,10 +5,8 @@ import {
   Zap,
   Atom,
   ShieldCheck,
-  Compass,
   ArrowRight,
   Layers,
-  Keyboard,
   Award,
   Eye,
   X,
@@ -33,7 +31,7 @@ export function PhanulabLandingPage() {
       <div className="fixed top-1/2 left-1/2 w-[32rem] h-[32rem] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
 
       {/* Main Glassmorphic Modal Container */}
-      <div className="relative w-full max-w-4xl rounded-3xl bg-slate-900/90 border border-slate-700/80 shadow-2xl shadow-cyan-950/50 p-5 sm:p-8 md:p-10 flex flex-col gap-6 text-slate-100 my-auto">
+      <div className="relative w-full max-w-4xl rounded-3xl bg-slate-900/90 border border-slate-700/80 shadow-2xl shadow-cyan-950/50 p-6 sm:p-8 md:p-10 flex flex-col gap-6 text-slate-100 my-auto">
         
         {/* Top Header: Badge & Creator Info */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-800 pb-5">
@@ -120,71 +118,34 @@ export function PhanulabLandingPage() {
           </div>
         </div>
 
-        {/* 4 Feature Highlights Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col gap-2">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-              <Zap className="w-4 h-4" />
+        {/* 4 Feature Highlights Grid (Clean without small text) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col sm:flex-row items-center gap-2.5 text-center sm:text-left">
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-4.5 h-4.5" />
             </div>
-            <h2 className="text-xs font-bold text-white">Hệ Thống Máy Laser</h2>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Mô phỏng máy CO2 (10.6µm), UV (355nm), Fiber (1064nm) cắt khắc đa vật liệu.
-            </p>
+            <h2 className="text-xs font-bold text-white leading-snug">Hệ Thống Máy Laser</h2>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-violet-500/40 transition-all flex flex-col gap-2">
-            <div className="w-8 h-8 rounded-lg bg-violet-500/20 text-violet-400 flex items-center justify-center">
-              <Layers className="w-4 h-4" />
+          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-violet-500/40 transition-all flex flex-col sm:flex-row items-center gap-2.5 text-center sm:text-left">
+            <div className="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center flex-shrink-0">
+              <Layers className="w-4.5 h-4.5" />
             </div>
-            <h2 className="text-xs font-bold text-white">10 Bàn Thí Nghiệm Tầng 2</h2>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Lăng kính khúc xạ, giao thoa Michelson, nhiễu xạ khe hẹp, phân cực & wafer bán dẫn.
-            </p>
+            <h2 className="text-xs font-bold text-white leading-snug">10 Bàn Thí Nghiệm</h2>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-emerald-500/40 transition-all flex flex-col gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
+          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-emerald-500/40 transition-all flex flex-col sm:flex-row items-center gap-2.5 text-center sm:text-left">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <ShieldCheck className="w-4.5 h-4.5" />
             </div>
-            <h2 className="text-xs font-bold text-white">An Toàn & Phủ Sơn UV</h2>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Khóa liên động Interlock ngắt khẩn cấp E-STOP, cảm biến khói & buồng phủ sơn sấy nano.
-            </p>
+            <h2 className="text-xs font-bold text-white leading-snug">An Toàn & Phủ Sơn UV</h2>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-sky-500/40 transition-all flex flex-col gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
-              <Eye className="w-4 h-4" />
+          <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800 hover:border-sky-500/40 transition-all flex flex-col sm:flex-row items-center gap-2.5 text-center sm:text-left">
+            <div className="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center flex-shrink-0">
+              <Eye className="w-4.5 h-4.5" />
             </div>
-            <h2 className="text-xs font-bold text-white">Doraemon & Góc Nhìn 3D</h2>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Đồng hành cùng nhân vật Doraemon anime 3D; nhấn phím 9 để chiêm ngưỡng toàn thân.
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Instructions & Keybindings */}
-        <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-wrap items-center justify-center sm:justify-between gap-2.5 text-xs">
-          <div className="flex items-center space-x-2 text-slate-300">
-            <Keyboard className="w-4 h-4 text-cyan-400" />
-            <span>Phím điều khiển:</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 font-bold">WASD</span>
-            <span className="text-slate-400">Di chuyển</span>
-
-            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 font-bold">Chuột</span>
-            <span className="text-slate-400">Xoay nhìn 360°</span>
-
-            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-emerald-400 font-bold">E</span>
-            <span className="text-slate-400">Khám phá</span>
-
-            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-sky-400 font-bold">9</span>
-            <span className="text-slate-400">Góc nhìn thứ 3</span>
-
-            <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-violet-400 font-bold">↑ ↓</span>
-            <span className="text-slate-400">Chọn dụng cụ</span>
+            <h2 className="text-xs font-bold text-white leading-snug">Doraemon & Góc Nhìn 3D</h2>
           </div>
         </div>
 
