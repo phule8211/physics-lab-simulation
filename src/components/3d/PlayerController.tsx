@@ -32,7 +32,32 @@ export function PlayerController() {
     setMode,
     setCameraHeading,
     setPlayerElevation,
+    isDesignModalOpen,
+    isSpecimenModalOpen,
+    isHelpModalOpen,
+    isNpcDialogOpen,
+    isChemicalModalOpen,
+    isEquipmentModalOpen,
+    isSinkModalOpen,
   } = useLabStore();
+
+  const isAnyModalOpen =
+    isDesignModalOpen ||
+    isSpecimenModalOpen ||
+    isHelpModalOpen ||
+    isNpcDialogOpen ||
+    isChemicalModalOpen ||
+    isEquipmentModalOpen ||
+    isSinkModalOpen ||
+    activeStationId !== null ||
+    mode === 'INSPECTING';
+
+  // Automatically release mouse pointer whenever any tab/modal is opened
+  useEffect(() => {
+    if (isAnyModalOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, [isAnyModalOpen]);
 
   const velocity = useRef(new THREE.Vector3());
   const position = useRef(new THREE.Vector3(0, EYE_HEIGHT, 0));
@@ -496,11 +521,11 @@ useFrame((_, delta) => {
     }
   });
 
-return (
-  <>
-    {mode === 'WALKING' && (
+  return (
+    <>
+      {mode === 'WALKING' && !isAnyModalOpen && (
         <PointerLockControls ref={controlsRef} />
-    )}
-  </>
-);
+      )}
+    </>
+  );
 }

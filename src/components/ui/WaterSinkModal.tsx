@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import { X, Droplets, Waves, Sliders, Play, Square, Check, Gauge } from 'lucide-react';
 
@@ -13,6 +13,13 @@ export function WaterSinkModal() {
     dispenseWaterIntoBeaker,
     chemicalBeaker,
   } = useLabStore();
+
+  // Automatically release mouse pointer when modal opens
+  useEffect(() => {
+    if (isSinkModalOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, [isSinkModalOpen]);
 
   if (!isSinkModalOpen) return null;
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import {
   X,
@@ -21,6 +21,13 @@ export function ChemicalDispenserModal() {
     addChemicalToTestBeaker,
     resetChemicalBeaker,
   } = useLabStore();
+
+  // Automatically release mouse pointer when modal opens
+  useEffect(() => {
+    if (isChemicalModalOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, [isChemicalModalOpen]);
 
   if (!isChemicalModalOpen) return null;
 

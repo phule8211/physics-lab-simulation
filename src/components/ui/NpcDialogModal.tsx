@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import {
   X,
@@ -137,6 +137,12 @@ const NPC_TOPICS: TopicData[] = [
 
 export function NpcDialogModal() {
   const { isNpcDialogOpen, closeNpcDialog, npcCurrentTopic, setNpcTopic } = useLabStore();
+
+  useEffect(() => {
+    if (isNpcDialogOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, [isNpcDialogOpen]);
 
   if (!isNpcDialogOpen) return null;
 

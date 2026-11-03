@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import { X, TestTubes, Pipette, FlaskConical, Check, Plus, PackageCheck } from 'lucide-react';
 
@@ -9,6 +9,13 @@ export function LabEquipmentRackModal() {
     collectedEquipment,
     takeEquipmentItem,
   } = useLabStore();
+
+  // Automatically release mouse pointer when modal opens
+  useEffect(() => {
+    if (isEquipmentModalOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, [isEquipmentModalOpen]);
 
   if (!isEquipmentModalOpen) return null;
 

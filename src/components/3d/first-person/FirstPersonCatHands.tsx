@@ -269,6 +269,26 @@ function SinglePaw({
       ]}
     >
       {/* =========================================================================
+          0. UPPER ARM & LAB COAT SLEEVE (Cánh tay áo Blouse trắng xắn gấu cao cấp)
+         ========================================================================= */}
+      <group position={[0, -0.16, 0.30]} rotation={[0.65, 0, 0]}>
+        {/* White Lab Coat Upper Arm Sleeve */}
+        <mesh castShadow>
+          <cylinderGeometry args={[0.058, 0.052, 0.24, 18]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.82} />
+        </mesh>
+        {/* Rolled-up Fabric Cuff (Gấu áo blouse xắn lên chuyên nghiệp) */}
+        <mesh position={[0, -0.10, 0]}>
+          <cylinderGeometry args={[0.062, 0.060, 0.045, 18]} />
+          <meshStandardMaterial color="#e2e8f0" roughness={0.85} />
+        </mesh>
+        <mesh position={[0, -0.08, 0]}>
+          <torusGeometry args={[0.058, 0.007, 12, 20]} />
+          <meshStandardMaterial color="#cbd5e1" roughness={0.9} />
+        </mesh>
+      </group>
+
+      {/* =========================================================================
           1. FOREARM (Cẳng tay mèo cam thon mượt với vằn lông mướp)
          ========================================================================= */}
       <group position={[0, -0.06, 0.14]} rotation={[0.45, 0, 0]}>
@@ -432,7 +452,333 @@ function SinglePaw({
 }
 
 // =========================================================================
-// MAIN FIRST-PERSON CAT HANDS VIEWMODEL COMPONENT
+// FULL-BODY HUMAN SCIENTIST RIG WITH CAT HANDS (MÔ HÌNH NGƯỜI HOÀN CHỈNH)
+// =========================================================================
+
+interface FullBodyHumanProps {
+  bodyRef: React.RefObject<THREE.Group | null>;
+  walkCycle: number;
+  isMoving: boolean;
+}
+
+function FullBodyHuman({ bodyRef, walkCycle, isMoving }: FullBodyHumanProps) {
+  // Stride angles for leg swinging
+  const legAngleL = isMoving ? Math.sin(walkCycle) * 0.38 : 0;
+  const legAngleR = isMoving ? -Math.sin(walkCycle) * 0.38 : 0;
+
+  // Knee bending on backward stride
+  const kneeBendL = isMoving ? Math.max(0, -Math.sin(walkCycle)) * 0.52 : 0;
+  const kneeBendR = isMoving ? Math.max(0, Math.sin(walkCycle)) * 0.52 : 0;
+
+  // Subtle hip sway during gait
+  const hipSwayX = isMoving ? Math.sin(walkCycle) * 0.015 : 0;
+
+  return (
+    <group ref={bodyRef} name="FullBodyHumanPlayer">
+      {/* =========================================================================
+          1. LEGS & ESD SAFETY BOOTS (Hai chân & Giày phòng sạch chống tĩnh điện)
+         ========================================================================= */}
+      {/* LEFT LEG */}
+      <group position={[-0.12 + hipSwayX, 0.86, 0]}>
+        <group rotation={[legAngleL, 0, 0]}>
+          {/* Upper Thigh (Quần âu bảo hộ tối màu phòng sạch) */}
+          <mesh position={[0, -0.20, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.076, 0.066, 0.40, 16]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.85} />
+          </mesh>
+          {/* Knee Joint */}
+          <mesh position={[0, -0.40, 0]} castShadow>
+            <sphereGeometry args={[0.065, 14, 14]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.85} />
+          </mesh>
+          {/* Lower Shin / Calf */}
+          <group position={[0, -0.40, 0]} rotation={[kneeBendL, 0, 0]}>
+            <mesh position={[0, -0.19, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.063, 0.055, 0.38, 16]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.85} />
+            </mesh>
+            {/* Left Cleanroom Boot (Giày ESD màu trắng viền cyan) */}
+            <group position={[0, -0.38, 0.05]}>
+              {/* Boot Ankle Cuff */}
+              <mesh position={[0, 0.04, -0.04]} castShadow>
+                <cylinderGeometry args={[0.060, 0.058, 0.08, 16]} />
+                <meshStandardMaterial color="#0284c7" roughness={0.6} />
+              </mesh>
+              {/* Main Shoe Foot */}
+              <mesh position={[0, 0, 0.02]} castShadow receiveShadow>
+                <boxGeometry args={[0.11, 0.085, 0.22]} />
+                <meshStandardMaterial color="#f1f5f9" roughness={0.4} />
+              </mesh>
+              {/* Rubber Tread Sole */}
+              <mesh position={[0, -0.045, 0.02]} receiveShadow>
+                <boxGeometry args={[0.115, 0.022, 0.23]} />
+                <meshStandardMaterial color="#0f172a" roughness={0.9} />
+              </mesh>
+              {/* Cyan ESD Conductive Toe Stripe */}
+              <mesh position={[0, -0.015, 0.12]}>
+                <boxGeometry args={[0.09, 0.045, 0.02]} />
+                <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={0.6} />
+              </mesh>
+            </group>
+          </group>
+        </group>
+      </group>
+
+      {/* RIGHT LEG */}
+      <group position={[0.12 - hipSwayX, 0.86, 0]}>
+        <group rotation={[legAngleR, 0, 0]}>
+          {/* Upper Thigh */}
+          <mesh position={[0, -0.20, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.076, 0.066, 0.40, 16]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.85} />
+          </mesh>
+          {/* Knee Joint */}
+          <mesh position={[0, -0.40, 0]} castShadow>
+            <sphereGeometry args={[0.065, 14, 14]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.85} />
+          </mesh>
+          {/* Lower Shin / Calf */}
+          <group position={[0, -0.40, 0]} rotation={[kneeBendR, 0, 0]}>
+            <mesh position={[0, -0.19, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.063, 0.055, 0.38, 16]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.85} />
+            </mesh>
+            {/* Right Cleanroom Boot */}
+            <group position={[0, -0.38, 0.05]}>
+              <mesh position={[0, 0.04, -0.04]} castShadow>
+                <cylinderGeometry args={[0.060, 0.058, 0.08, 16]} />
+                <meshStandardMaterial color="#0284c7" roughness={0.6} />
+              </mesh>
+              <mesh position={[0, 0, 0.02]} castShadow receiveShadow>
+                <boxGeometry args={[0.11, 0.085, 0.22]} />
+                <meshStandardMaterial color="#f1f5f9" roughness={0.4} />
+              </mesh>
+              <mesh position={[0, -0.045, 0.02]} receiveShadow>
+                <boxGeometry args={[0.115, 0.022, 0.23]} />
+                <meshStandardMaterial color="#0f172a" roughness={0.9} />
+              </mesh>
+              <mesh position={[0, -0.015, 0.12]}>
+                <boxGeometry args={[0.09, 0.045, 0.02]} />
+                <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={0.6} />
+              </mesh>
+            </group>
+          </group>
+        </group>
+      </group>
+
+      {/* =========================================================================
+          2. PELVIS, TECHNICAL BELT & LOWER LAB COAT (Hông, Thắt lưng & Vạt áo)
+         ========================================================================= */}
+      {/* Pelvis & Trousers Top */}
+      <mesh position={[0, 0.94, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.34, 0.16, 0.22]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.85} />
+      </mesh>
+
+      {/* Tactical Leather Belt */}
+      <mesh position={[0, 0.99, 0]} castShadow>
+        <boxGeometry args={[0.35, 0.045, 0.225]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.6} />
+      </mesh>
+      {/* Brushed Steel Belt Buckle */}
+      <mesh position={[0, 0.99, 0.115]}>
+        <boxGeometry args={[0.055, 0.04, 0.01]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.25} />
+      </mesh>
+
+      {/* Lower Lab Coat Flaps (Vạt áo blouse trắng buông tự nhiên) */}
+      <mesh position={[0, 0.88, -0.01]} castShadow receiveShadow>
+        <boxGeometry args={[0.39, 0.32, 0.25]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.82} />
+      </mesh>
+
+      {/* =========================================================================
+          3. TORSO & WHITE SCIENTIST LAB COAT (Ngực áo blouse & Bảng tên kỹ sư)
+         ========================================================================= */}
+      <group position={[0, 1.25, 0]}>
+        {/* Main Lab Coat Chest Body */}
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[0.38, 0.44, 0.23]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.82} />
+        </mesh>
+
+        {/* Navy Cleanroom Inner Shirt (V-neck opening) */}
+        <mesh position={[0, 0.12, 0.116]}>
+          <planeGeometry args={[0.12, 0.18]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.9} />
+        </mesh>
+
+        {/* Left Lapel (Cổ áo lật trái) */}
+        <mesh position={[-0.08, 0.12, 0.118]} rotation={[0, 0, -0.15]}>
+          <boxGeometry args={[0.07, 0.22, 0.012]} />
+          <meshStandardMaterial color="#e2e8f0" roughness={0.85} />
+        </mesh>
+
+        {/* Right Lapel (Cổ áo lật phải) */}
+        <mesh position={[0.08, 0.12, 0.118]} rotation={[0, 0, 0.15]}>
+          <boxGeometry args={[0.07, 0.22, 0.012]} />
+          <meshStandardMaterial color="#e2e8f0" roughness={0.85} />
+        </mesh>
+
+        {/* Optical Specialist ID Badge on Left Chest */}
+        <group position={[-0.11, 0.08, 0.122]}>
+          {/* Emerald Ribbon Clip */}
+          <mesh position={[0, 0.065, 0]}>
+            <boxGeometry args={[0.02, 0.03, 0.008]} />
+            <meshStandardMaterial color="#059669" metalness={0.5} roughness={0.3} />
+          </mesh>
+          {/* Badge Card */}
+          <mesh castShadow>
+            <boxGeometry args={[0.075, 0.10, 0.006]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.3} />
+          </mesh>
+          {/* Photo Box */}
+          <mesh position={[-0.018, 0.018, 0.004]}>
+            <planeGeometry args={[0.026, 0.032]} />
+            <meshStandardMaterial color="#334155" />
+          </mesh>
+          {/* Laser Icon Accent */}
+          <mesh position={[0.018, 0.018, 0.004]}>
+            <planeGeometry args={[0.024, 0.024]} />
+            <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={0.8} />
+          </mesh>
+          {/* Text Bars */}
+          <mesh position={[0, -0.022, 0.004]}>
+            <planeGeometry args={[0.062, 0.014]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+          <mesh position={[0, -0.038, 0.004]}>
+            <planeGeometry args={[0.062, 0.006]} />
+            <meshStandardMaterial color="#0284c7" />
+          </mesh>
+        </group>
+
+        {/* Right Chest Pocket with 2 Precision Laser Alignment Pens */}
+        <group position={[0.11, 0.06, 0.122]}>
+          {/* Pocket Hem */}
+          <mesh>
+            <boxGeometry args={[0.075, 0.08, 0.005]} />
+            <meshStandardMaterial color="#e2e8f0" roughness={0.85} />
+          </mesh>
+          {/* Silver Stylus Pen */}
+          <mesh position={[-0.016, 0.05, 0.004]}>
+            <cylinderGeometry args={[0.004, 0.004, 0.06, 10]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} />
+          </mesh>
+          {/* Gold Laser Stylus Pen */}
+          <mesh position={[0.016, 0.055, 0.004]}>
+            <cylinderGeometry args={[0.004, 0.004, 0.065, 10]} />
+            <meshStandardMaterial color="#fbbf24" metalness={0.9} roughness={0.2} />
+          </mesh>
+        </group>
+
+        {/* Broad Shoulders (Hai bên vai áo) */}
+        <mesh position={[-0.22, 0.16, 0]} castShadow>
+          <sphereGeometry args={[0.07, 16, 16]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.82} />
+        </mesh>
+        <mesh position={[0.22, 0.16, 0]} castShadow>
+          <sphereGeometry args={[0.07, 16, 16]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.82} />
+        </mesh>
+      </group>
+
+      {/* =========================================================================
+          4. HEAD, LASER GOGGLES & CAT EARS HEADSET (Đầu, Kính Laser & Tai mèo)
+         ========================================================================= */}
+      <group position={[0, 1.62, -0.10]}>
+        {/* Neck */}
+        <mesh position={[0, -0.07, 0]} castShadow>
+          <cylinderGeometry args={[0.055, 0.065, 0.10, 16]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.85} />
+        </mesh>
+
+        {/* Head */}
+        <mesh castShadow>
+          <sphereGeometry args={[0.105, 18, 18]} />
+          <meshStandardMaterial color="#334155" roughness={0.8} />
+        </mesh>
+
+        {/* Cleanroom Cap / Hair Visor */}
+        <mesh position={[0, 0.05, 0.04]} castShadow>
+          <boxGeometry args={[0.18, 0.04, 0.14]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.6} />
+        </mesh>
+
+        {/* Laser Safety Goggles (Kính bảo hộ màu hổ phách/cam) */}
+        <group position={[0, 0.01, 0.09]}>
+          {/* Black Frame */}
+          <mesh castShadow>
+            <boxGeometry args={[0.16, 0.045, 0.03]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.5} />
+          </mesh>
+          {/* Amber Anti-Laser Optical Filter Lenses */}
+          <mesh position={[-0.04, 0, 0.016]}>
+            <boxGeometry args={[0.06, 0.036, 0.005]} />
+            <meshStandardMaterial
+              color="#f59e0b"
+              metalness={0.4}
+              roughness={0.1}
+              transparent
+              opacity={0.85}
+            />
+          </mesh>
+          <mesh position={[0.04, 0, 0.016]}>
+            <boxGeometry args={[0.06, 0.036, 0.005]} />
+            <meshStandardMaterial
+              color="#f59e0b"
+              metalness={0.4}
+              roughness={0.1}
+              transparent
+              opacity={0.85}
+            />
+          </mesh>
+        </group>
+
+        {/* Comms Headset with Status LED */}
+        <mesh position={[0.11, 0, 0]}>
+          <cylinderGeometry args={[0.035, 0.035, 0.03, 16]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.4} />
+        </mesh>
+        <mesh position={[0.11, -0.01, 0.05]}>
+          <cylinderGeometry args={[0.003, 0.003, 0.08, 8]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.8} />
+        </mesh>
+        <mesh position={[0.10, -0.01, 0.09]}>
+          <sphereGeometry args={[0.006, 8, 8]} />
+          <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={1.5} />
+        </mesh>
+
+        {/* Cute Orange Tabby Cat Ears on Headband */}
+        <group position={[-0.07, 0.12, 0]} rotation={[0.1, 0, -0.2]}>
+          <mesh castShadow>
+            <coneGeometry args={[0.04, 0.08, 12]} />
+            <meshStandardMaterial color="#ea580c" roughness={0.88} />
+          </mesh>
+          {/* Inner Pink Ear Fur */}
+          <mesh position={[0, -0.005, 0.01]} scale={[0.65, 0.65, 0.65]}>
+            <coneGeometry args={[0.04, 0.08, 12]} />
+            <meshStandardMaterial color="#f472b6" roughness={0.7} />
+          </mesh>
+        </group>
+        <group position={[0.07, 0.12, 0]} rotation={[0.1, 0, 0.2]}>
+          <mesh castShadow>
+            <coneGeometry args={[0.04, 0.08, 12]} />
+            <meshStandardMaterial color="#ea580c" roughness={0.88} />
+          </mesh>
+          {/* Inner Pink Ear Fur */}
+          <mesh position={[0, -0.005, 0.01]} scale={[0.65, 0.65, 0.65]}>
+            <coneGeometry args={[0.04, 0.08, 12]} />
+            <meshStandardMaterial color="#f472b6" roughness={0.7} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  );
+}
+
+// =========================================================================
+// MAIN FIRST-PERSON CAT HANDS & FULL BODY CHARACTER COMPONENT
 // =========================================================================
 
 export function FirstPersonCatHands() {
@@ -441,6 +787,7 @@ export function FirstPersonCatHands() {
   const keys = useKeyboardControls();
 
   const groupRef = useRef<THREE.Group>(null);
+  const bodyRef = useRef<THREE.Group>(null);
 
   // Mouse sway lag trackers
   const prevCamRot = useRef(new THREE.Euler());
@@ -573,14 +920,37 @@ export function FirstPersonCatHands() {
     // Apply sway & breathe to viewmodel container
     groupRef.current.translateX(swayX.current + breatheX);
     groupRef.current.translateY(swayY.current + breatheY);
+
+    // 5. Update Full Body Human character position & orientation on the ground
+    if (bodyRef.current) {
+      bodyRef.current.visible = isVisible;
+      if (isVisible) {
+        const viewDir = new THREE.Vector3();
+        camera.getWorldDirection(viewDir);
+        const cameraYaw = Math.atan2(viewDir.x, viewDir.z);
+
+        const eyeHeight = 1.7;
+        const feetY = camera.position.y - eyeHeight;
+
+        // Position body on ground, slightly back by 0.08m along view line
+        const backOffsetX = -viewDir.x * 0.08;
+        const backOffsetZ = -viewDir.z * 0.08;
+
+        bodyRef.current.position.set(
+          camera.position.x + backOffsetX,
+          feetY,
+          camera.position.z + backOffsetZ
+        );
+        bodyRef.current.rotation.set(0, cameraYaw + Math.PI, 0);
+      }
+    }
   });
 
   return (
-    <group ref={groupRef} name="FirstPersonCatHands">
-      {/* Left Orange Tabby Paw */}
-      <SinglePaw
-        side="left"
-        tapProgress={tapAnim.current * 0.6}
+    <>
+      {/* 1. Full-Body Human Scientist Character (Thân người hoàn chỉnh với Áo Blouse, Quần Âu, Giày ESD) */}
+      <FullBodyHuman
+        bodyRef={bodyRef}
         walkCycle={walkCycle.current}
         isMoving={
           keys.current.forward ||
@@ -588,24 +958,40 @@ export function FirstPersonCatHands() {
           keys.current.left ||
           keys.current.right
         }
-        heldItem={heldItem}
-        materialType={selectedMaterial}
       />
 
-      {/* Right Orange Tabby Paw (Main Action Paw holding equipment / workpiece) */}
-      <SinglePaw
-        side="right"
-        tapProgress={tapAnim.current}
-        walkCycle={walkCycle.current}
-        isMoving={
-          keys.current.forward ||
-          keys.current.backward ||
-          keys.current.left ||
-          keys.current.right
-        }
-        heldItem={heldItem}
-        materialType={selectedMaterial}
-      />
-    </group>
+      {/* 2. First-Person Viewmodel (Hai tay mèo cam nối liền ống tay áo blouse trắng) */}
+      <group ref={groupRef} name="FirstPersonCatHands">
+        {/* Left Orange Tabby Paw */}
+        <SinglePaw
+          side="left"
+          tapProgress={tapAnim.current * 0.6}
+          walkCycle={walkCycle.current}
+          isMoving={
+            keys.current.forward ||
+            keys.current.backward ||
+            keys.current.left ||
+            keys.current.right
+          }
+          heldItem={heldItem}
+          materialType={selectedMaterial}
+        />
+
+        {/* Right Orange Tabby Paw (Main Action Paw holding equipment / workpiece) */}
+        <SinglePaw
+          side="right"
+          tapProgress={tapAnim.current}
+          walkCycle={walkCycle.current}
+          isMoving={
+            keys.current.forward ||
+            keys.current.backward ||
+            keys.current.left ||
+            keys.current.right
+          }
+          heldItem={heldItem}
+          materialType={selectedMaterial}
+        />
+      </group>
+    </>
   );
 }

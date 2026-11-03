@@ -17,6 +17,13 @@ export function HelpGuideModal() {
   const isHelpModalOpen = useLabStore((state) => state.isHelpModalOpen);
   const closeHelpModal = useLabStore((state) => state.closeHelpModal);
 
+  // Release pointer lock when modal opens
+  useEffect(() => {
+    if (isHelpModalOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, [isHelpModalOpen]);
+
   // Close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
