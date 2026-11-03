@@ -136,11 +136,13 @@ export function LabWorkbenchModal() {
           </div>
 
           <div className="flex items-center space-x-2 self-end sm:self-auto">
-            <span className="text-xs font-mono text-slate-400 hidden sm:inline">Phím tắt: ESC</span>
+            <span className="text-xs font-mono text-slate-400 hidden sm:inline">Phím tắt: X / ESC</span>
             <button
-              onClick={closeWorkbenchModal}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-700 transition-all active:scale-95"
-              title="Đóng bảng thí nghiệm"
+              onClick={() => {
+                useLabStore.getState().closeActiveLabUI();
+              }}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-700 transition-all active:scale-95 cursor-pointer"
+              title="Đóng bảng thí nghiệm (X / ESC)"
             >
               <X className="w-5 h-5" />
             </button>

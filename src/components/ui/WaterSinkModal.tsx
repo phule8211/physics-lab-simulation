@@ -43,10 +43,10 @@ export function WaterSinkModal() {
           </div>
           <button
             onClick={() => {
-              closeSinkModal();
-              document.querySelector('canvas')?.requestPointerLock();
+              useLabStore.getState().closeActiveLabUI();
             }}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Đóng (X / ESC)"
           >
             <X className="w-5 h-5" />
           </button>

@@ -4,16 +4,31 @@ import { useLabStore } from '../../store/useLabStore';
 import { SECOND_FLOOR_STATIONS } from '../../data/staircaseConfig';
 import { FlaskConical, AlertTriangle } from 'lucide-react';
 
-export function ChemicalReagentRack() {
-  const rackConfig = SECOND_FLOOR_STATIONS.CHEMICAL_RACK;
+interface ChemicalReagentRackProps {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: [number, number, number] | number;
+  visible?: boolean;
+}
+
+export function ChemicalReagentRack(props: ChemicalReagentRackProps = {}) {
+  const rackConfig = SECOND_FLOOR_STATIONS?.CHEMICAL_RACK;
+  const position = props.position || rackConfig?.position || [4.2, 3.06, 9.8];
+  const rotation = props.rotation || rackConfig?.rotation || [0, 0, 0];
+  const scale = props.scale !== undefined ? props.scale : 1;
+  const visible = props.visible !== undefined ? props.visible : true;
   const { openChemicalModal, isChemicalModalOpen, chemicalBeaker } = useLabStore();
 
   const totalLiquid = chemicalBeaker.hcl + chemicalBeaker.hno3 + chemicalBeaker.h2o2 + chemicalBeaker.water;
 
+  if (!visible) return null;
+
   return (
     <group
-      position={rackConfig.position}
-      rotation={rackConfig.rotation}
+      position={position}
+      rotation={rotation}
+      scale={scale}
+      frustumCulled={false}
       onClick={(e) => {
         e.stopPropagation();
         openChemicalModal();
@@ -115,10 +130,10 @@ export function ChemicalReagentRack() {
           <cylinderGeometry args={[0.032, 0.032, 0.035, 16]} />
           <meshStandardMaterial color="#dc2626" roughness={0.3} />
         </mesh>
-        {/* Front Label: "HCl 37%" - Curved conforming cylinder decal (zero z-fighting) */}
-        <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
-          <cylinderGeometry args={[0.0708, 0.0708, 0.11, 24, 1, true, -Math.PI / 4, Math.PI / 2]} />
-          <meshBasicMaterial color="#ffffff" side={2} />
+        {/* Front Label: "HCl 37%" */}
+        <mesh position={[0, 0, 0.071]}>
+          <planeGeometry args={[0.08, 0.1]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.3} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
         </mesh>
       </group>
 
@@ -145,10 +160,10 @@ export function ChemicalReagentRack() {
           <cylinderGeometry args={[0.032, 0.032, 0.035, 16]} />
           <meshStandardMaterial color="#f59e0b" roughness={0.3} />
         </mesh>
-        {/* Front Label: "HNO3 68%" - Curved conforming cylinder decal (zero z-fighting) */}
-        <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
-          <cylinderGeometry args={[0.0708, 0.0708, 0.11, 24, 1, true, -Math.PI / 4, Math.PI / 2]} />
-          <meshBasicMaterial color="#ffffff" side={2} />
+        {/* Front Label: "HNO3 68%" */}
+        <mesh position={[0, 0, 0.071]}>
+          <planeGeometry args={[0.08, 0.1]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.3} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
         </mesh>
       </group>
 
@@ -175,10 +190,10 @@ export function ChemicalReagentRack() {
           <cylinderGeometry args={[0.032, 0.032, 0.035, 16]} />
           <meshStandardMaterial color="#0284c7" roughness={0.3} />
         </mesh>
-        {/* Front Label: "H2O2 30%" - Curved conforming cylinder decal (zero z-fighting) */}
-        <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
-          <cylinderGeometry args={[0.0708, 0.0708, 0.11, 24, 1, true, -Math.PI / 4, Math.PI / 2]} />
-          <meshBasicMaterial color="#ffffff" side={2} />
+        {/* Front Label: "H2O2 30%" */}
+        <mesh position={[0, 0, 0.071]}>
+          <planeGeometry args={[0.08, 0.1]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.3} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
         </mesh>
       </group>
 

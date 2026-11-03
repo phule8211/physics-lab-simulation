@@ -131,10 +131,10 @@ export function ChemicalDispenserModal() {
           </div>
           <button
             onClick={() => {
-              closeChemicalModal();
-              document.querySelector('canvas')?.requestPointerLock();
+              useLabStore.getState().closeActiveLabUI();
             }}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Đóng (X / ESC)"
           >
             <X className="w-5 h-5" />
           </button>
@@ -383,12 +383,11 @@ export function ChemicalDispenserModal() {
 
               <button
                 onClick={() => {
-                  closeChemicalModal();
-                  document.querySelector('canvas')?.requestPointerLock();
+                  useLabStore.getState().closeActiveLabUI();
                 }}
                 className="w-full sm:flex-1 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-lab-cyan hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-lab-cyan/30"
               >
-                Hoàn Tất & Giữ Cốc
+                Hoàn Tất & Giữ Cốc [X]
               </button>
             </div>
           </div>

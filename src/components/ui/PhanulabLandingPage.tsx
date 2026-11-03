@@ -11,6 +11,7 @@ import {
   Keyboard,
   Award,
   Eye,
+  X,
 } from 'lucide-react';
 
 export function PhanulabLandingPage() {
@@ -58,9 +59,20 @@ export function PhanulabLandingPage() {
             </div>
           </div>
 
-          <div className="text-right flex items-center space-x-2 text-xs text-slate-400 bg-slate-950/60 px-3.5 py-1.5 rounded-xl border border-slate-800">
-            <Award className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <span>Created by <strong className="text-cyan-300 font-semibold">Phanu Corp.</strong></span>
+          <div className="flex items-center space-x-2">
+            <div className="text-right flex items-center space-x-2 text-xs text-slate-400 bg-slate-950/60 px-3.5 py-1.5 rounded-xl border border-slate-800">
+              <Award className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span>Created by <strong className="text-cyan-300 font-semibold">Phanu Corp.</strong></span>
+            </div>
+
+            <button
+              onClick={closeLandingPage}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 border border-slate-700/60 transition-all cursor-pointer"
+              title="Đóng bảng giới thiệu (X / ESC)"
+              aria-label="Đóng bảng giới thiệu"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 

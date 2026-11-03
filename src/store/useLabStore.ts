@@ -204,6 +204,7 @@ interface LabState {
   isLandingPageOpen: boolean;
   openLandingPage: () => void;
   closeLandingPage: () => void;
+  closeActiveLabUI: () => boolean;
 
   // Actions
   setHoveredStation: (id: StationId | null, distance?: number | null) => void;
@@ -525,7 +526,78 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
   closeNpcDialog: () => {
     sound.playClick();
-    set({ isNpcDialogOpen: false, npcCurrentTopic: null });
+    set({
+      isNpcDialogOpen: false,
+      npcCurrentTopic: null,
+      hoveredStationId: null,
+      hoveredDistance: null,
+      activeStationId: null,
+    });
+  },
+  closeActiveLabUI: () => {
+    const s = get();
+    let hasClosed = false;
+
+    const isAnyModalOpen =
+      s.isNpcDialogOpen ||
+      s.isChemicalModalOpen ||
+      s.isEquipmentModalOpen ||
+      s.isSinkModalOpen ||
+      s.isWorkbenchModalOpen ||
+      s.isDesignModalOpen ||
+      s.isSpecimenModalOpen ||
+      s.isHelpModalOpen ||
+      s.isLandingPageOpen;
+
+    if (isAnyModalOpen) {
+      sound.playClick();
+      set({
+        isNpcDialogOpen: false,
+        npcCurrentTopic: null,
+        isChemicalModalOpen: false,
+        isEquipmentModalOpen: false,
+        isSinkModalOpen: false,
+        isWorkbenchModalOpen: false,
+        selectedWorkbenchId: null,
+        isDesignModalOpen: false,
+        isSpecimenModalOpen: false,
+        isHelpModalOpen: false,
+        isLandingPageOpen: false,
+        hoveredStationId: null,
+        hoveredDistance: null,
+        activeStationId: null,
+      });
+      hasClosed = true;
+    }
+
+    if (s.mode === 'INSPECTING' || s.activeStationId !== null) {
+      sound.playWhoosh();
+      sound.stopLaserHum();
+      set({
+        mode: 'TRANSITIONING',
+        activeStationId: null,
+        isCuttingJob: false,
+        isXRayMode: false,
+        hoveredComponentId: null,
+        hoveredStationId: null,
+        hoveredDistance: null,
+      });
+      hasClosed = true;
+    }
+
+    s.dismissMachineDock();
+
+    if (hasClosed) {
+      try {
+        const canvas = document.querySelector('canvas');
+        if (canvas && typeof canvas.requestPointerLock === 'function') {
+          const p = canvas.requestPointerLock();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        }
+      } catch {}
+    }
+
+    return hasClosed;
   },
   setNpcTopic: (topic) => {
     sound.playClick();

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLabStore } from './store/useLabStore';
 import { CanvasContainer } from './components/3d/CanvasContainer';
 import { CrosshairHUD } from './components/ui/CrosshairHUD';
 import { KnowledgePanel } from './components/ui/KnowledgePanel';
@@ -16,6 +17,31 @@ import { LabWorkbenchModal } from './components/ui/LabWorkbenchModal';
 import { PhanulabLandingPage } from './components/ui/PhanulabLandingPage';
 
 export function App() {
+  // Global quick-close shortcut: pressing 'X' closes any active tab, modal, or machine inspection view
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignore keypress if actively typing inside an input, textarea, or editable element
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'x') {
+        const closed = useLabStore.getState().closeActiveLabUI();
+        if (closed) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-lab-dark select-none touch-none">
       {/* 3D WebGL Canvas Layer */}

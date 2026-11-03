@@ -286,7 +286,8 @@ export function CrosshairHUD() {
          ========================================================================= */}
       {mode === 'WALKING' && (
         <div
-          className="fixed pointer-events-none z-20 flex flex-col items-center justify-center"
+          id="hud-center-reticle"
+          className="fixed pointer-events-none z-20 flex flex-col items-center justify-center will-change-transform"
           style={{
             top: '50%',
             left: '50%',

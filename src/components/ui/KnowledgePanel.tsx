@@ -133,12 +133,11 @@ export function KnowledgePanel() {
         {/* Close Button [X] */}
         <button
           onClick={() => {
-            exitInspection();
-            document.querySelector('canvas')?.requestPointerLock();
+            useLabStore.getState().closeActiveLabUI();
           }}
-          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-200 border border-slate-700 hover:border-slate-500"
-          aria-label="Đóng bảng kiến thức và quay lại xưởng"
-          title="Đóng (ESC)"
+          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-200 border border-slate-700 hover:border-slate-500 cursor-pointer"
+          aria-label="Đóng bảng kiến thức và quay lại xưởng (Phím X / ESC)"
+          title="Đóng bảng kiến thức (X / ESC)"
         >
           <X className="w-5 h-5" />
         </button>

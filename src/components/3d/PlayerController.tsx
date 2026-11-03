@@ -6,7 +6,7 @@ import { useLabStore, playerWorldState } from '../../store/useLabStore';
 import { STATIONS } from '../../data/labConfig';
 import { resolveMovementWithCollisions } from './CollisionManager';
 import { MachineId, StationId } from '../../types/lab';
-import { getGroundHeightAt, SECOND_FLOOR_STATIONS, LAB_TABLES, WALL_SWITCHES } from '../../data/staircaseConfig';
+import { getGroundHeightAt, SECOND_FLOOR_STATIONS, LAB_TABLES, WALL_SWITCHES, MEZZANINE_CONFIG } from '../../data/staircaseConfig';
 import { sound } from '../../utils/audioSystem';
 const EYE_HEIGHT = 1.7;
 const WALK_SPEED = 4.2;
@@ -78,6 +78,7 @@ export function PlayerController() {
   const orbitYaw = useRef(0);
   const orbitPitch = useRef(0.25);
   const orbitRadius = useRef(2.5);
+  const reticleOffset = useRef({ x: 0, y: 0 });
 
   // Universal hand interaction handler: works whether hands are free or holding an item
   const executeInteraction = (targetId: StationId) => {
@@ -179,6 +180,8 @@ export function PlayerController() {
         if (hovered && currentMode === 'WALKING') {
           executeInteraction(hovered);
         }
+      } else if (e.code === 'KeyX') {
+        store.closeActiveLabUI();
       } else if (e.code === 'Escape') {
         // Auto-lock pointer upon stopping machine usage or closing panels
         if (store.isNpcDialogOpen) {
@@ -509,21 +512,31 @@ export function PlayerController() {
         store.mode === 'INSPECTING';
 
       if (store.mode === 'WALKING' && !isAnyModalCurrentlyOpen) {
+        if (!document.pointerLockElement) {
+          try {
+            const p = gl.domElement.requestPointerLock();
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+          } catch {}
+          return;
+        }
+
         if (store.hoveredStationId) {
           executeInteraction(store.hoveredStationId);
           return;
         }
-
-        if (!document.pointerLockElement) {
-          try {
-            gl.domElement.requestPointerLock();
-          } catch {}
-        }
       }
     };
 
+    const handleBlur = () => {
+      keys.current = { forward: false, backward: false, left: false, right: false, sprint: false, jump: false };
+    };
+
     window.addEventListener('click', handleCanvasClick);
-    return () => window.removeEventListener('click', handleCanvasClick);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      window.removeEventListener('click', handleCanvasClick);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, [gl]);
 
   // Set initial camera position
@@ -841,13 +854,125 @@ useFrame((_, delta) => {
       }
     }
 
-    // Prioritize object directly in crosshair view (highest dot product / alignment score)
-    nearbyCandidates.sort((a, b) => {
+    // Helper: Obtain 3D interaction anchor point for any station
+    const getTargetWorldPos = (id: StationId): THREE.Vector3 | null => {
+      if (id in STATIONS) {
+        const s = STATIONS[id as MachineId];
+        return new THREE.Vector3(s.position[0], s.position[1] + 0.9, s.position[2]);
+      }
+      if (id === 'aptomat_tube_lights') {
+        return new THREE.Vector3(WALL_SWITCHES.aptomat_tube_lights.position[0], 1.55, WALL_SWITCHES.aptomat_tube_lights.position[2]);
+      }
+      if (id === 'aptomat_ceiling_lamps') {
+        return new THREE.Vector3(WALL_SWITCHES.aptomat_ceiling_lamps.position[0], 1.55, WALL_SWITCHES.aptomat_ceiling_lamps.position[2]);
+      }
+      if (id === 'npc_dung') {
+        const pos = useLabStore.getState().npcDungPosition || SECOND_FLOOR_STATIONS.NPC_DUNG.position;
+        return new THREE.Vector3(pos[0], pos[1] + 1.2, pos[2]);
+      }
+      if (id === 'chemical_rack') {
+        return new THREE.Vector3(4.2, MEZZANINE_CONFIG.floorY + 1.1, 9.8);
+      }
+      if (id === 'equipment_rack') {
+        return new THREE.Vector3(7.5, MEZZANINE_CONFIG.floorY + 1.1, 9.8);
+      }
+      if (id === 'lab_sink') {
+        return new THREE.Vector3(0.0, MEZZANINE_CONFIG.floorY + 1.0, 9.8);
+      }
+      if (id === 'computer_desk') {
+        return new THREE.Vector3(-6.0, MEZZANINE_CONFIG.floorY + 0.9, 9.8);
+      }
+      if (typeof id === 'string' && id.startsWith('table_')) {
+        const tb = LAB_TABLES.find((t) => t.id === id);
+        if (tb) return new THREE.Vector3(tb.position[0], tb.position[1] + 0.85, tb.position[2]);
+      }
+      return null;
+    };
+
+    // Project candidates to screen coordinates to compute secondary auto-aim radius
+    const enrichedCandidates: {
+      id: StationId;
+      dist: number;
+      dot: number;
+      screenX?: number;
+      screenY?: number;
+      screenDist?: number;
+    }[] = nearbyCandidates.map((cand) => {
+      const worldPos = getTargetWorldPos(cand.id);
+      if (!worldPos) return cand;
+      const proj = worldPos.clone().project(camera);
+      if (proj.z < 1.0) {
+        const screenDist = Math.hypot(proj.x, proj.y);
+        return {
+          ...cand,
+          screenX: proj.x,
+          screenY: proj.y,
+          screenDist,
+        };
+      }
+      return cand;
+    });
+
+    // Prioritize candidates closest to screen center (within auto-aim cone) to prevent rapid flickering
+    enrichedCandidates.sort((a, b) => {
+      if (a.screenDist !== undefined && b.screenDist !== undefined) {
+        if (a.screenDist < 0.28 && b.screenDist < 0.28) {
+          return a.screenDist - b.screenDist;
+        }
+      }
       const scoreA = a.dot * 3.5 - a.dist * 0.8;
       const scoreB = b.dot * 3.5 - b.dist * 0.8;
       return scoreB - scoreA;
     });
-    const nearbyIds = nearbyCandidates.map((c) => c.id);
+
+    // Magnetism target calculation for center reticle pointer
+    const bestScreenCand = enrichedCandidates.find(
+      (c) => c.screenDist !== undefined && c.screenDist < 0.26
+    );
+    let targetPixelX = 0;
+    let targetPixelY = 0;
+
+    if (
+      bestScreenCand &&
+      bestScreenCand.screenX !== undefined &&
+      bestScreenCand.screenY !== undefined
+    ) {
+      const maxPull = 40; // Max auto-aim magnetic pull offset in pixels
+      targetPixelX = THREE.MathUtils.clamp(
+        bestScreenCand.screenX * (gl.domElement.clientWidth * 0.35),
+        -maxPull,
+        maxPull
+      );
+      targetPixelY = THREE.MathUtils.clamp(
+        -bestScreenCand.screenY * (gl.domElement.clientHeight * 0.35),
+        -maxPull,
+        maxPull
+      );
+    }
+
+    // Smoothly interpolate reticle offset toward target (damp back to 0,0 when looking away)
+    reticleOffset.current.x = THREE.MathUtils.damp(
+      reticleOffset.current.x,
+      targetPixelX,
+      16,
+      dt
+    );
+    reticleOffset.current.y = THREE.MathUtils.damp(
+      reticleOffset.current.y,
+      targetPixelY,
+      16,
+      dt
+    );
+
+    // Apply hardware-accelerated transform directly to DOM element (0 React re-renders)
+    const reticleEl = document.getElementById('hud-center-reticle');
+    if (reticleEl) {
+      const rx = reticleOffset.current.x;
+      const ry = reticleOffset.current.y;
+      reticleEl.style.transform = `translate(calc(-50% + ${rx.toFixed(1)}px), calc(-50% + ${ry.toFixed(1)}px))`;
+    }
+
+    const nearbyIds = enrichedCandidates.map((c) => c.id);
 
     const storeState = useLabStore.getState();
 
@@ -860,8 +985,8 @@ useFrame((_, delta) => {
       useLabStore.getState().setNearbyStations(nearbyIds);
     }
 
-    const activeIdx = Math.min(storeState.activeTargetIndex, Math.max(0, nearbyCandidates.length - 1));
-    const activeCandidate = nearbyCandidates[activeIdx] || null;
+    const activeIdx = Math.min(storeState.activeTargetIndex, Math.max(0, enrichedCandidates.length - 1));
+    const activeCandidate = enrichedCandidates[activeIdx] || null;
     const closestStation: StationId | null = activeCandidate ? activeCandidate.id : null;
     const activeDistance: number | null =
       activeCandidate && activeCandidate.dist !== null ? Number(activeCandidate.dist.toFixed(1)) : null;

@@ -144,6 +144,25 @@ export function NpcDialogModal() {
     }
   }, [isNpcDialogOpen]);
 
+  const handleCloseDialog = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    closeNpcDialog();
+    try {
+      const canvas = document.querySelector('canvas');
+      if (canvas && typeof canvas.requestPointerLock === 'function') {
+        const p = canvas.requestPointerLock();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => {});
+        }
+      }
+    } catch {
+      // Safe fallback if browser blocks pointer lock
+    }
+  };
+
   if (!isNpcDialogOpen) return null;
 
   const currentTopicData = NPC_TOPICS.find((t) => t.id === npcCurrentTopic) || null;
@@ -212,11 +231,9 @@ export function NpcDialogModal() {
               </h3>
             </div>
             <button
-              onClick={() => {
-                closeNpcDialog();
-                document.querySelector('canvas')?.requestPointerLock();
-              }}
+              onClick={handleCloseDialog}
               className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Đóng hộp thoại (Phím X / Esc)"
             >
               <X className="w-5 h-5" />
             </button>
@@ -307,13 +324,10 @@ export function NpcDialogModal() {
                     <span>← Quay lại danh sách câu hỏi</span>
                   </button>
                   <button
-                    onClick={() => {
-                      closeNpcDialog();
-                      document.querySelector('canvas')?.requestPointerLock();
-                    }}
+                    onClick={handleCloseDialog}
                     className="px-4 py-2 rounded-xl bg-lab-cyan hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-lab-cyan/30"
                   >
-                    Tôi đã hiểu, cảm ơn KS. Dũng!
+                    Tôi đã hiểu, cảm ơn KS. Dũng! [X]
                   </button>
                 </div>
               </div>
