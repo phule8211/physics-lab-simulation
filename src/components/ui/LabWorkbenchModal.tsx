@@ -835,3 +835,4 @@ export function LabWorkbenchModal() {
     </div>
   );
 }
+
