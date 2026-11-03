@@ -91,9 +91,20 @@ export function MachineControlOverlay() {
     resetSensors,
     isMachineDockDismissed,
     dismissMachineDock,
+    exitInspection,
     machinePower,
     toggleMachinePower,
   } = useLabStore();
+
+  const handleStopUsingMachine = () => {
+    if (mode === 'INSPECTING') {
+      exitInspection();
+    }
+    dismissMachineDock();
+    try {
+      document.querySelector('canvas')?.requestPointerLock();
+    } catch {}
+  };
 
   const bbox = useMemo(() => computeBoundingBox(currentToolpaths), [currentToolpaths]);
   const isOutOfBounds = bbox.isOutOfBounds;
@@ -199,7 +210,7 @@ export function MachineControlOverlay() {
               )}
 
               <button
-                onClick={() => dismissMachineDock()}
+                onClick={handleStopUsingMachine}
                 className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/90 hover:bg-rose-500/25 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all active:scale-95"
                 title="Dừng thao tác máy & Ẩn con trỏ chuột (ESC hoặc phím di chuyển WASD)"
               >
@@ -398,7 +409,7 @@ export function MachineControlOverlay() {
                 <span>{machinePower['COATING_STATION'] ? 'Nguồn: BẬT' : 'Nguồn: TẮT'}</span>
               </button>
               <button
-                onClick={() => dismissMachineDock()}
+                onClick={handleStopUsingMachine}
                 className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/90 hover:bg-rose-500/25 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all active:scale-95 font-sans"
                 title="Dừng thao tác máy & Ẩn con trỏ chuột (ESC hoặc phím di chuyển WASD)"
               >
@@ -634,7 +645,7 @@ export function MachineControlOverlay() {
               </button>
             )}
             <button
-              onClick={() => dismissMachineDock()}
+              onClick={handleStopUsingMachine}
               className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/90 hover:bg-rose-500/25 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all active:scale-95 mr-1"
               title="Dừng thao tác máy & Ẩn con trỏ chuột (ESC hoặc phím di chuyển WASD)"
             >

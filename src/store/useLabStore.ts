@@ -1710,37 +1710,17 @@ export const useLabStore = create<LabState>((set, get) => ({
 
 
   // Machine dock dismiss state (tự ẩn cursor khi dừng thao tác máy)
-
-
-
-  isMachineDockDismissed: false,
-
-
-
+  isMachineDockDismissed: true,
   dismissMachineDock: () => {
-
-
-
     set({ isMachineDockDismissed: true });
-
-
-
     if (typeof document !== 'undefined') {
-
-
-
-      document.querySelector('canvas')?.requestPointerLock();
-
-
-
+      try {
+        document.querySelector('canvas')?.requestPointerLock();
+      } catch {
+        // ignore
+      }
     }
-
-
-
   },
-
-
-
   showMachineDock: () => set({ isMachineDockDismissed: false }),
 
 
@@ -2890,25 +2870,11 @@ export const useLabStore = create<LabState>((set, get) => ({
 
 
     set({
-
-
-
       mode: 'TRANSITIONING',
-
-
-
       activeStationId: id,
-
-
-
       activeTab: 'PHYSICS_PRINCIPLE',
-
-
-
       isCuttingJob: false,
-
-
-
+      isMachineDockDismissed: false,
     });
 
 
@@ -2938,33 +2904,13 @@ export const useLabStore = create<LabState>((set, get) => ({
 
 
     set({
-
-
-
       mode: 'TRANSITIONING',
-
-
-
       activeStationId: null,
-
-
-
       isCuttingJob: false,
-
-
-
       isDesignModalOpen: false,
-
-
-
       isXRayMode: false,
-
-
-
       hoveredComponentId: null,
-
-
-
+      isMachineDockDismissed: true,
     });
 
 

@@ -114,7 +114,25 @@ export function PlayerController() {
         store.isNpcDialogOpen ||
         store.isChemicalModalOpen ||
         store.isEquipmentModalOpen ||
-        store.isSinkModalOpen;
+        store.isSinkModalOpen ||
+        store.isWorkbenchModalOpen ||
+        store.isDeviceSelectModalOpen;
+
+      const requestLock = () => {
+        if (controlsRef.current) {
+          try {
+            controlsRef.current.lock();
+          } catch {
+            try {
+              gl.domElement.requestPointerLock();
+            } catch {}
+          }
+        } else {
+          try {
+            gl.domElement.requestPointerLock();
+          } catch {}
+        }
+      };
 
       // Tab / Q: Cycle through nearby interactive targets when multiple objects are close
       if (e.code === 'Tab' || e.code === 'KeyQ') {
@@ -126,16 +144,19 @@ export function PlayerController() {
         }
       }
 
-      // Auto-lock pointer / hide cursor on movement keys (WASD, arrows, space) in WALKING mode
+      // Movement keys (WASD, arrows, space): Stop inspection/machine dock and lock cursor to canvas
       const movementKeys = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'];
-      if (movementKeys.includes(e.code) && currentMode === 'WALKING' && !anyModalOpen) {
-        useLabStore.getState().dismissMachineDock();
-        if (!document.pointerLockElement) {
-          try {
-            gl.domElement.requestPointerLock();
-          } catch {
-            // ignore potential user gesture restrictions
-          }
+      if (movementKeys.includes(e.code)) {
+        if (currentMode === 'INSPECTING' || (currentMode === 'TRANSITIONING' && !store.activeStationId)) {
+          exitInspection();
+          store.dismissMachineDock();
+          transitionProgress.current = 1.0;
+        } else if (currentMode === 'WALKING') {
+          store.dismissMachineDock();
+        }
+
+        if (!anyModalOpen && !document.pointerLockElement) {
+          requestLock();
         }
       }
 
@@ -172,40 +193,40 @@ export function PlayerController() {
         // Auto-lock pointer upon stopping machine usage or closing panels
         if (store.isNpcDialogOpen) {
           store.closeNpcDialog();
-          gl.domElement.requestPointerLock();
+          requestLock();
         } else if (store.isChemicalModalOpen) {
           store.closeChemicalModal();
-          gl.domElement.requestPointerLock();
+          requestLock();
         } else if (store.isEquipmentModalOpen) {
           store.closeEquipmentModal();
-          gl.domElement.requestPointerLock();
+          requestLock();
         } else if (store.isSinkModalOpen) {
           store.closeSinkModal();
-          gl.domElement.requestPointerLock();
+          requestLock();
         } else if (store.isWorkbenchModalOpen) {
           store.closeWorkbenchModal();
-          gl.domElement.requestPointerLock();
+          requestLock();
         } else if (store.isDesignModalOpen) {
           store.closeDesignModal();
-          gl.domElement.requestPointerLock();
+          requestLock();
         } else if (store.isSpecimenModalOpen) {
           store.closeSpecimenModal();
-          gl.domElement.requestPointerLock();
+          requestLock();
         } else if (store.isHelpModalOpen) {
           store.closeHelpModal();
-          gl.domElement.requestPointerLock();
+          requestLock();
+        } else if (store.isDeviceSelectModalOpen) {
+          store.closeDeviceSelectModal();
+          requestLock();
         } else if (currentMode === 'INSPECTING') {
           exitInspection();
-          gl.domElement.requestPointerLock();
+          store.dismissMachineDock();
+          requestLock();
         } else if (currentMode === 'WALKING') {
           // Pressing ESC dismisses machine dock and locks mouse pointer back to canvas
           store.dismissMachineDock();
           if (!document.pointerLockElement) {
-            try {
-              gl.domElement.requestPointerLock();
-            } catch {
-              // ignore
-            }
+            requestLock();
           }
         }
       } else if (e.code === 'Digit1') {
@@ -304,6 +325,142 @@ export function PlayerController() {
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, [gl]);
+
+  // Canvas click to lock pointer when walking
+  useEffect(() => {
+    const handleCanvasClick = (e: MouseEvent) => {
+      // If clicking interactive UI elements, don't lock
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target.closest('button') ||
+          e.target.closest('input') ||
+          e.target.closest('select') ||
+          e.target.closest('textarea') ||
+          e.target.closest('a') ||
+          e.target.closest('[role="dialog"]') ||
+          e.target.closest('.pointer-events-auto'))
+      ) {
+        return;
+      }
+
+      const store = useLabStore.getState();
+      const anyModalCurrentlyOpen =
+        store.isDesignModalOpen ||
+        store.isSpecimenModalOpen ||
+        store.isHelpModalOpen ||
+        store.isNpcDialogOpen ||
+        store.isChemicalModalOpen ||
+        store.isEquipmentModalOpen ||
+        store.isSinkModalOpen ||
+        store.isWorkbenchModalOpen ||
+        store.isDeviceSelectModalOpen ||
+        store.mode === 'INSPECTING';
+
+      if (store.mode === 'WALKING' && !anyModalCurrentlyOpen && !document.pointerLockElement) {
+        if (controlsRef.current) {
+          try {
+            controlsRef.current.lock();
+          } catch {
+            try {
+              gl.domElement.requestPointerLock();
+            } catch {}
+          }
+        } else {
+          try {
+            gl.domElement.requestPointerLock();
+          } catch {}
+        }
+      }
+    };
+
+    window.addEventListener('click', handleCanvasClick);
+    return () => window.removeEventListener('click', handleCanvasClick);
+  }, [gl]);
+
+  // Fallback mouse look in WALKING mode when pointer lock is temporarily unengaged
+  useEffect(() => {
+    let lastX: number | null = null;
+    let lastY: number | null = null;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // If native pointer lock is active, Drei PointerLockControls handles mouse look
+      if (document.pointerLockElement) {
+        lastX = null;
+        lastY = null;
+        return;
+      }
+
+      const store = useLabStore.getState();
+      if (store.mode !== 'WALKING') {
+        lastX = null;
+        lastY = null;
+        return;
+      }
+
+      const anyModalCurrentlyOpen =
+        store.isDesignModalOpen ||
+        store.isSpecimenModalOpen ||
+        store.isHelpModalOpen ||
+        store.isNpcDialogOpen ||
+        store.isChemicalModalOpen ||
+        store.isEquipmentModalOpen ||
+        store.isSinkModalOpen ||
+        store.isWorkbenchModalOpen ||
+        store.isDeviceSelectModalOpen;
+
+      if (anyModalCurrentlyOpen) {
+        lastX = null;
+        lastY = null;
+        return;
+      }
+
+      // If hovering over UI interactive controls, don't rotate camera
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target.closest('button') ||
+          e.target.closest('input') ||
+          e.target.closest('select') ||
+          e.target.closest('textarea') ||
+          e.target.closest('a') ||
+          e.target.closest('[role="dialog"]') ||
+          e.target.closest('.pointer-events-auto'))
+      ) {
+        lastX = null;
+        lastY = null;
+        return;
+      }
+
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+
+      let dx = e.movementX;
+      let dy = e.movementY;
+
+      if (dx === undefined || (dx === 0 && dy === 0 && lastX !== null)) {
+        dx = lastX !== null ? currentX - lastX : 0;
+        dy = lastY !== null ? currentY - lastY : 0;
+      }
+
+      lastX = currentX;
+      lastY = currentY;
+
+      if (Math.abs(dx) > 120 || Math.abs(dy) > 120) {
+        return;
+      }
+
+      if (dx !== 0 || dy !== 0) {
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        euler.setFromQuaternion(camera.quaternion);
+        euler.y -= dx * 0.0024;
+        euler.x -= dy * 0.0024;
+        euler.x = Math.max(-1.42, Math.min(1.42, euler.x));
+        camera.quaternion.setFromEuler(euler);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [camera]);
 
   // Set initial camera position
   useEffect(() => {
@@ -641,29 +798,6 @@ useFrame((_, delta) => {
     const closestStation: StationId | null = activeCandidate ? activeCandidate.id : null;
     const activeDistance: number | null = activeCandidate ? activeCandidate.dist : null;
 
-    const isMachineDockDismissed = storeState.isMachineDockDismissed;
-    const isNearMachine = closestStation && closestStation in STATIONS;
-    const wasNearMachine = previousStationRef.current && previousStationRef.current in STATIONS;
-
-    // Auto-unlock cursor when entering a machine station so user can click dock controls
-    if (isNearMachine && closestStation !== previousStationRef.current) {
-      previousStationRef.current = closestStation;
-      if (!isMachineDockDismissed && document.pointerLockElement) {
-        document.exitPointerLock();
-      }
-    } else if (!closestStation) {
-      // Stepped away from machine: Auto-lock pointer / hide cursor immediately!
-      if (wasNearMachine && !document.pointerLockElement && !isAnyModalOpen && deviceMode === 'desktop') {
-        try {
-          gl.domElement.requestPointerLock();
-        } catch {
-          // ignore
-        }
-        storeState.showMachineDock();
-      }
-      previousStationRef.current = null;
-    }
-
     setHoveredStation(
       closestStation,
       closestStation && activeDistance !== null ? Number(activeDistance.toFixed(1)) : null
@@ -674,7 +808,11 @@ useFrame((_, delta) => {
   return (
     <>
       {mode === 'WALKING' && !isAnyModalOpen && deviceMode === 'desktop' && (
-        <PointerLockControls ref={controlsRef} />
+        <PointerLockControls
+          ref={controlsRef}
+          onLock={() => setPointerLocked(true)}
+          onUnlock={() => setPointerLocked(false)}
+        />
       )}
     </>
   );
