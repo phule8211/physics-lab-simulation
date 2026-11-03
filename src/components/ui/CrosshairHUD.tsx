@@ -14,6 +14,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { CompassWidget } from './CompassWidget';
+import { CatHandsDropdown } from './CatHandsDropdown';
 
 const SECOND_FLOOR_HUD_INFO: Record<string, { shortName: string; wavelength: string; hint: string }> = {
   npc_dung: {
@@ -123,6 +124,9 @@ export function CrosshairHUD() {
               <Activity className="w-4 h-4 text-emerald-400" />
               <span className="hidden sm:inline font-mono text-[11px]">FPS</span>
             </button>
+
+            {/* Cat Hands Held Item Quick Selector Dropdown */}
+            <CatHandsDropdown />
 
             {/* Help Shortcuts Modal */}
             <button
@@ -245,8 +249,8 @@ export function CrosshairHUD() {
       {/* =========================================================================
           BOTTOM FOOTER: Navigation Guide & Hotkeys [1, 2, 3, 4] (WALKING mode)
          ========================================================================= */}
-      {mode === 'WALKING' && (
-        <footer role="contentinfo" className="flex items-end justify-between w-full">
+      {mode === 'WALKING' && !hoveredStationId && (
+        <footer role="contentinfo" className="hidden md:flex items-end justify-between w-full">
           {/* Controls Instructions Card */}
           <div className="glass-pill rounded-xl px-4 py-2.5 flex flex-wrap items-center gap-3 text-xs text-slate-300 pointer-events-auto shadow-lg">
             <div className="flex items-center space-x-1.5">

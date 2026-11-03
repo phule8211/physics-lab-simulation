@@ -61,12 +61,19 @@ const STATION_ITEMS: {
 export function MobileNavBar() {
   const {
     activeStationId,
+    hoveredStationId,
     mode,
     enterInspection,
     exitInspection,
     toggleHelpModal,
     toggleStats,
   } = useLabStore();
+
+  // On desktop, CrosshairHUD provides full station controls, and MachineControlOverlay
+  // provides machine operation controls. Hide completely when machine dock is active.
+  if (activeStationId || hoveredStationId) {
+    return null;
+  }
 
   const handleStationClick = (id: MachineId) => {
     if (document.pointerLockElement) {
@@ -84,7 +91,7 @@ export function MobileNavBar() {
     <nav
       role="navigation"
       aria-label="Thanh điều hướng trạm máy trên thiết bị di động"
-      className="pointer-events-auto fixed bottom-3 inset-x-2 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 z-40 flex items-center justify-between md:justify-center gap-1.5 p-1.5 bg-slate-950/90 backdrop-blur-2xl border border-slate-700/80 rounded-2xl shadow-2xl max-w-xl mx-auto select-none"
+      className="md:hidden pointer-events-auto fixed bottom-3 inset-x-2 z-40 flex items-center justify-between gap-1.5 p-1.5 bg-slate-950/90 backdrop-blur-2xl border border-slate-700/80 rounded-2xl shadow-2xl max-w-xl mx-auto select-none"
     >
       {/* Station Buttons */}
       <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">

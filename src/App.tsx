@@ -1,7 +1,6 @@
 import React from 'react';
 import { CanvasContainer } from './components/3d/CanvasContainer';
 import { CrosshairHUD } from './components/ui/CrosshairHUD';
-import { CatHandsHotbar } from './components/ui/CatHandsHotbar';
 import { KnowledgePanel } from './components/ui/KnowledgePanel';
 import { MachineControlOverlay } from './components/ui/MachineControlOverlay';
 import { VectorDesignModal } from './components/ui/VectorDesignModal';
@@ -23,9 +22,6 @@ export function App() {
 
       {/* 2D UI & HUD Overlay Layer */}
       <CrosshairHUD />
-
-      {/* Interactive Cat Hands Quick-Slot Hotbar */}
-      <CatHandsHotbar />
 
       {/* Mobile-First Floating Navigation Bar */}
       <MobileNavBar />
