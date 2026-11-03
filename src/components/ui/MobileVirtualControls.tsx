@@ -26,6 +26,8 @@ const JOYSTICK_RADIUS = 46; // max travel distance of knob from center in px
 
 export function MobileVirtualControls() {
   const {
+    deviceMode,
+    isDeviceSelectModalOpen,
     mode,
     activeStationId,
     hoveredStationId,
@@ -240,8 +242,8 @@ export function MobileVirtualControls() {
     }
   }, [currentFloor, teleportTo]);
 
-  // Don't render virtual controls if modal is open or inspecting a machine
-  if (isAnyModalOpen) {
+  // Don't render virtual controls if not in MOBILE mode, or if any modal is open
+  if (deviceMode !== 'mobile' || isAnyModalOpen || isDeviceSelectModalOpen) {
     return null;
   }
 
@@ -400,3 +402,4 @@ export function MobileVirtualControls() {
     </>
   );
 }
+

@@ -65,6 +65,7 @@ const STATION_ITEMS: {
 
 export function MobileNavBar() {
   const {
+    deviceMode,
     activeStationId,
     hoveredStationId,
     mode,
@@ -82,6 +83,8 @@ export function MobileNavBar() {
     isEquipmentModalOpen,
     isSinkModalOpen,
   } = useLabStore();
+
+  if (deviceMode !== 'mobile') return null;
 
   const [isOpen, setIsOpen] = useState(false);
 

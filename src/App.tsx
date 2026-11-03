@@ -14,6 +14,7 @@ import { ChemicalDispenserModal } from './components/ui/ChemicalDispenserModal';
 import { LabEquipmentRackModal } from './components/ui/LabEquipmentRackModal';
 import { WaterSinkModal } from './components/ui/WaterSinkModal';
 import { MobileVirtualControls } from './components/ui/MobileVirtualControls';
+import { DeviceSelectModal } from './components/ui/DeviceSelectModal';
 
 export function App() {
   return (
@@ -29,6 +30,9 @@ export function App() {
 
       {/* Mobile Dual-Touch Virtual Joystick & Action Buttons */}
       <MobileVirtualControls />
+
+      {/* Device Mode Selection Modal (PC / Laptop vs Mobile / Tablet) */}
+      <DeviceSelectModal />
 
       {/* Inspection Sidebar Knowledge Panel (Direct root mount for uninterrupted scroll & tab clicks) */}
       <KnowledgePanel />

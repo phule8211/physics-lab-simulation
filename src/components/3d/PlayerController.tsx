@@ -42,6 +42,8 @@ export function PlayerController() {
     isSinkModalOpen,
     isTouchDevice,
     setIsTouchDevice,
+    deviceMode,
+    isDeviceSelectModalOpen,
   } = useLabStore();
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export function PlayerController() {
     isChemicalModalOpen ||
     isEquipmentModalOpen ||
     isSinkModalOpen ||
+    isDeviceSelectModalOpen ||
     activeStationId !== null ||
     mode === 'INSPECTING';
 
@@ -579,7 +582,7 @@ useFrame((_, delta) => {
 
   return (
     <>
-      {mode === 'WALKING' && !isAnyModalOpen && !isTouchDevice && (
+      {mode === 'WALKING' && !isAnyModalOpen && deviceMode === 'desktop' && (
         <PointerLockControls ref={controlsRef} />
       )}
     </>

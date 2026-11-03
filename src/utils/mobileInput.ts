@@ -57,3 +57,4 @@ export function resetMobileInput() {
   mobileInputState.lookDelta.dy = 0;
   mobileInputState.jump = false;
 }
+

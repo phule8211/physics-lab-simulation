@@ -19,7 +19,7 @@ try {
 
 export function CanvasContainer() {
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full h-full relative z-0 isolate">
       <Canvas
         shadows={{ type: THREE.PCFSoftShadowMap }}
         camera={{ fov: 75, near: 0.1, far: 100, position: [0, 1.7, 4] }}

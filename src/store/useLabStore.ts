@@ -20,6 +20,7 @@ export interface ActionToast {
 }
 
 export type HeldItemType = 'NONE' | 'WORKPIECE' | 'BEAKER' | 'TEST_TUBE' | 'PIPETTE' | 'CALIPER';
+export type DeviceMode = 'desktop' | 'mobile';
 
 interface LabState {
   // Navigation & Core State
@@ -209,6 +210,11 @@ interface LabState {
   setHeldItem: (item: HeldItemType) => void;
 
   // Mobile & Virtual Controls State
+  deviceMode: DeviceMode;
+  isDeviceSelectModalOpen: boolean;
+  setDeviceMode: (mode: DeviceMode) => void;
+  openDeviceSelectModal: () => void;
+  closeDeviceSelectModal: () => void;
   isTouchDevice: boolean;
   setIsTouchDevice: (isTouch: boolean) => void;
   isMobileSprint: boolean;
@@ -257,7 +263,27 @@ export const useLabStore = create<LabState>((set, get) => ({
   soundEnabled: true,
 
   // Mobile & Virtual Controls State
-  isTouchDevice: false,
+  deviceMode:
+    typeof window !== 'undefined' && localStorage.getItem('preferred_device_mode') === 'mobile'
+      ? 'mobile'
+      : 'desktop',
+  isDeviceSelectModalOpen:
+    typeof window !== 'undefined' ? !localStorage.getItem('preferred_device_mode') : false,
+  setDeviceMode: (mode: DeviceMode) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('preferred_device_mode', mode);
+    }
+    sound.playClick();
+    set({
+      deviceMode: mode,
+      isDeviceSelectModalOpen: false,
+      isTouchDevice: mode === 'mobile',
+    });
+  },
+  openDeviceSelectModal: () => set({ isDeviceSelectModalOpen: true }),
+  closeDeviceSelectModal: () => set({ isDeviceSelectModalOpen: false }),
+  isTouchDevice:
+    typeof window !== 'undefined' && localStorage.getItem('preferred_device_mode') === 'mobile',
   setIsTouchDevice: (isTouch: boolean) => set({ isTouchDevice: isTouch }),
   isMobileSprint: false,
   toggleMobileSprint: () => {

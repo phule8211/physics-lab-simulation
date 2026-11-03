@@ -12,6 +12,8 @@ import {
   PackageCheck,
   HelpCircle,
   Activity,
+  Monitor,
+  Smartphone,
 } from 'lucide-react';
 import { CompassWidget } from './CompassWidget';
 import { CatHandsDropdown } from './CatHandsDropdown';
@@ -63,6 +65,8 @@ export function CrosshairHUD() {
     toggleStats,
     isStatsVisible,
     isTouchDevice,
+    deviceMode,
+    openDeviceSelectModal,
   } = useLabStore();
 
   const isGroundStation = hoveredStationId && hoveredStationId in STATIONS;
@@ -111,6 +115,30 @@ export function CrosshairHUD() {
         <div className="flex flex-col items-end space-y-1.5 sm:space-y-2 pointer-events-auto">
           {/* Quick Toolbar (Mute sound, Diagnostics, Help, Simulation Toggle) */}
           <div className="flex items-center space-x-1 sm:space-x-2">
+            {/* Device Mode Switcher (Desktop 💻 vs Mobile 📱) */}
+            <button
+              onClick={openDeviceSelectModal}
+              className={`glass-pill px-2.5 py-1.5 sm:py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 border transition-all duration-200 ${
+                deviceMode === 'desktop'
+                  ? 'text-cyan-300 border-cyan-500/50 bg-cyan-950/40 hover:bg-cyan-900/50'
+                  : 'text-emerald-300 border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-900/50'
+              }`}
+              aria-label="Đổi chế độ Máy tính hoặc Điện thoại"
+              title={deviceMode === 'desktop' ? 'Đang ở chế độ Máy tính (Chuột/Phím) — Nhấn để đổi' : 'Đang ở chế độ Điện thoại (Joystick) — Nhấn để đổi'}
+            >
+              {deviceMode === 'desktop' ? (
+                <>
+                  <Monitor className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="font-mono text-[11px] font-bold">PC</span>
+                </>
+              ) : (
+                <>
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="font-mono text-[11px] font-bold">Mobile</span>
+                </>
+              )}
+            </button>
+
             {/* Performance Stats HUD Toggle */}
             <button
               onClick={toggleStats}
@@ -206,15 +234,15 @@ export function CrosshairHUD() {
                   <span className="text-[10px] text-lab-cyan font-mono mt-1">
                     {hoveredInfo.sub}
                   </span>
-                  {!isPointerLocked && !isTouchDevice && (
-                    <div className="hidden sm:flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
+                  {!isPointerLocked && deviceMode === 'desktop' && (
+                    <div className="flex items-center space-x-1.5 text-[11px] text-amber-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
                       <MousePointerClick className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 animate-pulse" />
                       <span>Ấn chuột trái thì sẽ mất cursor để điều khiển bằng W, A, S, D</span>
                     </div>
                   )}
-                  {isTouchDevice && (
-                    <div className="flex sm:hidden items-center space-x-1.5 text-[10px] text-cyan-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
-                      <span>Chạm nút [E] để tương tác</span>
+                  {deviceMode === 'mobile' && (
+                    <div className="flex items-center space-x-1.5 text-[10px] text-cyan-300 font-medium mt-1.5 pt-1.5 border-t border-slate-800/80">
+                      <span>Chạm nút [E] bên phải để tương tác</span>
                     </div>
                   )}
                 </div>
