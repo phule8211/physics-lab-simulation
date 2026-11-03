@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import * as THREE from 'three';
-import { Text, Environment, Lightformer, Sparkles } from '@react-three/drei';
+import { Text, Environment, Lightformer, Sparkles, useTexture } from '@react-three/drei';
 import { StaircaseAndMezzanine } from './StaircaseAndMezzanine';
 import { LabWorkbenches } from './LabWorkbenches';
 import { GiantCeramicBottleShelf } from './GiantCeramicBottleShelf';
@@ -21,6 +21,12 @@ function SafeText(props: any) {
 }
 
 export function WorkshopEnvironment() {
+  const floorTexture = useTexture('/textures/floor_tiles.png');
+  floorTexture.wrapS = THREE.RepeatWrapping;
+  floorTexture.wrapT = THREE.RepeatWrapping;
+  floorTexture.repeat.set(14, 25);
+  floorTexture.colorSpace = THREE.SRGBColorSpace;
+
   return (
     <group>
       {/* =========================================================================
@@ -159,7 +165,7 @@ export function WorkshopEnvironment() {
       </Suspense>
 
       {/* =========================================================================
-          3. FLOOR (Ultra-Glossy Industrial Epoxy PBR with Expansion Tile Joints)
+          3. FLOOR (Large-Format Grey Marble Cleanroom Floor Tiles with PBR Reflections)
          ========================================================================= */}
       {/* Ambient Airborne Dust Motes (Simulates Unreal Engine Niagara Particle Field) */}
       <Sparkles
@@ -172,51 +178,19 @@ export function WorkshopEnvironment() {
         color="#bae6fd"
       />
 
-      {/* Main Epoxy Floor: Ultra-Glossy Laboratory Epoxy with Clearcoat & HDR Specular Sheen */}
+      {/* Main Floor: Large Grey Marble & Granite Cleanroom Tiles */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 2]} receiveShadow>
         <planeGeometry args={[20, 20]} />
         <meshPhysicalMaterial
-          color="#0b1329"
-          roughness={0.12}
-          metalness={0.25}
-          clearcoat={1.0}
-          clearcoatRoughness={0.08}
-          reflectivity={0.9}
-          envMapIntensity={1.8}
+          map={floorTexture}
+          roughness={0.22}
+          metalness={0.12}
+          clearcoat={0.85}
+          clearcoatRoughness={0.10}
+          reflectivity={0.78}
+          envMapIntensity={1.3}
         />
       </mesh>
-
-      {/* Center Pathway Runner (Dark Matte Grip Strip) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 2]} receiveShadow>
-        <planeGeometry args={[3.2, 20]} />
-        <meshStandardMaterial
-          color="#090d16"
-          roughness={0.5}
-          metalness={0.08}
-        />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} receiveShadow>
-        <planeGeometry args={[20, 3.2]} />
-        <meshStandardMaterial
-          color="#090d16"
-          roughness={0.5}
-          metalness={0.08}
-        />
-      </mesh>
-
-      {/* Floor Expansion Joint Grid Lines */}
-      {[-7.5, -5, -2.5, 2.5, 5, 7.5].map((x) => (
-        <mesh key={`joint-x-${x}`} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.003, 0]}>
-          <planeGeometry args={[0.02, 16]} />
-          <meshBasicMaterial color="#1e293b" opacity={0.6} transparent />
-        </mesh>
-      ))}
-      {[-6, -3, 3, 6].map((z) => (
-        <mesh key={`joint-z-${z}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, z]}>
-          <planeGeometry args={[20, 0.02]} />
-          <meshBasicMaterial color="#1e293b" opacity={0.6} transparent />
-        </mesh>
-      ))}
 
       {/* Yellow Safety Boundary Strips around Stations */}
       <SafetyZoneBorder position={[-6, 0.005, -4]} width={4.2} depth={3.4} />
