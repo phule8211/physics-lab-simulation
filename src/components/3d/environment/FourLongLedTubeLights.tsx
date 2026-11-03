@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { useLabStore } from '../../../store/useLabStore';
 
 interface SingleTubeFixtureProps {
   position: [number, number, number];
   length?: number;
-  isOn?: boolean;
+  dimFactor: number;
 }
 
-function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFixtureProps) {
+function SingleTubeFixture({ position, length = 5.2, dimFactor }: SingleTubeFixtureProps) {
   const [posX, posY, posZ] = position;
   const ceilingY = 6.75;
   const cableHeight = ceilingY - posY;
+  const isGlowing = dimFactor > 0.02;
 
   return (
     <group position={[posX, posY, posZ]}>
@@ -22,7 +24,7 @@ function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFi
           color="#1e293b"
           metalness={0.88}
           roughness={0.25}
-          envMapIntensity={0.8}
+          envMapIntensity={0.8 * dimFactor}
         />
       </mesh>
 
@@ -51,9 +53,9 @@ function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFi
         >
           <cylinderGeometry args={[0.022, 0.022, length - 0.12, 16]} />
           <meshStandardMaterial
-            color={isOn ? '#ffffff' : '#334155'}
-            emissive={isOn ? '#f8fafc' : '#000000'}
-            emissiveIntensity={isOn ? 3.6 : 0}
+            color={isGlowing ? '#ffffff' : '#334155'}
+            emissive={isGlowing ? '#f8fafc' : '#000000'}
+            emissiveIntensity={3.6 * dimFactor}
             toneMapped={false}
             roughness={0.1}
           />
@@ -64,22 +66,22 @@ function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFi
       <mesh position={[0, -0.05, 0]}>
         <boxGeometry args={[length - 0.08, 0.015, 0.18]} />
         <meshStandardMaterial
-          color={isOn ? '#f8fafc' : '#1e293b'}
-          emissive={isOn ? '#ffffff' : '#000000'}
-          emissiveIntensity={isOn ? 1.8 : 0}
+          color={isGlowing ? '#f8fafc' : '#1e293b'}
+          emissive={isGlowing ? '#ffffff' : '#000000'}
+          emissiveIntensity={1.8 * dimFactor}
           toneMapped={false}
           transparent
-          opacity={isOn ? 0.85 : 0.3}
+          opacity={0.3 + 0.55 * dimFactor}
           roughness={0.2}
         />
       </mesh>
 
-      {/* 5. Distributed Downward Clean Light Emitters (5500K Neutral White) */}
-      {isOn && [-length / 4, length / 4].map((lightX, i) => (
+      {/* 5. Distributed Downward Clean Light Emitters (5500K Neutral White) with Smooth Height-aware Attenuation */}
+      {isGlowing && [-length / 4, length / 4].map((lightX, i) => (
         <pointLight
           key={`emitter-${i}`}
           position={[lightX, -0.2, 0]}
-          intensity={2.4}
+          intensity={2.4 * dimFactor}
           distance={11}
           decay={1.8}
           color="#f8fafc"
@@ -97,9 +99,22 @@ function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFi
  * - Southeast: [ 4.5, 5.6,  3.2]
  *
  * Controllable via the Aptomat (MCB) circuit breaker switch on the workshop wall.
+ * Features smooth physics-based gradual dimming when switched on/off.
  */
 export function FourLongLedTubeLights() {
   const isAptomatOn = useLabStore((state) => state.isAptomatOn);
+  const dimFactorRef = useRef(isAptomatOn ? 1.0 : 0.0);
+  const [currentDim, setCurrentDim] = useState(isAptomatOn ? 1.0 : 0.0);
+
+  useFrame((_, delta) => {
+    const target = isAptomatOn ? 1.0 : 0.0;
+    const next = THREE.MathUtils.damp(dimFactorRef.current, target, 7.0, delta);
+    dimFactorRef.current = next;
+    // Update local state if significant change
+    if (Math.abs(next - currentDim) > 0.01) {
+      setCurrentDim(next);
+    }
+  });
 
   const fixtures: [number, number, number][] = [
     [-4.5, 5.6, -3.2], // Northwest quadrant (CO2 Laser & Workbenches)
@@ -115,7 +130,7 @@ export function FourLongLedTubeLights() {
           key={`led-tube-${idx}`}
           position={pos}
           length={5.2}
-          isOn={isAptomatOn}
+          dimFactor={currentDim}
         />
       ))}
     </group>

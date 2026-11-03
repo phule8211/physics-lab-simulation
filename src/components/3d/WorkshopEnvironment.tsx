@@ -1,4 +1,4 @@
-import React, { Suspense, useRef } from 'react';
+import React, { Suspense, useRef, useState } from 'react';
 
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -56,14 +56,14 @@ export function WorkshopEnvironment() {
   floorTexture.repeat.set(14, 25);
   floorTexture.colorSpace = THREE.SRGBColorSpace;
 
-  // Proportional dimming based on luminous power and mounting height:
-  // - CB-01 (4 hanging tube luminaires at Y=5.6m): 45% of general room flood
-  // - CB-02 (8 ceiling troffer luminaires at Y=6.85m): 55% of cleanroom diffuse field
+  // Physical inverse-square illuminance weights based on fixture count and mounting height from ground:
+  // - 4 tube luminaires at Y=5.6m: W_tube = (4 / 5.6^2) / (4 / 5.6^2 + 8 / 6.85^2) ~ 0.428 (42.8%)
+  // - 8 ceiling troffer luminaires at Y=6.85m: W_ceiling = (8 / 6.85^2) / (4 / 5.6^2 + 8 / 6.85^2) ~ 0.572 (57.2%)
   // - Both ON: 1.0 (100% full illumination)
-  // - Only CB-01 ON: 0.45 (Dimmed work area lighting)
-  // - Only CB-02 ON: 0.55 (Dimmed ceiling troffer lighting)
-  // - Both OFF: 0.0 (Complete pitch black darkness!)
-  const targetGeneralLighting = (isAptomatOn ? 0.45 : 0) + (isCeilingLampsAptomatOn ? 0.55 : 0);
+  // - Only CB-01 ON: 0.428 (~43% lower-height direct work area light)
+  // - Only CB-02 ON: 0.572 (~57% higher diffuse ceiling light)
+  // - Both OFF: 0.0 (COMPLETE PITCH-BLACK DARKNESS!)
+  const targetGeneralLighting = (isAptomatOn ? 0.428 : 0) + (isCeilingLampsAptomatOn ? 0.572 : 0);
 
   const hemiLightRef = useRef<THREE.HemisphereLight>(null);
   const dirSunRef = useRef<THREE.DirectionalLight>(null);
@@ -77,29 +77,40 @@ export function WorkshopEnvironment() {
   const floorMatRef = useRef<THREE.MeshPhysicalMaterial>(null);
   const currentFactorRef = useRef(targetGeneralLighting);
 
+  const ceilingFactorRef = useRef(isCeilingLampsAptomatOn ? 1.0 : 0.0);
+  const [ceilingFactor, setCeilingFactor] = useState(isCeilingLampsAptomatOn ? 1.0 : 0.0);
+
   useFrame((state, delta) => {
-    // Smooth dynamic dimming transition over ~0.35s ("hiệu ứng tối dần")
+    // Smooth dynamic dimming transition over ~0.45s ("hiệu ứng giảm dần độ sáng")
     currentFactorRef.current = THREE.MathUtils.damp(
       currentFactorRef.current,
       targetGeneralLighting,
-      7.5,
+      6.5,
       delta
     );
     const f = currentFactorRef.current;
+    const isPitchBlack = !isAptomatOn && !isCeilingLampsAptomatOn && f < 0.01;
+
+    const targetCeiling = isCeilingLampsAptomatOn ? 1.0 : 0.0;
+    const nextCeiling = THREE.MathUtils.damp(ceilingFactorRef.current, targetCeiling, 7.0, delta);
+    ceilingFactorRef.current = nextCeiling;
+    if (Math.abs(nextCeiling - ceilingFactor) > 0.01) {
+      setCeilingFactor(nextCeiling);
+    }
 
     // 1. Hemisphere ambient lighting
     if (hemiLightRef.current) {
-      hemiLightRef.current.intensity = 0.75 * f;
+      hemiLightRef.current.intensity = isPitchBlack ? 0 : 0.75 * f;
     }
 
     // 2. Primary directional sun
     if (dirSunRef.current) {
-      dirSunRef.current.intensity = 1.3 * f;
+      dirSunRef.current.intensity = isPitchBlack ? 0 : 1.3 * f;
     }
 
     // 3. Secondary directional fill
     if (dirFillRef.current) {
-      dirFillRef.current.intensity = 0.45 * f;
+      dirFillRef.current.intensity = isPitchBlack ? 0 : 0.45 * f;
     }
 
     // 4. Station overhead spotlights (modulated by general lighting & machine power switches)
@@ -109,21 +120,21 @@ export function WorkshopEnvironment() {
     const p4 = machinePower['SENSOR_STATION'] ?? true;
     const p5 = machinePower['COATING_STATION'] ?? true;
 
-    if (spotStation1Ref.current) spotStation1Ref.current.intensity = p1 ? 1.8 * f : 0;
-    if (spotStation2Ref.current) spotStation2Ref.current.intensity = p2 ? 1.8 * f : 0;
-    if (spotStation3Ref.current) spotStation3Ref.current.intensity = p3 ? 1.8 * f : 0;
-    if (spotStation4Ref.current) spotStation4Ref.current.intensity = p4 ? 1.8 * f : 0;
-    if (spotStation5Ref.current) spotStation5Ref.current.intensity = p5 ? 2.2 * f : 0;
+    if (spotStation1Ref.current) spotStation1Ref.current.intensity = p1 && !isPitchBlack ? 1.8 * f : 0;
+    if (spotStation2Ref.current) spotStation2Ref.current.intensity = p2 && !isPitchBlack ? 1.8 * f : 0;
+    if (spotStation3Ref.current) spotStation3Ref.current.intensity = p3 && !isPitchBlack ? 1.8 * f : 0;
+    if (spotStation4Ref.current) spotStation4Ref.current.intensity = p4 && !isPitchBlack ? 1.8 * f : 0;
+    if (spotStation5Ref.current) spotStation5Ref.current.intensity = p5 && !isPitchBlack ? 2.2 * f : 0;
 
     // 5. Signboard light
     if (signLightRef.current) {
-      signLightRef.current.intensity = 1.6 * f;
+      signLightRef.current.intensity = isPitchBlack ? 0 : 1.6 * f;
     }
 
     // 6. Scene environment map intensity & floor tile reflection
-    state.scene.environmentIntensity = f;
+    state.scene.environmentIntensity = isPitchBlack ? 0 : f;
     if (floorMatRef.current) {
-      floorMatRef.current.envMapIntensity = 1.3 * f;
+      floorMatRef.current.envMapIntensity = isPitchBlack ? 0 : 1.3 * f;
     }
 
     // 7. Deep atmospheric fog & background smoothly dims to pitch black (#000000) when all lights off
@@ -598,11 +609,11 @@ export function WorkshopEnvironment() {
 
 
 
-      {/* Industrial Wall-Mounted Aptomat Dual Sub-Panel: CB-01 (4 Đèn Dài) & CB-02 (8 Đèn Âm Trần) */}
+      {/* Industrial Wall-Mounted Aptomat Dual Sub-Panel: CB-01 (4 Đèn Dài) & CB-02 (8 Đèn Âm Trần) with 1.0m spacing */}
 
-      <AptomatCircuitBreaker position={[-2.4, 1.55, -7.88]} rotation={[0, 0, 0]} />
+      <AptomatCircuitBreaker position={[-2.65, 1.55, -7.88]} rotation={[0, 0, 0]} />
 
-      <CeilingLampsAptomatBreaker position={[-1.95, 1.55, -7.88]} rotation={[0, 0, 0]} />
+      <CeilingLampsAptomatBreaker position={[-1.65, 1.55, -7.88]} rotation={[0, 0, 0]} />
 
 
 
@@ -1029,61 +1040,33 @@ export function WorkshopEnvironment() {
             <boxGeometry args={[1.88, 0.02, 0.44]} />
 
             <meshStandardMaterial
-
-              color={isCeilingLampsAptomatOn ? "#ffffff" : "#1e293b"}
-
-              emissive={isCeilingLampsAptomatOn ? "#f8fafc" : "#000000"}
-
-              emissiveIntensity={isCeilingLampsAptomatOn ? 2.8 : 0}
-
+              color={ceilingFactor > 0.02 ? "#ffffff" : "#1e293b"}
+              emissive={ceilingFactor > 0.02 ? "#f8fafc" : "#000000"}
+              emissiveIntensity={2.8 * ceilingFactor}
               toneMapped={false}
-
             />
-
           </mesh>
-
-
 
           {/* Emergency Backup Power Status LED (Green = Power On, Red = Tripped/Cut) */}
-
           <mesh position={[0.92, -0.052, 0.22]}>
-
             <sphereGeometry args={[0.012, 10, 10]} />
-
             <meshStandardMaterial
-
               color={isCeilingLampsAptomatOn ? "#22c55e" : "#ef4444"}
-
               emissive={isCeilingLampsAptomatOn ? "#22c55e" : "#ef4444"}
-
               emissiveIntensity={2.0}
-
               toneMapped={false}
-
             />
-
           </mesh>
 
-
-
-          {/* Real downlight illumination controlled by Aptomat CB-02 */}
-
-          {isCeilingLampsAptomatOn && (
-
+          {/* Real downlight illumination controlled by Aptomat CB-02 with smooth dimming */}
+          {ceilingFactor > 0.02 && (
             <pointLight
-
               position={[0, -0.2, 0]}
-
-              intensity={1.6}
-
+              intensity={1.8 * ceilingFactor}
               distance={11.0}
-
               decay={2.0}
-
               color="#f8fafc"
-
             />
-
           )}
 
         </group>

@@ -31,13 +31,13 @@ export const WALL_SWITCHES = {
     id: 'aptomat_tube_lights' as const,
     name: 'Aptomat 4 Đèn Dài (CB-01)',
     shortName: 'CB-01 (4 Đèn Dài)',
-    position: [-2.4, 1.55, -7.88] as [number, number, number],
+    position: [-2.65, 1.55, -7.88] as [number, number, number],
   },
   aptomat_ceiling_lamps: {
     id: 'aptomat_ceiling_lamps' as const,
     name: 'Aptomat 8 Đèn Trần (CB-02)',
     shortName: 'CB-02 (8 Đèn Trần)',
-    position: [-1.95, 1.55, -7.88] as [number, number, number],
+    position: [-1.65, 1.55, -7.88] as [number, number, number],
   },
 } as const;
 
@@ -135,7 +135,7 @@ export const LAB_TABLES: LabTableConfig[] = [
     id: 'table_04',
     name: 'Bàn Cân Điện Tử Phân Tích Độ Chính Xác Cao',
     tableNumber: 4,
-    position: [3.8, MEZZANINE_CONFIG.floorY, 6.8],
+    position: [3.0, MEZZANINE_CONFIG.floorY, 6.8],
     rotation: [0, 0, 0],
     specialty: 'ANALYTICAL_SCALE',
     floor: 2,
@@ -293,6 +293,32 @@ export const EXTRA_COLLIDERS: AABBBox[] = [
     max: [3.65, MEZZANINE_CONFIG.floorY + 1.2, 4.6],
   },
 
+  // 1b. Sloped Staircase Railings (Left side: X in [1.18, 1.38], Right side: X in [3.42, 3.62] from Z = -0.1 to 4.65)
+  ...Array.from({ length: 8 }).map((_, i) => {
+    const zMin = -0.1 + i * (4.75 / 8);
+    const zMax = -0.1 + (i + 1) * (4.75 / 8);
+    const groundY = Math.max(0, (i / 8) * 3.06);
+    const topY = ((i + 1) / 8) * 3.06 + 1.25;
+    return {
+      id: `collider_stair_rail_left_seg_${i}`,
+      name: `Lan Can Cầu Thang Trái - Đoạn ${i + 1}`,
+      min: [1.18, groundY, zMin] as [number, number, number],
+      max: [1.38, topY, zMax] as [number, number, number],
+    };
+  }),
+  ...Array.from({ length: 8 }).map((_, i) => {
+    const zMin = -0.1 + i * (4.75 / 8);
+    const zMax = -0.1 + (i + 1) * (4.75 / 8);
+    const groundY = Math.max(0, (i / 8) * 3.06);
+    const topY = ((i + 1) / 8) * 3.06 + 1.25;
+    return {
+      id: `collider_stair_rail_right_seg_${i}`,
+      name: `Lan Can Cầu Thang Phải - Đoạn ${i + 1}`,
+      min: [3.42, groundY, zMin] as [number, number, number],
+      max: [3.62, topY, zMax] as [number, number, number],
+    };
+  }),
+
   // 2. Giant Shelf Collider
   {
     id: 'collider_giant_shelf',
@@ -333,5 +359,19 @@ export const EXTRA_COLLIDERS: AABBBox[] = [
     name: 'Giá Đỡ Dụng Cụ Thí Nghiệm',
     min: [6.7, MEZZANINE_CONFIG.floorY, 9.4],
     max: [8.3, MEZZANINE_CONFIG.floorY + 1.5, 10.4],
+  },
+
+  // 5. Auxiliary Equipment Colliders (Industrial Chillers CW-5200 on Ground Floor)
+  {
+    id: 'collider_chiller_co2',
+    name: 'Máy Làm Mát Chiller CW-5200 (CO2)',
+    min: [-8.2, 0, -5.8],
+    max: [-7.4, 1.2, -5.0],
+  },
+  {
+    id: 'collider_chiller_uv',
+    name: 'Máy Làm Mát Chiller CW-5200 (UV)',
+    min: [7.4, 0, -5.8],
+    max: [8.2, 1.2, -5.0],
   },
 ];

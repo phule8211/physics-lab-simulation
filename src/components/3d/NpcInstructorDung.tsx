@@ -6,9 +6,11 @@ import * as THREE from 'three';
 
 import { Html } from '@react-three/drei';
 
-import { useLabStore } from '../../store/useLabStore';
+import { useLabStore, playerWorldState } from '../../store/useLabStore';
 
 import { MEZZANINE_CONFIG } from '../../data/staircaseConfig';
+
+import { resolveMovementWithCollisions } from './CollisionManager';
 
 import { MessageSquareText, Sparkles, FlaskConical, Activity, CheckCircle2 } from 'lucide-react';
 
@@ -29,87 +31,62 @@ interface Waypoint {
 }
 
 const NPC_PATROL_WAYPOINTS: Waypoint[] = [
-
   {
-
     name: 'Bàn Máy Tính CAD',
-
     taskTitle: 'Đang theo dõi dữ liệu CAD & phổ cắt laser trên laptop',
-
-    position: [-4.6, MEZZANINE_CONFIG.floorY, 9.6],
-
+    position: [-5.4, MEZZANINE_CONFIG.floorY, 8.8],
     targetYaw: 0,
-
     duration: 8,
-
     experimentType: 'LAPTOP_CAD',
-
   },
-
   {
-
     name: 'Bồn Nước & Vòi DI Water',
-
     taskTitle: 'Đang tráng rửa dụng cụ bằng nước khử ion siêu sạch DI Water',
-
-    position: [0.0, MEZZANINE_CONFIG.floorY, 9.6],
-
+    position: [0.0, MEZZANINE_CONFIG.floorY, 8.8],
     targetYaw: 0,
-
     duration: 7,
-
     experimentType: 'DI_WATER_RINSE',
-
   },
-
   {
-
     name: 'Giá Hóa Chất Wafer',
-
     taskTitle: 'Đang chuẩn độ dung dịch ăn mòn wafer bán dẫn (HCl + HNO3)',
-
-    position: [3.6, MEZZANINE_CONFIG.floorY, 9.6],
-
+    position: [4.2, MEZZANINE_CONFIG.floorY, 8.8],
     targetYaw: 0,
-
     duration: 9,
-
     experimentType: 'ACID_TITRATION',
-
   },
-
   {
-
     name: 'Giá Dụng Cụ Thí Nghiệm',
-
     taskTitle: 'Đang kiểm tra độ chính xác của Micropipette và ống nghiệm',
-
-    position: [6.6, MEZZANINE_CONFIG.floorY, 9.2],
-
-    targetYaw: -Math.PI / 4,
-
+    position: [7.2, MEZZANINE_CONFIG.floorY, 8.8],
+    targetYaw: 0,
     duration: 7,
-
     experimentType: 'PIPETTE_CHECK',
-
   },
-
   {
-
-    name: 'Lan Can Ban Công Tầng 2',
-
-    taskTitle: 'Đang tuần tra an toàn và giám sát các buồng cắt laser tầng 1',
-
-    position: [-1.2, MEZZANINE_CONFIG.floorY, 5.8],
-
+    name: 'Hành Lang Giữa Tầng 2',
+    taskTitle: 'Đang di chuyển qua lối đi trung tâm tầng 2',
+    position: [2.0, MEZZANINE_CONFIG.floorY, 8.2],
     targetYaw: Math.PI,
-
-    duration: 8,
-
+    duration: 1,
     experimentType: 'WORKSHOP_PATROL',
-
   },
-
+  {
+    name: 'Lan Can Ban Công Tầng 2',
+    taskTitle: 'Đang tuần tra an toàn và quan sát các máy laser tầng 1',
+    position: [2.0, MEZZANINE_CONFIG.floorY, 5.5],
+    targetYaw: Math.PI,
+    duration: 8,
+    experimentType: 'WORKSHOP_PATROL',
+  },
+  {
+    name: 'Hành Lang Nghiên Cứu',
+    taskTitle: 'Đang quay lại khu vực bàn thí nghiệm và hóa chất',
+    position: [2.0, MEZZANINE_CONFIG.floorY, 8.2],
+    targetYaw: 0,
+    duration: 1,
+    experimentType: 'WORKSHOP_PATROL',
+  },
 ];
 
 function lerpAngle(a: number, b: number, t: number): number {
@@ -222,27 +199,26 @@ export function NpcInstructorDung() {
 
       if (rightKneeRef.current) rightKneeRef.current.rotation.x = THREE.MathUtils.lerp(rightKneeRef.current.rotation.x, 0, dt * 8);
 
-      // Welcoming gesture: Lego right arm raised forward politely with forward-bent elbow
-
+      // Welcoming gesture: natural human right arm raised politely, elbows bent symmetrically inward
       if (rightShoulderRef.current) {
-
-        rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.45, dt * 6);
-        rightShoulderRef.current.rotation.z = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.z, 0.28, dt * 6);
-
+        rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.42, dt * 6);
+        rightShoulderRef.current.rotation.z = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.z, 0.08, dt * 6);
       }
-
       if (rightElbowRef.current) {
         rightElbowRef.current.rotation.x = THREE.MathUtils.lerp(rightElbowRef.current.rotation.x, 0.52, dt * 6);
+        rightElbowRef.current.rotation.y = -0.16;
+        rightElbowRef.current.rotation.z = -0.10;
       }
 
-      // Left arm holding clipboard with Lego claw hand, elbow bent forward
+      // Left arm holding clipboard with natural human posture
       if (leftShoulderRef.current) {
-        leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.22, dt * 6);
-        leftShoulderRef.current.rotation.z = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.z, -0.28, dt * 6);
+        leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.20, dt * 6);
+        leftShoulderRef.current.rotation.z = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.z, -0.08, dt * 6);
       }
-
       if (leftElbowRef.current) {
         leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.48, dt * 6);
+        leftElbowRef.current.rotation.y = 0.16;
+        leftElbowRef.current.rotation.z = 0.10;
       }
 
       // Head nods gently towards player
@@ -279,66 +255,67 @@ export function NpcInstructorDung() {
 
         } else {
 
-          // Move towards target waypoint
-
-          const moveDir = toTarget.normalize();
-
+          // Move towards target waypoint with physics collision resolution
+          const moveDir = toTarget.clone().normalize();
           const walkSpeed = 1.15; // m/s
+          const intendedPos: [number, number, number] = [
+            positionRef.current.x + moveDir.x * walkSpeed * dt,
+            positionRef.current.y,
+            positionRef.current.z + moveDir.z * walkSpeed * dt,
+          ];
 
-          positionRef.current.addScaledVector(moveDir, walkSpeed * dt);
+          // Solid obstacle avoidance: cannot walk through tables, walls, railings, or player
+          const resolved = resolveMovementWithCollisions(
+            [positionRef.current.x, positionRef.current.y, positionRef.current.z],
+            intendedPos,
+            0.35,
+            false,
+            { x: playerWorldState.x, y: playerWorldState.y, z: playerWorldState.z, radius: 0.35, isEyeHeight: true }
+          );
+          positionRef.current.set(resolved[0], resolved[1], resolved[2]);
 
           // Rotate facing travel direction with angular smoothing
-
           const travelAngle = Math.atan2(moveDir.x, moveDir.z);
-
           yawRef.current = lerpAngle(yawRef.current, travelAngle, dt * 6.0);
 
           // Advance walk cycle phase
-
           walkPhaseRef.current += dt * 5.2;
-
           const p = walkPhaseRef.current;
 
           // Leg kinematics with natural knee flexion (Chân bước tự nhiên, đầu gối gập ra sau)
-
           const stride = 0.65;
-
           if (leftThighRef.current) leftThighRef.current.rotation.x = Math.sin(p) * stride;
-
           if (rightThighRef.current) rightThighRef.current.rotation.x = -Math.sin(p) * stride;
 
           // Knees flex backwards only during backward swing
-
           if (leftKneeRef.current) leftKneeRef.current.rotation.x = Math.max(0, -Math.sin(p - 0.25) * 0.75);
-
           if (rightKneeRef.current) rightKneeRef.current.rotation.x = Math.max(0, Math.sin(p - 0.25) * 0.75);
 
           // Pelvis vertical oscillation (Nhấp nhô bước đi)
-
           if (pelvisRef.current) {
-
             pelvisRef.current.position.y = 0.82 + Math.abs(Math.sin(p * 2)) * 0.04;
-
           }
 
-          // Lego Arms: Minifigure arm swing pivoting from shoulder with rigid forward elbow bend (~28 deg)
-
-          const armSwing = 0.42;
+          // Natural human arm swing with symmetric forward/inward elbow curvature
+          const armSwing = 0.35;
 
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = 0.18 - Math.sin(p) * armSwing;
-            leftShoulderRef.current.rotation.z = -0.28; // Lego outward flare
+            leftShoulderRef.current.rotation.x = 0.12 - Math.sin(p) * armSwing;
+            leftShoulderRef.current.rotation.z = -0.06;
           }
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = 0.18 + Math.sin(p) * armSwing;
-            rightShoulderRef.current.rotation.z = 0.28; // Lego outward flare
+            rightShoulderRef.current.rotation.x = 0.12 + Math.sin(p) * armSwing;
+            rightShoulderRef.current.rotation.z = 0.06;
           }
           if (leftElbowRef.current) {
-            // Constant forward bend (Lego posture) with subtle swing
-            leftElbowRef.current.rotation.x = 0.48 + Math.sin(p) * 0.05;
+            leftElbowRef.current.rotation.x = 0.42 + Math.sin(p) * 0.04;
+            leftElbowRef.current.rotation.y = 0.16;
+            leftElbowRef.current.rotation.z = 0.10;
           }
           if (rightElbowRef.current) {
-            rightElbowRef.current.rotation.x = 0.48 - Math.sin(p) * 0.05;
+            rightElbowRef.current.rotation.x = 0.42 - Math.sin(p) * 0.04;
+            rightElbowRef.current.rotation.y = -0.16;
+            rightElbowRef.current.rotation.z = -0.10;
           }
 
           // Head looks ahead with subtle sway
@@ -378,25 +355,27 @@ export function NpcInstructorDung() {
         const expType = currentWp.experimentType;
 
         if (expType === 'ACID_TITRATION' || expType === 'DI_WATER_RINSE') {
-
           // Holding test tube / beaker in left hand, gently swirling with right hand
-
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.65, dt * 4);
-            leftShoulderRef.current.rotation.z = -0.2;
+            leftShoulderRef.current.rotation.x = THREE.MathUtils.lerp(leftShoulderRef.current.rotation.x, 0.55, dt * 4);
+            leftShoulderRef.current.rotation.z = -0.08;
           }
 
           if (leftElbowRef.current) {
-            leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.75, dt * 4);
+            leftElbowRef.current.rotation.x = THREE.MathUtils.lerp(leftElbowRef.current.rotation.x, 0.65, dt * 4);
+            leftElbowRef.current.rotation.y = 0.16;
+            leftElbowRef.current.rotation.z = 0.10;
           }
 
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.55, dt * 4);
-            rightShoulderRef.current.rotation.z = 0.25;
+            rightShoulderRef.current.rotation.x = THREE.MathUtils.lerp(rightShoulderRef.current.rotation.x, 0.48, dt * 4);
+            rightShoulderRef.current.rotation.z = 0.08;
           }
 
           if (rightElbowRef.current) {
-            rightElbowRef.current.rotation.x = 0.75 + Math.sin(time * 3.5) * 0.15; // swirling motion
+            rightElbowRef.current.rotation.x = 0.65 + Math.sin(time * 3.5) * 0.12; // swirling motion
+            rightElbowRef.current.rotation.y = -0.16;
+            rightElbowRef.current.rotation.z = -0.10;
           }
 
           if (headRef.current) {
@@ -406,37 +385,54 @@ export function NpcInstructorDung() {
         } else if (expType === 'LAPTOP_CAD') {
           // Both arms forward typing on keyboard
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = 0.55 + Math.sin(time * 8) * 0.04;
-            leftShoulderRef.current.rotation.z = -0.15;
+            leftShoulderRef.current.rotation.x = 0.50 + Math.sin(time * 8) * 0.03;
+            leftShoulderRef.current.rotation.z = -0.06;
           }
 
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = 0.55 + Math.cos(time * 8) * 0.04;
-            rightShoulderRef.current.rotation.z = 0.15;
+            rightShoulderRef.current.rotation.x = 0.50 + Math.cos(time * 8) * 0.03;
+            rightShoulderRef.current.rotation.z = 0.06;
           }
 
-          if (leftElbowRef.current) leftElbowRef.current.rotation.x = 0.8;
-          if (rightElbowRef.current) rightElbowRef.current.rotation.x = 0.8;
+          if (leftElbowRef.current) {
+            leftElbowRef.current.rotation.x = 0.70;
+            leftElbowRef.current.rotation.y = 0.16;
+            leftElbowRef.current.rotation.z = 0.10;
+          }
+          if (rightElbowRef.current) {
+            rightElbowRef.current.rotation.x = 0.70;
+            rightElbowRef.current.rotation.y = -0.16;
+            rightElbowRef.current.rotation.z = -0.10;
+          }
           if (headRef.current) headRef.current.rotation.x = 0.18; // looking at laptop screen
 
         } else {
           // Inspecting equipment / patrol overview
           if (leftShoulderRef.current) {
-            leftShoulderRef.current.rotation.x = 0.25;
-            leftShoulderRef.current.rotation.z = -0.12;
+            leftShoulderRef.current.rotation.x = 0.22;
+            leftShoulderRef.current.rotation.z = -0.06;
           }
 
           if (rightShoulderRef.current) {
-            rightShoulderRef.current.rotation.x = 0.25 + Math.sin(time * 1.2) * 0.1;
-            rightShoulderRef.current.rotation.z = 0.2;
+            rightShoulderRef.current.rotation.x = 0.22 + Math.sin(time * 1.2) * 0.08;
+            rightShoulderRef.current.rotation.z = 0.06;
+          }
+
+          if (leftElbowRef.current) {
+            leftElbowRef.current.rotation.x = 0.45;
+            leftElbowRef.current.rotation.y = 0.16;
+            leftElbowRef.current.rotation.z = 0.10;
+          }
+
+          if (rightElbowRef.current) {
+            rightElbowRef.current.rotation.x = 0.45;
+            rightElbowRef.current.rotation.y = -0.16;
+            rightElbowRef.current.rotation.z = -0.10;
           }
 
           if (headRef.current) {
-
             headRef.current.rotation.y = Math.sin(time * 0.8) * 0.25; // looking around lab
-
             headRef.current.rotation.x = 0.08;
-
           }
 
         }
@@ -677,16 +673,16 @@ export function NpcInstructorDung() {
 
           </group>
 
-          {/* LEFT ARM HIERARCHY: CLASSIC LEGO MINIFIGURE ARM (Khuỷu tay gập về trước, bàn tay Lego C-Clamp) */}
+          {/* LEFT ARM HIERARCHY: HUMAN-PROPORTIONED ARM (Khuỷu tay gập đối xứng tự nhiên, cẳng tay hướng vào trong) */}
 
-          <group ref={leftShoulderRef} position={[-0.23, 0.28, 0]} rotation={[0.2, 0, -0.25]}>
-            {/* Lego Upper Arm Sleeve */}
+          <group ref={leftShoulderRef} position={[-0.23, 0.28, 0]} rotation={[0.15, 0, -0.06]}>
+            {/* Upper Arm Sleeve */}
             <mesh position={[0, -0.13, 0]} castShadow>
               <cylinderGeometry args={[0.052, 0.048, 0.26, 16]} />
               <meshStandardMaterial color="#f8fafc" roughness={0.35} />
             </mesh>
-            {/* Lego Left Elbow Joint (Cố định gập về trước ~28 độ) */}
-            <group ref={leftElbowRef} position={[0, -0.26, 0]} rotation={[0.48, -0.1, 0]}>
+            {/* Left Elbow Joint (Gập về trước đối xứng ~26 độ, nghiêng nhẹ vào trong) */}
+            <group ref={leftElbowRef} position={[0, -0.26, 0]} rotation={[0.45, 0.16, 0.10]}>
 
               {/* Lego Forearm Sleeve */}
 
@@ -758,16 +754,16 @@ export function NpcInstructorDung() {
 
           </group>
 
-          {/* RIGHT ARM HIERARCHY: CLASSIC LEGO MINIFIGURE ARM (Khuỷu tay gập về trước, bàn tay Lego C-Clamp) */}
+          {/* RIGHT ARM HIERARCHY: HUMAN-PROPORTIONED ARM (Khuỷu tay gập đối xứng tự nhiên, cẳng tay hướng vào trong) */}
 
-          <group ref={rightShoulderRef} position={[0.23, 0.28, 0]} rotation={[0.2, 0, 0.25]}>
-            {/* Lego Upper Arm Sleeve */}
+          <group ref={rightShoulderRef} position={[0.23, 0.28, 0]} rotation={[0.15, 0, 0.06]}>
+            {/* Upper Arm Sleeve */}
             <mesh position={[0, -0.13, 0]} castShadow>
               <cylinderGeometry args={[0.052, 0.048, 0.26, 16]} />
               <meshStandardMaterial color="#f8fafc" roughness={0.35} />
             </mesh>
-            {/* Lego Right Elbow Joint (Cố định gập về trước ~28 độ) */}
-            <group ref={rightElbowRef} position={[0, -0.26, 0]} rotation={[0.48, 0.1, 0]}>
+            {/* Right Elbow Joint (Gập về trước đối xứng ~26 độ, nghiêng nhẹ vào trong) */}
+            <group ref={rightElbowRef} position={[0, -0.26, 0]} rotation={[0.45, -0.16, -0.10]}>
 
               {/* Lego Forearm Sleeve */}
 

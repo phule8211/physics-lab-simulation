@@ -17,7 +17,7 @@ interface BaseBreakerBoxProps {
 }
 
 function BaseIndustrialBreakerBox({
-  position = [-2.4, 1.55, -7.88],
+  position = [-2.65, 1.55, -7.88],
   rotation = [0, 0, 0],
   isOn,
   onToggle,
@@ -245,7 +245,7 @@ export function AptomatCircuitBreaker(props: { position?: [number, number, numbe
   const { isAptomatOn, toggleAptomat } = useLabStore();
   return (
     <BaseIndustrialBreakerBox
-      position={props.position || [-2.4, 1.55, -7.88]}
+      position={props.position || [-2.65, 1.55, -7.88]}
       rotation={props.rotation}
       isOn={isAptomatOn}
       onToggle={toggleAptomat}
@@ -259,13 +259,13 @@ export function AptomatCircuitBreaker(props: { position?: [number, number, numbe
 
 /**
  * Aptomat 2: Điều khiển 8 Đèn Âm Trần (Cleanroom Troffer)
- * Đặt ngay bên cạnh Aptomat 1 trên tường phía Bắc
+ * Đặt ngay bên cạnh Aptomat 1 trên tường phía Bắc (cách 1.0m)
  */
 export function CeilingLampsAptomatBreaker(props: { position?: [number, number, number]; rotation?: [number, number, number] }) {
   const { isCeilingLampsAptomatOn, toggleCeilingLampsAptomat } = useLabStore();
   return (
     <BaseIndustrialBreakerBox
-      position={props.position || [-1.95, 1.55, -7.88]}
+      position={props.position || [-1.65, 1.55, -7.88]}
       rotation={props.rotation}
       isOn={isCeilingLampsAptomatOn}
       onToggle={toggleCeilingLampsAptomat}

@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import { MEZZANINE_CONFIG, STAIRCASE_GEOMETRY } from '../../data/staircaseConfig';
 import { useLabStore } from '../../store/useLabStore';
@@ -135,6 +136,17 @@ function NewelPost({
  */
 export function StaircaseAndMezzanine() {
   const isCeilingLampsAptomatOn = useLabStore((s) => s.isCeilingLampsAptomatOn);
+  const dimRef = useRef(isCeilingLampsAptomatOn ? 1.0 : 0.0);
+  const [dimFactor, setDimFactor] = useState(isCeilingLampsAptomatOn ? 1.0 : 0.0);
+
+  useFrame((_, delta) => {
+    const target = isCeilingLampsAptomatOn ? 1.0 : 0.0;
+    const next = THREE.MathUtils.damp(dimRef.current, target, 7.0, delta);
+    dimRef.current = next;
+    if (Math.abs(next - dimFactor) > 0.01) {
+      setDimFactor(next);
+    }
+  });
 
   // Load textures
   const woodTexture = useTexture('/textures/wood.jpg');
@@ -394,12 +406,12 @@ export function StaircaseAndMezzanine() {
           ))}
         </group>
 
-        {/* Warm Ambient Lights on Mezzanine (controlled by CB-02 Aptomat 8 Ceiling Lamps) */}
-        {isCeilingLampsAptomatOn && [-6, -2, 2, 6].map((lx) => (
+        {/* Warm Ambient Lights on Mezzanine (controlled by CB-02 Aptomat 8 Ceiling Lamps with gradual dimming) */}
+        {dimFactor > 0.02 && [-6, -2, 2, 6].map((lx) => (
           <pointLight
             key={`mez_light_${lx}`}
             position={[lx, 2.6, 5.3]}
-            intensity={2.0}
+            intensity={2.0 * dimFactor}
             distance={8}
             decay={2}
             color="#fef3c7"

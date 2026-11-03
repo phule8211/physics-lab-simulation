@@ -10,19 +10,18 @@ export const ALL_COLLIDERS: AABBBox[] = [
 ];
 
 /**
- * Checks if a cylinder (x, z) at eye height y with radius r intersects with an AABB box
+ * Checks if a vertical cylinder (x, z) spanning feetY to headY with radius r intersects with an AABB box
  */
 function cylinderIntersectsAABB(
   x: number,
-  y: number,
   z: number,
+  feetY: number,
+  headY: number,
   radius: number,
   box: AABBBox
 ): boolean {
-  // Check vertical Y overlap: player body extends from feet (y - 1.65) to top of head (y + 0.15)
-  const playerFeet = y - 1.65;
-  const playerHead = y + 0.15;
-  if (playerFeet >= box.max[1] || playerHead <= box.min[1]) {
+  // Check vertical Y overlap
+  if (feetY >= box.max[1] || headY <= box.min[1]) {
     return false;
   }
 
@@ -38,42 +37,64 @@ function cylinderIntersectsAABB(
   return distanceSquared < radius * radius;
 }
 
+export interface DynamicObstacle {
+  x: number;
+  y: number;
+  z: number;
+  radius: number;
+  isEyeHeight?: boolean;
+}
+
 /**
- * Resolves player movement using wall-sliding physics with 3D height awareness
+ * Resolves entity movement using wall-sliding physics with 3D height awareness and dynamic obstacle avoidance.
  * Tries X movement, then Z movement independently to allow sliding along walls.
  */
 export function resolveMovementWithCollisions(
   currentPos: [number, number, number],
   intendedPos: [number, number, number],
-  playerRadius: number = 0.45
+  radius: number = 0.45,
+  isEyeHeight: boolean = true,
+  dynamicObstacle?: DynamicObstacle | null
 ): [number, number, number] {
   let resolvedX = intendedPos[0];
   let resolvedZ = intendedPos[2];
-  const playerY = currentPos[1];
+  const entityY = currentPos[1];
+  const feetY = isEyeHeight ? entityY - 1.65 : entityY;
+  const headY = isEyeHeight ? entityY + 0.15 : entityY + 1.8;
+
+  const checkCollisionAt = (testPoint: [number, number, number]) => {
+    // 1. Static AABB Colliders (walls, machine tables, lab workbenches, stair railings, racks, sink, etc.)
+    for (const box of ALL_COLLIDERS) {
+      if (cylinderIntersectsAABB(testPoint[0], testPoint[2], feetY, headY, radius, box)) {
+        return true;
+      }
+    }
+
+    // 2. Dynamic Cylinder Obstacle (e.g. NPC Dũng vs Player)
+    if (dynamicObstacle) {
+      const obsFeet = dynamicObstacle.isEyeHeight ? dynamicObstacle.y - 1.65 : dynamicObstacle.y;
+      const obsHead = dynamicObstacle.isEyeHeight ? dynamicObstacle.y + 0.15 : dynamicObstacle.y + 1.8;
+      // Vertical overlap check
+      if (feetY < obsHead && headY > obsFeet) {
+        const dx = testPoint[0] - dynamicObstacle.x;
+        const dz = testPoint[2] - dynamicObstacle.z;
+        const minDist = radius + dynamicObstacle.radius;
+        if (dx * dx + dz * dz < minDist * minDist) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
 
   // 1. Test X axis movement
-  let collidesX = false;
-  for (const box of ALL_COLLIDERS) {
-    if (cylinderIntersectsAABB(resolvedX, playerY, currentPos[2], playerRadius, box)) {
-      collidesX = true;
-      break;
-    }
-  }
-  if (collidesX) {
-    // Cancel X motion (sliding along Z)
+  if (checkCollisionAt([resolvedX, entityY, currentPos[2]])) {
     resolvedX = currentPos[0];
   }
 
   // 2. Test Z axis movement
-  let collidesZ = false;
-  for (const box of ALL_COLLIDERS) {
-    if (cylinderIntersectsAABB(resolvedX, playerY, resolvedZ, playerRadius, box)) {
-      collidesZ = true;
-      break;
-    }
-  }
-  if (collidesZ) {
-    // Cancel Z motion (sliding along X)
+  if (checkCollisionAt([resolvedX, entityY, resolvedZ])) {
     resolvedZ = currentPos[2];
   }
 

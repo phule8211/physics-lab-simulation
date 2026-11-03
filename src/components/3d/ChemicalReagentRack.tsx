@@ -52,7 +52,13 @@ export function ChemicalReagentRack() {
           2. CHEMICAL REAGENT BOTTLES
          ========================================================================= */}
       {/* BOTTLE 1: Axit Clohidric (HCl 37%) - Amber Glass Bottle, Red Cap */}
-      <group position={[-0.42, 1.25, -0.16]}>
+      <group
+        position={[-0.42, 1.25, -0.16]}
+        onClick={(e) => {
+          e.stopPropagation();
+          openChemicalModal();
+        }}
+      >
         {/* Amber Glass Body */}
         <mesh castShadow>
           <cylinderGeometry args={[0.07, 0.07, 0.22, 20]} />
@@ -76,7 +82,13 @@ export function ChemicalReagentRack() {
       </group>
 
       {/* BOTTLE 2: Axit Nitric (HNO3 68%) - Dark Brown Bottle, Yellow Cap */}
-      <group position={[0.0, 1.25, -0.16]}>
+      <group
+        position={[0.0, 1.25, -0.16]}
+        onClick={(e) => {
+          e.stopPropagation();
+          openChemicalModal();
+        }}
+      >
         {/* Dark Brown Glass Body */}
         <mesh castShadow>
           <cylinderGeometry args={[0.07, 0.07, 0.22, 20]} />
@@ -100,7 +112,13 @@ export function ChemicalReagentRack() {
       </group>
 
       {/* BOTTLE 3: Oxy Già (H2O2 30%) - Opaque White HDPE Bottle, Blue Cap */}
-      <group position={[0.42, 1.25, -0.16]}>
+      <group
+        position={[0.42, 1.25, -0.16]}
+        onClick={(e) => {
+          e.stopPropagation();
+          openChemicalModal();
+        }}
+      >
         {/* Opaque White HDPE Body */}
         <mesh castShadow>
           <cylinderGeometry args={[0.07, 0.07, 0.22, 20]} />
@@ -126,7 +144,13 @@ export function ChemicalReagentRack() {
       {/* =========================================================================
           3. LARGE EXPERIMENT BEAKER (CỐC THÍ NGHIỆM TO 500ML TRÊN BÀN)
          ========================================================================= */}
-      <group position={[0, 0.87, 0.16]}>
+      <group
+        position={[0, 0.87, 0.16]}
+        onClick={(e) => {
+          e.stopPropagation();
+          openChemicalModal();
+        }}
+      >
         {/* Borosilicate Glass Beaker Wall */}
         <mesh castShadow>
           <cylinderGeometry args={[0.09, 0.09, 0.22, 24, 1, true]} />
@@ -173,7 +197,7 @@ export function ChemicalReagentRack() {
       {/* =========================================================================
           4. FLOATING OVERHEAD INTERACTIVE PROMPT
          ========================================================================= */}
-      <Html position={[0, 1.8, 0]} center distanceFactor={7} style={{ pointerEvents: 'none' }}>
+      <Html position={[0, 2.15, 0]} center distanceFactor={7} style={{ pointerEvents: 'none' }}>
         <div
           onClick={(e) => {
             e.stopPropagation();

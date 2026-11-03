@@ -672,10 +672,13 @@ useFrame((_, delta) => {
       position.current.z + velocity.current.z * dt,
     ];
 
+    const npcDungPos = useLabStore.getState().npcDungPosition;
     const resolvedPos = resolveMovementWithCollisions(
       [position.current.x, position.current.y, position.current.z],
       intendedPos,
-      0.32
+      0.32,
+      true,
+      npcDungPos ? { x: npcDungPos[0], y: npcDungPos[1], z: npcDungPos[2], radius: 0.35, isEyeHeight: false } : null
     );
 
     position.current.set(resolvedPos[0], resolvedPos[1], resolvedPos[2]);
@@ -751,7 +754,12 @@ useFrame((_, delta) => {
     }
 
     // Multi-Target Proximity Detection: Collect all interactive stations in range
-    const nearbyCandidates: { id: StationId; dist: number }[] = [];
+    const nearbyCandidates: { id: StationId; dist: number; dot: number }[] = [];
+
+    const aimDir = new THREE.Vector3();
+    camera.getWorldDirection(aimDir);
+    aimDir.y = 0;
+    aimDir.normalize();
 
     // Ground floor stations
     for (const st of Object.values(STATIONS)) {
@@ -767,15 +775,10 @@ useFrame((_, delta) => {
           st.position[2] - position.current.z
         ).normalize();
 
-        const viewDir = new THREE.Vector3();
-        camera.getWorldDirection(viewDir);
-        viewDir.y = 0;
-        viewDir.normalize();
-
-        const dot = viewDir.dot(dirToStation);
+        const dot = aimDir.dot(dirToStation);
         const isFacing = dist < 2.4 ? dot > 0.1 : dot > 0.35;
         if (isFacing) {
-          nearbyCandidates.push({ id: st.id, dist });
+          nearbyCandidates.push({ id: st.id, dist, dot });
         }
       }
     }
@@ -787,22 +790,17 @@ useFrame((_, delta) => {
         const dz = position.current.z - sw.position[2];
         const dist = Math.sqrt(dx * dx + dz * dz);
 
-        if (dist < 3.5) {
+        if (dist < 4.2) {
           const dirToSwitch = new THREE.Vector3(
             sw.position[0] - position.current.x,
             0,
             sw.position[2] - position.current.z
           ).normalize();
 
-          const viewDir = new THREE.Vector3();
-          camera.getWorldDirection(viewDir);
-          viewDir.y = 0;
-          viewDir.normalize();
-
-          const dot = viewDir.dot(dirToSwitch);
-          const isFacing = dist < 2.0 ? dot > 0.0 : dot > 0.15;
-          if (isFacing) {
-            nearbyCandidates.push({ id: sw.id, dist });
+          const dot = aimDir.dot(dirToSwitch);
+          // Facing check: player must be looking towards the switch
+          if (dot > 0.2) {
+            nearbyCandidates.push({ id: sw.id, dist, dot });
           }
         }
       }
@@ -813,27 +811,42 @@ useFrame((_, delta) => {
       const npcPos = useLabStore.getState().npcDungPosition || SECOND_FLOOR_STATIONS.NPC_DUNG.position;
       for (const st of Object.values(SECOND_FLOOR_STATIONS)) {
         const targetPos = st.id === 'npc_dung' ? npcPos : st.position;
-        const dx = position.current.x - targetPos[0];
-        const dz = position.current.z - targetPos[2];
+        const dx = targetPos[0] - position.current.x;
+        const dz = targetPos[2] - position.current.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < 2.8) {
-          nearbyCandidates.push({ id: st.id, dist });
+        const maxDist = st.id === 'chemical_rack' ? 3.8 : 3.0;
+
+        if (dist < maxDist) {
+          const dirToStation = new THREE.Vector3(dx, 0, dz).normalize();
+          const dot = aimDir.dot(dirToStation);
+          const isFacing = dist < 1.8 ? dot > -0.2 : dot > 0.2;
+          if (isFacing) {
+            nearbyCandidates.push({ id: st.id, dist, dot });
+          }
         }
       }
 
       // Check proximity to all 10 Lab Workbenches
       for (const tb of LAB_TABLES) {
-        const dx = position.current.x - tb.position[0];
-        const dz = position.current.z - tb.position[2];
+        const dx = tb.position[0] - position.current.x;
+        const dz = tb.position[2] - position.current.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < 2.2) {
-          nearbyCandidates.push({ id: tb.id as StationId, dist });
+        if (dist < 2.4) {
+          const dirToTable = new THREE.Vector3(dx, 0, dz).normalize();
+          const dot = aimDir.dot(dirToTable);
+          if (dot > 0.2) {
+            nearbyCandidates.push({ id: tb.id as StationId, dist, dot });
+          }
         }
       }
     }
 
-    // Sort by proximity ascending
-    nearbyCandidates.sort((a, b) => a.dist - b.dist);
+    // Prioritize object directly in crosshair view (highest dot product / alignment score)
+    nearbyCandidates.sort((a, b) => {
+      const scoreA = a.dot * 3.5 - a.dist * 0.8;
+      const scoreB = b.dot * 3.5 - b.dist * 0.8;
+      return scoreB - scoreA;
+    });
     const nearbyIds = nearbyCandidates.map((c) => c.id);
 
     // Sync nearby candidates to Zustand store

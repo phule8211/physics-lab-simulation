@@ -105,22 +105,26 @@ export function CrosshairHUD() {
   const isTableStation = Boolean(hoveredStationId && typeof hoveredStationId === 'string' && hoveredStationId.startsWith('table_'));
   const matchedTable = isTableStation ? LAB_TABLES.find((t) => t.id === hoveredStationId) : null;
 
-  const currentBrightnessPct = Math.round(((isAptomatOn ? 0.45 : 0) + (isCeilingLampsAptomatOn ? 0.55 : 0)) * 100);
+  const currentBrightnessPct = Math.round(((isAptomatOn ? 0.43 : 0) + (isCeilingLampsAptomatOn ? 0.57 : 0)) * 100);
 
   const hoveredInfo = isAptomatTube
     ? {
         name: 'Aptomat 4 Đèn Dài (CB-01)',
         sub: isAptomatOn 
-          ? `Nguồn điện: ĐANG BẬT [ON] • Độ sáng phòng: ${currentBrightnessPct}%` 
-          : `Nguồn điện: ĐÃ NGẮT [OFF] • Tắt 4 đèn tuýp (Phòng còn: ${currentBrightnessPct}%)`,
+          ? `Nguồn điện: ĐANG BẬT [ON] • Độ rọi lab: ${currentBrightnessPct}%` 
+          : currentBrightnessPct === 0
+          ? 'Nguồn điện: ĐÃ NGẮT [OFF] • Lab tối hoàn toàn (0% ánh sáng)'
+          : `Nguồn điện: ĐÃ NGẮT [OFF] • Tắt 4 đèn dài (Độ rọi lab còn: ${currentBrightnessPct}%)`,
         action: `Dùng tay gạt ${isAptomatOn ? 'TẮT' : 'BẬT'} 4 đèn tuýp dài (CB-01)`,
       }
     : isAptomatCeiling
     ? {
         name: 'Aptomat 8 Đèn Âm Trần (CB-02)',
         sub: isCeilingLampsAptomatOn 
-          ? `Nguồn điện: ĐANG BẬT [ON] • Độ sáng phòng: ${currentBrightnessPct}%` 
-          : `Nguồn điện: ĐÃ NGẮT [OFF] • Tắt 8 đèn trần (Phòng còn: ${currentBrightnessPct}%)`,
+          ? `Nguồn điện: ĐANG BẬT [ON] • Độ rọi lab: ${currentBrightnessPct}%` 
+          : currentBrightnessPct === 0
+          ? 'Nguồn điện: ĐÃ NGẮT [OFF] • Lab tối hoàn toàn (0% ánh sáng)'
+          : `Nguồn điện: ĐÃ NGẮT [OFF] • Tắt 8 đèn trần (Độ rọi lab còn: ${currentBrightnessPct}%)`,
         action: `Dùng tay gạt ${isCeilingLampsAptomatOn ? 'TẮT' : 'BẬT'} 8 đèn âm trần (CB-02)`,
       }
     : isGroundStation
