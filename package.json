@@ -31,5 +31,11 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.7.3",
     "vite": "^6.2.0"
-  }
+  },
+  "author": "Lê Ngọc Phú <phule8211@gmail.com>",
+  "contributors": [
+    "Lê Ngọc Phú <phule8211@gmail.com>",
+    "Đinh Thiên Ân <dthienan762@gmail.com>"
+  ],
+  "license": "MIT"
 }
