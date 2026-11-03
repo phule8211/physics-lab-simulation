@@ -37,9 +37,11 @@ export function PlayerController() {
     isEquipmentModalOpen,
     isSinkModalOpen,
     isWorkbenchModalOpen,
+    isLandingPageOpen,
   } = useLabStore();
 
   const isAnyModalOpen =
+    isLandingPageOpen ||
     isDesignModalOpen ||
     isSpecimenModalOpen ||
     isHelpModalOpen ||
@@ -128,6 +130,7 @@ export function PlayerController() {
 
       // Check if any modal is currently active
       const anyModalOpen =
+        store.isLandingPageOpen ||
         store.isDesignModalOpen ||
         store.isSpecimenModalOpen ||
         store.isHelpModalOpen ||
@@ -349,6 +352,7 @@ export function PlayerController() {
       }
 
       const isAnyModalCurrentlyOpen =
+        store.isLandingPageOpen ||
         store.isDesignModalOpen ||
         store.isSpecimenModalOpen ||
         store.isHelpModalOpen ||
@@ -423,6 +427,7 @@ export function PlayerController() {
       if (store.mode !== 'WALKING') return;
 
       const isAnyModalCurrentlyOpen =
+        store.isLandingPageOpen ||
         store.isDesignModalOpen ||
         store.isSpecimenModalOpen ||
         store.isHelpModalOpen ||
@@ -492,6 +497,7 @@ export function PlayerController() {
 
       const store = useLabStore.getState();
       const isAnyModalCurrentlyOpen =
+        store.isLandingPageOpen ||
         store.isDesignModalOpen ||
         store.isSpecimenModalOpen ||
         store.isHelpModalOpen ||

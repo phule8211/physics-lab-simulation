@@ -200,6 +200,11 @@ interface LabState {
   openWorkbenchModal: (tableId?: string) => void;
   closeWorkbenchModal: () => void;
 
+  // Phanulab Landing Page State
+  isLandingPageOpen: boolean;
+  openLandingPage: () => void;
+  closeLandingPage: () => void;
+
   // Actions
   setHoveredStation: (id: StationId | null, distance?: number | null) => void;
   setPointerLocked: (locked: boolean) => void;
@@ -706,6 +711,24 @@ export const useLabStore = create<LabState>((set, get) => ({
     });
     if (typeof document !== 'undefined') {
       document.querySelector('canvas')?.requestPointerLock();
+    }
+  },
+
+  // Phanulab Landing Page State
+  isLandingPageOpen: true,
+  openLandingPage: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isLandingPageOpen: true });
+  },
+  closeLandingPage: () => {
+    sound.playRelayClick();
+    set({ isLandingPageOpen: false });
+    if (typeof document !== 'undefined') {
+      const canvas = document.querySelector('canvas');
+      canvas?.requestPointerLock();
     }
   },
 

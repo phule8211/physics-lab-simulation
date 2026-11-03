@@ -17,6 +17,7 @@ import {
   Sliders,
   Layers,
   Eye,
+  Sparkles,
 } from 'lucide-react';
 import { CompassWidget } from './CompassWidget';
 import { CatHandsDropdown } from './CatHandsDropdown';
@@ -82,6 +83,7 @@ export function CrosshairHUD() {
     openEquipmentModal,
     openSinkModal,
     openDesignModal,
+    openLandingPage,
   } = useLabStore();
 
   const getTargetDisplayName = (id: StationId): string => {
@@ -174,21 +176,25 @@ export function CrosshairHUD() {
          ========================================================================= */}
       <header role="banner" className="flex items-start justify-between w-full">
         {/* Lab Title Badge */}
-        <div className="glass-panel rounded-xl px-2.5 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3 pointer-events-auto border border-slate-700/60 shadow-lg max-w-[200px] sm:max-w-none">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-lab-cyan/20 border border-lab-cyan/40 flex items-center justify-center text-lab-cyan flex-shrink-0">
+        <div
+          onClick={openLandingPage}
+          className="glass-panel rounded-xl px-2.5 py-2 sm:px-4 sm:py-3 flex items-center space-x-2 sm:space-x-3 pointer-events-auto border border-slate-700/60 shadow-lg max-w-[220px] sm:max-w-none cursor-pointer hover:border-cyan-500/50 transition-all group"
+          title="Nhấp để xem trang giới thiệu Phanulab - Phanu Corp."
+        >
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-lab-cyan/20 border border-lab-cyan/40 flex items-center justify-center text-lab-cyan flex-shrink-0 group-hover:scale-105 transition-transform">
             <Compass className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" style={{ animationDuration: '20s' }} />
           </div>
           <div className="overflow-hidden">
             <div className="flex items-center space-x-2">
-              <h1 className="text-xs sm:text-sm font-bold tracking-wide text-lab-text truncate">
-                VIRTUAL LASER LAB 3D
+              <h1 className="text-xs sm:text-sm font-bold tracking-wide text-lab-text truncate group-hover:text-cyan-300 transition-colors">
+                PHANULAB 3D
               </h1>
-              <span className="hidden sm:inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
-                Phase 4 Complete
+              <span className="hidden sm:inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-bold">
+                Phanu Corp.
               </span>
             </div>
             <p className="hidden md:block text-xs text-lab-muted">
-              Xưởng mô phỏng nguyên lý máy laser & cảm biến quang học
+              Nền tảng mô phỏng quang học & bán dẫn tương tác
             </p>
           </div>
         </div>
@@ -197,6 +203,16 @@ export function CrosshairHUD() {
         <div className="flex flex-col items-end space-y-1.5 sm:space-y-2 pointer-events-auto">
           {/* Quick Toolbar (Mute sound, Diagnostics, Help, Simulation Toggle) */}
           <div className="flex items-center space-x-1 sm:space-x-2">
+            {/* Phanulab Info Landing Page Reopen Button */}
+            <button
+              onClick={openLandingPage}
+              className="glass-pill px-2.5 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 border border-cyan-500/40 text-cyan-300 hover:text-white hover:bg-cyan-500/20 transition-all duration-200"
+              aria-label="Xem trang thông tin Phanulab & Phanu Corp."
+              title="Thông tin Phanulab • Phanu Corp. (Co-founder: Lê Ngọc Phú - Đinh Thiên Ân)"
+            >
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span className="font-semibold text-[11px] hidden md:inline">Phanulab</span>
+            </button>
             {/* Performance Stats HUD Toggle */}
             <button
               onClick={toggleStats}

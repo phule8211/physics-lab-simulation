@@ -13,6 +13,7 @@ import { ChemicalDispenserModal } from './components/ui/ChemicalDispenserModal';
 import { LabEquipmentRackModal } from './components/ui/LabEquipmentRackModal';
 import { WaterSinkModal } from './components/ui/WaterSinkModal';
 import { LabWorkbenchModal } from './components/ui/LabWorkbenchModal';
+import { PhanulabLandingPage } from './components/ui/PhanulabLandingPage';
 
 export function App() {
   return (
@@ -50,6 +51,9 @@ export function App() {
 
       {/* Loading Progress Screen */}
       <LoadingScreen />
+
+      {/* Phanulab Official Landing Page / Introduction */}
+      <PhanulabLandingPage />
     </main>
   );
 }
