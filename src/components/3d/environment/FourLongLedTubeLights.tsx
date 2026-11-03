@@ -51,9 +51,9 @@ function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFi
         >
           <cylinderGeometry args={[0.022, 0.022, length - 0.12, 16]} />
           <meshStandardMaterial
-            color={isOn ? '#ffffff' : '#64748b'}
-            emissive={isOn ? '#f8fafc' : '#0f172a'}
-            emissiveIntensity={isOn ? 3.6 : 0.02}
+            color={isOn ? '#ffffff' : '#334155'}
+            emissive={isOn ? '#f8fafc' : '#000000'}
+            emissiveIntensity={isOn ? 3.6 : 0}
             toneMapped={false}
             roughness={0.1}
           />
@@ -64,22 +64,22 @@ function SingleTubeFixture({ position, length = 5.2, isOn = true }: SingleTubeFi
       <mesh position={[0, -0.05, 0]}>
         <boxGeometry args={[length - 0.08, 0.015, 0.18]} />
         <meshStandardMaterial
-          color={isOn ? '#f8fafc' : '#334155'}
-          emissive={isOn ? '#ffffff' : '#020617'}
+          color={isOn ? '#f8fafc' : '#1e293b'}
+          emissive={isOn ? '#ffffff' : '#000000'}
           emissiveIntensity={isOn ? 1.8 : 0}
           toneMapped={false}
           transparent
-          opacity={isOn ? 0.85 : 0.4}
+          opacity={isOn ? 0.85 : 0.3}
           roughness={0.2}
         />
       </mesh>
 
       {/* 5. Distributed Downward Clean Light Emitters (5500K Neutral White) */}
-      {[-length / 4, length / 4].map((lightX, i) => (
+      {isOn && [-length / 4, length / 4].map((lightX, i) => (
         <pointLight
           key={`emitter-${i}`}
           position={[lightX, -0.2, 0]}
-          intensity={isOn ? 2.4 : 0}
+          intensity={2.4}
           distance={11}
           decay={1.8}
           color="#f8fafc"

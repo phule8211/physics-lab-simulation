@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import { useTexture } from '@react-three/drei';
 import { MEZZANINE_CONFIG, STAIRCASE_GEOMETRY } from '../../data/staircaseConfig';
+import { useLabStore } from '../../store/useLabStore';
 
 /**
  * Procedural Wrought Iron Scrollwork Bracket
@@ -133,6 +134,8 @@ function NewelPost({
  * Wide 2.2m straight flight centered at X = 2.4, ascending directly to Floor 2
  */
 export function StaircaseAndMezzanine() {
+  const isCeilingLampsAptomatOn = useLabStore((s) => s.isCeilingLampsAptomatOn);
+
   // Load textures
   const woodTexture = useTexture('/textures/wood.jpg');
   useMemo(() => {
@@ -391,8 +394,8 @@ export function StaircaseAndMezzanine() {
           ))}
         </group>
 
-        {/* Warm Ambient Lights on Mezzanine */}
-        {[-6, -2, 2, 6].map((lx) => (
+        {/* Warm Ambient Lights on Mezzanine (controlled by CB-02 Aptomat 8 Ceiling Lamps) */}
+        {isCeilingLampsAptomatOn && [-6, -2, 2, 6].map((lx) => (
           <pointLight
             key={`mez_light_${lx}`}
             position={[lx, 2.6, 5.3]}

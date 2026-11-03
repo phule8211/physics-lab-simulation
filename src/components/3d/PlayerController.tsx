@@ -781,7 +781,7 @@ useFrame((_, delta) => {
         const dz = position.current.z - sw.position[2];
         const dist = Math.sqrt(dx * dx + dz * dz);
 
-        if (dist < 3.2) {
+        if (dist < 3.5) {
           const dirToSwitch = new THREE.Vector3(
             sw.position[0] - position.current.x,
             0,
@@ -794,7 +794,8 @@ useFrame((_, delta) => {
           viewDir.normalize();
 
           const dot = viewDir.dot(dirToSwitch);
-          if (dot > 0.15) {
+          const isFacing = dist < 2.0 ? dot > 0.0 : dot > 0.15;
+          if (isFacing) {
             nearbyCandidates.push({ id: sw.id, dist });
           }
         }
