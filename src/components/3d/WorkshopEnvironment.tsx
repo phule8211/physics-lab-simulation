@@ -9,6 +9,7 @@ import { NpcInstructorDung } from './NpcInstructorDung';
 import { ChemicalReagentRack } from './ChemicalReagentRack';
 import { LabEquipmentRack } from './LabEquipmentRack';
 import { LabSinkAndFaucet } from './LabSinkAndFaucet';
+import { FourLongLedTubeLights } from './environment/FourLongLedTubeLights';
 
 function SafeText(props: any) {
   return (
@@ -59,39 +60,39 @@ export function WorkshopEnvironment() {
       {/* Station 1 (CO2 Laser - 10.6um): Cool Cyan White */}
       <pointLight
         position={[-6, 4.0, -4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#38bdf8"
       />
       {/* Station 2 (UV Laser - 355nm): Violet/Cold Cleanroom White */}
       <pointLight
         position={[6, 4.0, -4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#c084fc"
       />
       {/* Station 3 (Fiber Laser - 1064nm): Warm Amber White */}
       <pointLight
         position={[-6, 4.0, 4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#fbbf24"
       />
       {/* Station 4 (Safety Sensor Station): Emerald Cleanroom Light */}
       <pointLight
         position={[6, 4.0, 4]}
-        intensity={2.8}
-        distance={10}
+        intensity={1.8}
+        distance={9}
         decay={2}
         color="#34d399"
       />
       {/* Station 5 (Spray Coating & UV Finishing Room): Clean White / Cool Cyan */}
       <pointLight
         position={[0, 4.0, -12.5]}
-        intensity={2.8}
+        intensity={2.2}
         distance={12}
         decay={2}
         color="#f8fafc"
@@ -511,28 +512,8 @@ export function WorkshopEnvironment() {
         />
       </mesh>
 
-      {/* Overhead Fluorescent Fixtures with Glowing Emissive Tubes */}
-      {[-6, 6].map((x) =>
-        [-4, 4].map((z) => (
-          <group key={`fixture-${x}-${z}`} position={[x, 6.85, z]}>
-            {/* Fixture casing */}
-            <mesh>
-              <boxGeometry args={[1.6, 0.1, 0.5]} />
-              <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.25} />
-            </mesh>
-            {/* Emissive light tubes (Bloom glows through post-processing) */}
-            <mesh position={[0, -0.06, 0]}>
-              <boxGeometry args={[1.5, 0.04, 0.35]} />
-              <meshStandardMaterial
-                color="#ffffff"
-                emissive="#f8fafc"
-                emissiveIntensity={2.5}
-                toneMapped={false}
-              />
-            </mesh>
-          </group>
-        ))
-      )}
+      {/* 4 Long Industrial LED Tube Lights Distributing Even Light Across the Workshop */}
+      <FourLongLedTubeLights />
 
       {/* =========================================================================
           6. LAB SIGNAGE & POSTERS (Typography with Emissive Glow)
