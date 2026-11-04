@@ -217,6 +217,11 @@ interface LabState {
   closeLandingPage: () => void;
   closeActiveLabUI: () => boolean;
 
+  // Knowledge Sidebar Panel Toggle State
+  isKnowledgePanelCollapsed: boolean;
+  toggleKnowledgePanelCollapsed: () => void;
+  setKnowledgePanelCollapsed: (collapsed: boolean) => void;
+
   // Actions
   setHoveredStation: (id: StationId | null, distance?: number | null) => void;
   setPointerLocked: (locked: boolean) => void;
@@ -936,6 +941,16 @@ export const useLabStore = create<LabState>((set, get) => ({
   isCuring: false,
   isTurntableRotating: true,
 
+  // Knowledge Sidebar Panel Toggle State
+  isKnowledgePanelCollapsed: false,
+  toggleKnowledgePanelCollapsed: () => {
+    sound.playClick();
+    set((state) => ({ isKnowledgePanelCollapsed: !state.isKnowledgePanelCollapsed }));
+  },
+  setKnowledgePanelCollapsed: (collapsed) => {
+    set({ isKnowledgePanelCollapsed: collapsed });
+  },
+
   setHoveredStation: (id, distance = null) =>
     set({ hoveredStationId: id, hoveredDistance: distance }),
 
@@ -958,6 +973,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       activeStationId: id,
       activeTab: 'PHYSICS_PRINCIPLE',
       isCuttingJob: false,
+      isKnowledgePanelCollapsed: false,
     });
   },
 
@@ -972,6 +988,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       isDesignModalOpen: false,
       isXRayMode: false,
       hoveredComponentId: null,
+      isKnowledgePanelCollapsed: false,
     });
   },
 
@@ -1197,6 +1214,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 
     set({
       isCuttingJob: true,
+      isKnowledgePanelCollapsed: true,
       cutProgress: 0,
       isMachineRunning: true,
       interlockTriggered: false,
@@ -1646,7 +1664,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 
   startSpraying: () => {
     sound.startSpraySound();
-    set({ isSpraying: true });
+    set({ isSpraying: true, isKnowledgePanelCollapsed: true });
   },
 
   stopSpraying: () => {
@@ -1678,6 +1696,7 @@ export const useLabStore = create<LabState>((set, get) => ({
     sound.playRelayClick();
     set({
       isCuring: true,
+      isKnowledgePanelCollapsed: true,
       actionMessage: {
         id: ++toastIdCounter,
         text: 'Đang kích hoạt dàn đèn sấy quang hóa UV (395nm) & Hồng ngoại sấy khô bề mặt...',

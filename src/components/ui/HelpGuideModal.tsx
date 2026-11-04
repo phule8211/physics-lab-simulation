@@ -57,6 +57,7 @@ export function HelpGuideModal() {
       shortcuts: [
         { key: 'E', desc: 'Tiến gần máy và nhấn E để vào chế độ kiểm tra & học tập' },
         { key: 'ESC', desc: 'Thoát chế độ kiểm tra và quay lại đi dạo xưởng' },
+        { key: 'Tab', desc: 'Thu gọn / Mở lại bảng thông tin lý thuyết để quan sát rõ buồng máy 3D' },
         { key: '1, 2, 3, 4, 5', desc: 'Chuyển nhanh giữa 5 trạm máy (CO2, UV, Fiber, Sensor, Buồng Sơn)' },
         { key: 'O', desc: 'Mở / Đóng nắp máy (Tự động kích hoạt Safety Interlock)' },
         { key: 'C', desc: 'Bắt đầu / Dừng chu trình cắt và khắc laser' },

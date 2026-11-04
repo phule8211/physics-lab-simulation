@@ -165,8 +165,20 @@ export function PlayerController() {
         }
       };
 
-      // Tab / Q: Cycle through nearby interactive targets when multiple objects are close
-      if (e.code === 'Tab' || e.code === 'KeyQ') {
+      // Tab: Toggle Knowledge Panel in machine inspection, or cycle nearby interactive targets when walking
+      if (e.code === 'Tab') {
+        const store = useLabStore.getState();
+        if (store.activeStationId || currentMode === 'INSPECTING') {
+          e.preventDefault();
+          store.toggleKnowledgePanelCollapsed();
+          return;
+        }
+        if (store.nearbyStations.length > 1) {
+          e.preventDefault();
+          store.cycleInteractiveTarget();
+          return;
+        }
+      } else if (e.code === 'KeyQ') {
         const store = useLabStore.getState();
         if (store.nearbyStations.length > 1) {
           e.preventDefault();

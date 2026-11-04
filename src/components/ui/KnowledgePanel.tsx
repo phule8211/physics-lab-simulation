@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import { PHYSICS_DATA } from '../../data/physicsData';
+import { STATIONS } from '../../data/labConfig';
 import { InfoTab } from '../../types/lab';
 import { MATERIALS_CATALOG, MaterialType } from '../../data/materialsConfig';
 import { SpectrumVisualizer } from './SpectrumVisualizer';
@@ -24,6 +25,10 @@ import {
   Sparkles,
   Scan,
   Eye,
+  ChevronRight,
+  ChevronLeft,
+  BookOpen,
+  PanelRightClose,
 } from 'lucide-react';
 
 function formatFormula(raw: string) {
@@ -65,6 +70,9 @@ export function KnowledgePanel() {
     toggleXRayMode,
     hoveredComponentId,
     setHoveredComponentId,
+    isKnowledgePanelCollapsed,
+    toggleKnowledgePanelCollapsed,
+    setKnowledgePanelCollapsed,
   } = useLabStore();
 
   // Ensure pointer lock is released when entering station inspection so user has cursor to scroll & click tabs
@@ -78,6 +86,29 @@ export function KnowledgePanel() {
 
   const data = PHYSICS_DATA[activeStationId];
   if (!data) return null;
+  const stationConfig = STATIONS[activeStationId];
+
+  // If collapsed: show compact, unobtrusive floating button to reopen anytime
+  if (isKnowledgePanelCollapsed) {
+    return (
+      <div className="pointer-events-auto fixed top-20 right-4 z-50 flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
+        <button
+          onClick={() => setKnowledgePanelCollapsed(false)}
+          className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-lab-cyan border border-lab-cyan/50 shadow-2xl shadow-cyan-950/60 backdrop-blur-xl transition-all duration-200 hover:scale-105 active:scale-95 group cursor-pointer"
+          title="Mở lại bảng thông tin lý thuyết & cấu tạo máy [Phím Tab]"
+        >
+          <BookOpen className="w-4 h-4 text-lab-cyan group-hover:rotate-6 transition-transform" />
+          <span className="text-xs font-bold text-white tracking-wide">
+            {stationConfig?.shortName || data.title}
+          </span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300">
+            Tab
+          </span>
+          <ChevronLeft className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-300 group-hover:-translate-x-0.5 transition-transform" />
+        </button>
+      </div>
+    );
+  }
 
   const tabs: { id: InfoTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'PHYSICS_PRINCIPLE', label: 'Nguyên Lý Hoạt Động', icon: Zap },
@@ -95,12 +126,22 @@ export function KnowledgePanel() {
       onWheel={(e) => e.stopPropagation()}
       className="pointer-events-auto fixed inset-y-0 right-0 w-full md:w-[540px] lg:w-[620px] z-50 flex flex-col bg-slate-900/95 backdrop-blur-2xl border-l border-slate-700/80 shadow-2xl text-slate-100 animate-in slide-in-from-right duration-300 select-text"
     >
+      {/* Quick Collapse Tab Handle on left border */}
+      <button
+        onClick={() => setKnowledgePanelCollapsed(true)}
+        className="absolute -left-9 top-24 z-50 p-2 rounded-l-xl bg-slate-900/95 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border-l border-y border-slate-700/80 shadow-xl backdrop-blur-xl transition-all duration-150 cursor-pointer flex items-center justify-center group"
+        title="Thu gọn bảng thông tin để xem rõ máy cắt [Phím Tab]"
+        aria-label="Thu gọn bảng thông tin"
+      >
+        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+      </button>
+
       {/* =========================================================================
           1. HEADER
          ========================================================================= */}
       <header className="p-5 border-b border-slate-800 bg-slate-950/60 relative flex-shrink-0">
         {/* Top Badges */}
-        <div className="flex flex-wrap items-center gap-2 mb-2 pr-12">
+        <div className="flex flex-wrap items-center gap-2 mb-2 pr-36 sm:pr-40">
           <span
             className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border"
             style={{
@@ -117,7 +158,7 @@ export function KnowledgePanel() {
         </div>
 
         {/* Title & Subtitle */}
-        <h2 className="text-xl font-bold tracking-tight text-white mb-1">
+        <h2 className="text-xl font-bold tracking-tight text-white mb-1 pr-28">
           {data.title}
         </h2>
         <p className="text-xs text-lab-muted leading-relaxed">
@@ -130,17 +171,33 @@ export function KnowledgePanel() {
           <span>{data.inventorInfo}</span>
         </div>
 
-        {/* Close Button [X] */}
-        <button
-          onClick={() => {
-            useLabStore.getState().closeActiveLabUI();
-          }}
-          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-200 border border-slate-700 hover:border-slate-500 cursor-pointer"
-          aria-label="Đóng bảng kiến thức và quay lại xưởng (Phím X / ESC)"
-          title="Đóng bảng kiến thức (X / ESC)"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Header Action Buttons: Collapse [Tab] + Close [ESC/X] */}
+        <div className="absolute top-4 right-4 flex items-center space-x-2">
+          {/* Collapse Button (stays in machine inspection) */}
+          <button
+            onClick={() => setKnowledgePanelCollapsed(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 transition-all duration-150 border border-slate-700 hover:border-cyan-500/50 flex items-center space-x-1.5 text-xs font-medium cursor-pointer"
+            title="Thu gọn bảng thông tin để quan sát mô phỏng 3D [Phím Tab]"
+          >
+            <PanelRightClose className="w-4 h-4 text-cyan-400" />
+            <span className="hidden sm:inline">Thu gọn</span>
+            <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
+              Tab
+            </kbd>
+          </button>
+
+          {/* Close & Exit to Workshop Button */}
+          <button
+            onClick={() => {
+              useLabStore.getState().closeActiveLabUI();
+            }}
+            className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-all duration-150 border border-slate-700 hover:border-rose-500/50 cursor-pointer"
+            aria-label="Đóng bảng kiến thức và quay lại xưởng (Phím X / ESC)"
+            title="Quay lại xưởng (X / ESC)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
         {/* Toggle Simulation Run */}
         <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-slate-800/60">

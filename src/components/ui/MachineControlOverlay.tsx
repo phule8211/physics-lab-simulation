@@ -31,6 +31,7 @@ import {
   Droplets,
   AlertOctagon,
   Power,
+  BookOpen,
 } from 'lucide-react';
 
 export function MachineControlOverlay() {
@@ -94,7 +95,11 @@ export function MachineControlOverlay() {
     exitInspection,
     machinePower,
     toggleMachinePower,
+    isKnowledgePanelCollapsed,
+    toggleKnowledgePanelCollapsed,
   } = useLabStore();
+
+  const isKnowledgePanelOpen = Boolean(activeStationId) && !isKnowledgePanelCollapsed;
 
   const handleStopUsingMachine = () => {
     if (mode === 'INSPECTING') {
@@ -142,14 +147,16 @@ export function MachineControlOverlay() {
     const hasAnyFault = isFlowTripped || isTempTripped || isSmokeTripped || isAlarmBuzzerActive;
 
     return (
-      <div className="fixed inset-x-0 bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3">
+      <div className={`fixed bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3 transition-all duration-300 ${
+        isKnowledgePanelOpen ? 'left-0 right-0 md:right-[540px] lg:right-[620px]' : 'inset-x-0'
+      }`}>
         {actionMessage && (
           <div className="mb-3 pointer-events-auto max-w-xl w-full">
             <ToastNotification message={actionMessage} onClose={clearActionMessage} />
           </div>
         )}
 
-        <CursorGuideBanner isPointerLocked={isPointerLocked} />
+        <CursorGuideBanner isPointerLocked={isPointerLocked} isCuttingJob={isCuttingJob} />
 
         <section
           aria-label="Bảng giả lập sự cố cảm biến và ngắt khẩn cấp"
@@ -338,14 +345,16 @@ export function MachineControlOverlay() {
     const finishList = Object.values(COATING_FINISHES);
 
     return (
-      <div className="fixed inset-x-0 bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3">
+      <div className={`fixed bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3 transition-all duration-300 ${
+        isKnowledgePanelOpen ? 'left-0 right-0 md:right-[540px] lg:right-[620px]' : 'inset-x-0'
+      }`}>
         {actionMessage && (
           <div className="mb-3 pointer-events-auto max-w-xl w-full">
             <ToastNotification message={actionMessage} onClose={clearActionMessage} />
           </div>
         )}
 
-        <CursorGuideBanner isPointerLocked={isPointerLocked} />
+        <CursorGuideBanner isPointerLocked={isPointerLocked} isCuttingJob={isCuttingJob} />
 
         <section
           onClick={(e) => e.stopPropagation()}
@@ -578,7 +587,9 @@ export function MachineControlOverlay() {
   const materialsList: MaterialType[] = ['WOOD', 'ACRYLIC', 'STEEL', 'ALUMINUM', 'SILICON', 'GLASS'];
 
   return (
-    <div className="fixed inset-x-0 bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3">
+    <div className={`fixed bottom-3 md:bottom-5 z-40 flex flex-col items-center pointer-events-none px-3 transition-all duration-300 ${
+      isKnowledgePanelOpen ? 'left-0 right-0 md:right-[540px] lg:right-[620px]' : 'inset-x-0'
+    }`}>
       {/* 1. FLOATING ACTION TOAST NOTIFICATION */}
       {actionMessage && (
         <div className="mb-3 pointer-events-auto max-w-xl w-full">
@@ -586,7 +597,7 @@ export function MachineControlOverlay() {
         </div>
       )}
 
-      <CursorGuideBanner isPointerLocked={isPointerLocked} />
+      <CursorGuideBanner isPointerLocked={isPointerLocked} isCuttingJob={isCuttingJob} />
 
       {/* 2. MAIN DOCK CONTROLLER */}
       <section
@@ -643,6 +654,23 @@ export function MachineControlOverlay() {
                 <span>{machinePower[currentStationId as MachineId] ? 'Nguồn: BẬT' : 'Nguồn: TẮT'}</span>
               </button>
             )}
+
+            {activeStationId && (
+              <button
+                onClick={toggleKnowledgePanelCollapsed}
+                className={`flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-semibold transition-all active:scale-95 ${
+                  !isKnowledgePanelCollapsed
+                    ? 'bg-lab-cyan/20 border-lab-cyan/60 text-lab-cyan shadow-sm shadow-cyan-950/40'
+                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                }`}
+                title="Bật/Tắt bảng thông tin lý thuyết & cấu tạo máy [Phím Tab]"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Lý thuyết</span>
+                <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-700">Tab</kbd>
+              </button>
+            )}
+
             <button
               onClick={handleStopUsingMachine}
               className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/90 hover:bg-rose-500/25 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all active:scale-95 mr-1"
@@ -960,8 +988,15 @@ export function MachineControlOverlay() {
 // =============================================================================
 // CURSOR GUIDANCE BANNER (TỰ ĐỘNG HIỆN CON TRỎ KHI VÀO MÁY + TỰ ĐỘNG ẨN KHI THOÁT)
 // =============================================================================
-function CursorGuideBanner({ isPointerLocked }: { isPointerLocked: boolean }) {
-  if (isPointerLocked) return null;
+function CursorGuideBanner({
+  isPointerLocked,
+  isCuttingJob = false,
+}: {
+  isPointerLocked: boolean;
+  isCuttingJob?: boolean;
+}) {
+  const [isDismissed, setIsDismissed] = React.useState(false);
+  if (isPointerLocked || isCuttingJob || isDismissed) return null;
 
   const handleLockCursor = () => {
     const canvas = document.querySelector('canvas');
@@ -973,7 +1008,7 @@ function CursorGuideBanner({ isPointerLocked }: { isPointerLocked: boolean }) {
   return (
     <div
       onClick={handleLockCursor}
-      className="w-full max-w-4xl mb-2 px-3.5 py-2.5 rounded-xl bg-slate-950/95 border border-cyan-500/50 backdrop-blur-xl shadow-xl shadow-cyan-950/40 flex items-center justify-between pointer-events-auto cursor-pointer hover:bg-slate-900/95 hover:border-cyan-400 transition-all group"
+      className="w-full max-w-4xl mb-2 px-3.5 py-2 rounded-xl bg-slate-950/95 border border-cyan-500/50 backdrop-blur-xl shadow-xl shadow-cyan-950/40 flex items-center justify-between pointer-events-auto cursor-pointer hover:bg-slate-900/95 hover:border-cyan-400 transition-all group"
       title="Nhấp vào đây, ấn W/A/S/D hoặc ESC để tự động ẩn con trỏ chuột và tiếp tục điều khiển"
     >
       <div className="flex items-center space-x-2.5 text-xs text-white">
@@ -993,9 +1028,22 @@ function CursorGuideBanner({ isPointerLocked }: { isPointerLocked: boolean }) {
         </div>
       </div>
 
-      <div className="flex items-center space-x-1.5 text-xs font-semibold text-cyan-300 bg-cyan-950/90 group-hover:bg-cyan-500 group-hover:text-slate-950 px-3 py-1.5 rounded-lg border border-cyan-700 transition-all flex-shrink-0">
-        <span className="hidden sm:inline">Ẩn con trỏ chuột</span>
-        <span className="font-mono text-xs font-bold">[ESC / WASD] ↵</span>
+      <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 text-xs font-semibold text-cyan-300 bg-cyan-950/90 group-hover:bg-cyan-500 group-hover:text-slate-950 px-3 py-1.5 rounded-lg border border-cyan-700 transition-all flex-shrink-0">
+          <span className="hidden sm:inline">Ẩn con trỏ chuột</span>
+          <span className="font-mono text-xs font-bold">[ESC / WASD] ↵</span>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsDismissed(true);
+          }}
+          className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+          title="Tắt thanh nhắc nhở này"
+          aria-label="Tắt nhắc nhở"
+        >
+          ✕
+        </button>
       </div>
     </div>
   );
