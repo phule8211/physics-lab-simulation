@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { MachineId, StationId, AppMode, InfoTab, CoatingFinishId, ProcessedJobInfo } from '../types/lab';
-export type { StationId, MachineId };
+import { MachineId, StationId, AppMode, InfoTab, CoatingFinishId, ProcessedJobInfo, GraphicsQuality, TargetFps } from '../types/lab';
+export type { StationId, MachineId, GraphicsQuality, TargetFps };
 import { STATIONS } from '../data/labConfig';
 import { MaterialType, MATERIALS_CATALOG } from '../data/materialsConfig';
 import { COATING_FINISHES } from '../data/coatingFinishes';
@@ -145,6 +145,17 @@ interface LabState {
   closeHelpModal: () => void;
   toggleHelpModal: () => void;
 
+  // Graphics Quality & Optimization Settings ('LOW' | 'MEDIUM' | 'HIGH' & 30 / 60 FPS)
+  graphicsQuality: GraphicsQuality;
+  setGraphicsQuality: (quality: GraphicsQuality) => void;
+  cycleGraphicsQuality: () => void;
+  targetFps: TargetFps;
+  setTargetFps: (fps: TargetFps) => void;
+  isSettingsModalOpen: boolean;
+  openSettingsModal: () => void;
+  closeSettingsModal: () => void;
+  toggleSettingsModal: () => void;
+
   // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
   isNpcDialogOpen: boolean;
   npcCurrentTopic: string | null;
@@ -269,6 +280,42 @@ interface LabState {
 }
 
 let toastIdCounter = 0;
+
+const getInitialGraphicsQuality = (): GraphicsQuality => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('phanulab_graphics_quality') as GraphicsQuality | null;
+      if (saved && (saved === 'LOW' || saved === 'MEDIUM' || saved === 'HIGH')) {
+        return saved;
+      }
+      // Low-spec hardware heuristic: low cores or low device memory
+      if (typeof navigator !== 'undefined') {
+        const cores = navigator.hardwareConcurrency || 8;
+        const memory = (navigator as unknown as { deviceMemory?: number }).deviceMemory || 8;
+        if (cores <= 4 || memory <= 4) {
+          return 'LOW';
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 'MEDIUM';
+};
+
+const getInitialTargetFps = (): TargetFps => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('phanulab_target_fps');
+      if (saved === '30' || saved === '60') {
+        return Number(saved) as TargetFps;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 60;
+};
 
 export const useLabStore = create<LabState>((set, get) => ({
   mode: 'WALKING',
@@ -512,6 +559,81 @@ export const useLabStore = create<LabState>((set, get) => ({
     set({ isHelpModalOpen: !get().isHelpModalOpen });
   },
 
+  // Graphics Quality & Optimization Settings ('LOW' | 'MEDIUM' | 'HIGH')
+  graphicsQuality: getInitialGraphicsQuality(),
+  setGraphicsQuality: (quality) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('phanulab_graphics_quality', quality);
+      }
+    } catch {
+      // ignore
+    }
+    const label =
+      quality === 'LOW'
+        ? '⚡ Mượt (Tối ưu cấu hình yếu)'
+        : quality === 'MEDIUM'
+        ? '⚖️ Cân bằng (Mặc định 60 FPS)'
+        : '✨ Đồ họa cao (Đầy đủ hiệu ứng)';
+    set({
+      graphicsQuality: quality,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: `Đồ họa: ${label}`,
+        type: 'info',
+      },
+    });
+  },
+  cycleGraphicsQuality: () => {
+    sound.playClick();
+    const current = get().graphicsQuality;
+    const next: GraphicsQuality =
+      current === 'LOW' ? 'MEDIUM' : current === 'MEDIUM' ? 'HIGH' : 'LOW';
+    get().setGraphicsQuality(next);
+  },
+
+  // Target FPS (30 FPS / 60 FPS)
+  targetFps: getInitialTargetFps(),
+  setTargetFps: (fps) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('phanulab_target_fps', String(fps));
+      }
+    } catch {
+      // ignore
+    }
+    set({
+      targetFps: fps,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: `Khóa tốc độ: ${fps} FPS ${fps === 30 ? '(Tiết kiệm tải GPU)' : '(Mượt mà tiêu chuẩn)'}`,
+        type: 'info',
+      },
+    });
+  },
+
+  // Settings Modal State
+  isSettingsModalOpen: false,
+  openSettingsModal: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isSettingsModalOpen: true });
+  },
+  closeSettingsModal: () => {
+    sound.playClick();
+    set({ isSettingsModalOpen: false });
+  },
+  toggleSettingsModal: () => {
+    sound.playClick();
+    const willOpen = !get().isSettingsModalOpen;
+    if (willOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isSettingsModalOpen: willOpen });
+  },
+
   // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
   isNpcDialogOpen: false,
   npcCurrentTopic: null,
@@ -547,7 +669,8 @@ export const useLabStore = create<LabState>((set, get) => ({
       s.isDesignModalOpen ||
       s.isSpecimenModalOpen ||
       s.isHelpModalOpen ||
-      s.isLandingPageOpen;
+      s.isLandingPageOpen ||
+      s.isSettingsModalOpen;
 
     if (isAnyModalOpen) {
       sound.playClick();
@@ -563,6 +686,7 @@ export const useLabStore = create<LabState>((set, get) => ({
         isSpecimenModalOpen: false,
         isHelpModalOpen: false,
         isLandingPageOpen: false,
+        isSettingsModalOpen: false,
         hoveredStationId: null,
         hoveredDistance: null,
         activeStationId: null,

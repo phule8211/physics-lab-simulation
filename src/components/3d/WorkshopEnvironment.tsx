@@ -49,6 +49,7 @@ export function WorkshopEnvironment() {
   const isAptomatOn = useLabStore((s) => s.isAptomatOn);
   const isCeilingLampsAptomatOn = useLabStore((s) => s.isCeilingLampsAptomatOn);
   const machinePower = useLabStore((s) => s.machinePower);
+  const graphicsQuality = useLabStore((s) => s.graphicsQuality);
 
   const floorTexture = useTexture('/textures/floor_tiles.png');
   floorTexture.wrapS = THREE.RepeatWrapping;
@@ -167,14 +168,14 @@ export function WorkshopEnvironment() {
         intensity={0.75 * targetGeneralLighting}
       />
 
-      {/* B. Primary Directional Sunlight/Skylight with PCF Soft Shadows */}
+      {/* B. Primary Directional Sunlight/Skylight with PCF Soft Shadows (Quality Scaled) */}
       <directionalLight
         ref={dirSunRef}
         position={[8, 14, 6]}
         intensity={1.3 * targetGeneralLighting}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        castShadow={graphicsQuality !== 'LOW'}
+        shadow-mapSize-width={graphicsQuality === 'HIGH' ? 1024 : 512}
+        shadow-mapSize-height={graphicsQuality === 'HIGH' ? 1024 : 512}
         shadow-camera-near={0.5}
         shadow-camera-far={32}
         shadow-camera-left={-12}
@@ -1057,26 +1058,30 @@ export function WorkshopEnvironment() {
               toneMapped={false}
             />
           </mesh>
-
-          {/* Real downlight illumination controlled by Aptomat CB-02 with smooth dimming */}
-          {ceilingFactor > 0.02 && (
-            <pointLight
-              position={[0, -0.2, 0]}
-              intensity={1.8 * ceilingFactor}
-              distance={11.0}
-              decay={2.0}
-              color="#f8fafc"
-            />
-          )}
-
         </group>
-
       ))}
 
-
+      {/* Consolidated Ceiling Downlight Illumination (Optimized: 2 primary aisle fixtures instead of 8 individual lights) */}
+      {ceilingFactor > 0.02 && graphicsQuality !== 'LOW' && (
+        <>
+          <pointLight
+            position={[-4.5, 6.2, 0]}
+            intensity={3.6 * ceilingFactor}
+            distance={15.0}
+            decay={1.8}
+            color="#f8fafc"
+          />
+          <pointLight
+            position={[4.5, 6.2, 0]}
+            intensity={3.6 * ceilingFactor}
+            distance={15.0}
+            decay={1.8}
+            color="#f8fafc"
+          />
+        </>
+      )}
 
       {/* 4 Long Industrial LED Tube Lights Distributing Even Light Across the Workshop */}
-
       <FourLongLedTubeLights />
 
 

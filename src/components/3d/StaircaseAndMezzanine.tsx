@@ -107,22 +107,22 @@ function NewelPost({
   return (
     <group position={position}>
       {/* Square base plinth */}
-      <mesh position={[0, 0.12, 0]} castShadow>
+      <mesh position={[0, 0.12, 0]}>
         <boxGeometry args={[0.16, 0.24, 0.16]} />
         <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
       </mesh>
       {/* Main post shaft */}
-      <mesh position={[0, height / 2, 0]} castShadow>
+      <mesh position={[0, height / 2, 0]}>
         <boxGeometry args={[0.11, height - 0.24, 0.11]} />
         <meshStandardMaterial color="#18181b" metalness={0.85} roughness={0.3} />
       </mesh>
       {/* Post capital cap */}
-      <mesh position={[0, height, 0]} castShadow>
+      <mesh position={[0, height, 0]}>
         <boxGeometry args={[0.18, 0.06, 0.18]} />
         <meshStandardMaterial color="#27272a" metalness={0.9} roughness={0.25} />
       </mesh>
       {/* Brass finial sphere on top */}
-      <mesh position={[0, height + 0.07, 0]} castShadow>
+      <mesh position={[0, height + 0.07, 0]}>
         <sphereGeometry args={[0.045, 16, 16]} />
         <meshStandardMaterial color="#fbbf24" metalness={0.92} roughness={0.18} />
       </mesh>
@@ -198,7 +198,7 @@ export function StaircaseAndMezzanine() {
               </mesh>
 
               {/* Heavy Understructure Steel Channel Riser */}
-              <mesh position={[0, -0.06, 0.12]} castShadow>
+              <mesh position={[0, -0.06, 0.12]}>
                 <boxGeometry args={[sg.treadWidth - 0.08, 0.12, 0.03]} />
                 <meshStandardMaterial color="#18181b" metalness={0.9} roughness={0.3} />
               </mesh>

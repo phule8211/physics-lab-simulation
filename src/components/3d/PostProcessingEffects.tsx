@@ -5,44 +5,62 @@ import {
   Vignette,
   SMAA,
   N8AO,
-  ChromaticAberration,
 } from '@react-three/postprocessing';
-import * as THREE from 'three';
+import { useLabStore } from '../../store/useLabStore';
 
 export function PostProcessingEffects() {
-  const caOffset = useMemo(() => new THREE.Vector2(0.0012, 0.0012), []);
+  const graphicsQuality = useLabStore((state) => state.graphicsQuality);
 
+  // In LOW mode (Cấu hình yếu / Siêu mượt):
+  // Completely bypass EffectComposer to eliminate fullscreen render-target passes,
+  // raymarching SSAO, and bloom downscale pyramids. Directly renders to screen buffer at 60 FPS.
+  if (graphicsQuality === 'LOW') {
+    return null;
+  }
+
+  // In MEDIUM mode (Cân bằng - Khuyên dùng):
+  // Zero multisampling overhead, lightweight single-pass bloom without mipmap blur pyramid,
+  // and subtle vignette. Smooth 60 FPS without GPU lag.
+  if (graphicsQuality === 'MEDIUM') {
+    return (
+      <EffectComposer multisampling={0} enableNormalPass={false}>
+        <Bloom
+          intensity={0.85}
+          luminanceThreshold={0.8}
+          luminanceSmoothing={0.25}
+          mipmapBlur={false}
+        />
+        <Vignette offset={0.18} darkness={0.42} />
+      </EffectComposer>
+    );
+  }
+
+  // In HIGH mode (Đồ họa cao):
+  // N8AO contact shadows (halfRes), cinematic bloom with mipmapBlur, vignette, and SMAA.
   return (
-    <EffectComposer multisampling={4} enableNormalPass={false}>
-      {/* 1. Unreal-Style Next-Gen Ambient Occlusion (Lumen Contact Shadows & Deep Crevices) */}
+    <EffectComposer multisampling={0} enableNormalPass={false}>
+      {/* 1. Next-Gen Contact Shadows & Deep Crevices (Half-resolution for optimal speed) */}
       <N8AO
-        aoRadius={1.1}
+        aoRadius={1.0}
         distanceFalloff={0.25}
-        intensity={2.2}
+        intensity={1.9}
         color="#020617"
-        quality="medium"
+        quality="low"
         halfRes
       />
 
-      {/* 2. Cinematic Multi-Layer Mipmap Bloom for Laser Plasma, LEDs & Emissive Tubes */}
+      {/* 2. Cinematic Multi-Layer Mipmap Bloom */}
       <Bloom
-        intensity={1.2}
-        luminanceThreshold={0.72}
+        intensity={1.1}
+        luminanceThreshold={0.74}
         luminanceSmoothing={0.28}
         mipmapBlur
       />
 
-      {/* 3. Subtle Optical Chromatic Aberration (Simulates Cinema Lens Edge Distortion) */}
-      <ChromaticAberration
-        offset={caOffset}
-        radialModulation
-        modulationOffset={0.45}
-      />
+      {/* 3. Edge Vignette for Cinematic Focus */}
+      <Vignette offset={0.16} darkness={0.5} />
 
-      {/* 4. Edge Vignette for Cinematic Laboratory Focus */}
-      <Vignette offset={0.16} darkness={0.52} />
-
-      {/* 5. Subpixel Morphological Anti-Aliasing (Crisp Jagged-free Edges) */}
+      {/* 4. Subpixel Morphological Anti-Aliasing */}
       <SMAA />
     </EffectComposer>
   );

@@ -13,6 +13,19 @@ const WALK_SPEED = 4.2;
 const SPRINT_SPEED = 7.5;
 const INTERACTION_DISTANCE = 3.2;
 
+// Scratch reusable vectors for 60 FPS zero-allocation physics and interaction loops
+const _forward = new THREE.Vector3();
+const _right = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
+const _moveDirection = new THREE.Vector3();
+const _viewDir = new THREE.Vector3();
+const _aimDir = new THREE.Vector3();
+const _adjustedLookAt = new THREE.Vector3();
+const _thirdPersonPos = new THREE.Vector3();
+const _tempPos = new THREE.Vector3();
+const _targetWorldPos = new THREE.Vector3();
+const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
+
 export function PlayerController() {
   const { camera, gl } = useThree();
   const keys = useKeyboardControls();
@@ -38,6 +51,7 @@ export function PlayerController() {
     isSinkModalOpen,
     isWorkbenchModalOpen,
     isLandingPageOpen,
+    isSettingsModalOpen,
   } = useLabStore();
 
   const isAnyModalOpen =
@@ -50,6 +64,7 @@ export function PlayerController() {
     isEquipmentModalOpen ||
     isSinkModalOpen ||
     isWorkbenchModalOpen ||
+    isSettingsModalOpen ||
     activeStationId !== null ||
     mode === 'INSPECTING';
 
@@ -139,7 +154,8 @@ export function PlayerController() {
         store.isChemicalModalOpen ||
         store.isEquipmentModalOpen ||
         store.isSinkModalOpen ||
-        store.isWorkbenchModalOpen;
+        store.isWorkbenchModalOpen ||
+        store.isSettingsModalOpen;
 
       const requestLock = () => {
         try {
@@ -320,25 +336,24 @@ export function PlayerController() {
   const rotateCamera = (dx: number, dy: number, factor: number) => {
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
 
-    const euler = new THREE.Euler(0, 0, 0, 'YXZ');
     if (
       Number.isFinite(camera.quaternion.x) &&
       Number.isFinite(camera.quaternion.y) &&
       Number.isFinite(camera.quaternion.z) &&
       Number.isFinite(camera.quaternion.w)
     ) {
-      euler.setFromQuaternion(camera.quaternion);
+      _euler.setFromQuaternion(camera.quaternion);
     } else {
       // Safe recovery if camera quaternion was ever corrupted with NaN
-      euler.set(0, THREE.MathUtils.degToRad(180), 0);
+      _euler.set(0, THREE.MathUtils.degToRad(180), 0);
     }
 
-    euler.y -= dx * factor;
-    euler.x -= dy * factor;
+    _euler.y -= dx * factor;
+    _euler.x -= dy * factor;
     // Clamp pitch to avoid gimbal flip (-82° to +82°)
-    euler.x = Math.max(-1.43, Math.min(1.43, euler.x));
+    _euler.x = Math.max(-1.43, Math.min(1.43, _euler.x));
 
-    camera.quaternion.setFromEuler(euler);
+    camera.quaternion.setFromEuler(_euler);
   };
 
   // Unified Pointer, Mouse & Laptop Trackpad Look Controller
@@ -363,7 +378,8 @@ export function PlayerController() {
         store.isChemicalModalOpen ||
         store.isEquipmentModalOpen ||
         store.isSinkModalOpen ||
-        store.isWorkbenchModalOpen;
+        store.isWorkbenchModalOpen ||
+        store.isSettingsModalOpen;
 
       if (isAnyModalCurrentlyOpen) {
         lastClientX = null;
@@ -438,7 +454,8 @@ export function PlayerController() {
         store.isChemicalModalOpen ||
         store.isEquipmentModalOpen ||
         store.isSinkModalOpen ||
-        store.isWorkbenchModalOpen;
+        store.isWorkbenchModalOpen ||
+        store.isSettingsModalOpen;
 
       if (isAnyModalCurrentlyOpen) return;
 
@@ -638,41 +655,39 @@ useFrame((_, delta) => {
       const z = lookAt[2] + r * Math.cos(orbitPitch.current) * Math.cos(orbitYaw.current);
 
       // Frame offset: Shift focal target rightwards so the machine is centered in the visible left 60% of screen (avoiding KnowledgePanel occlusion)
-      const forward = new THREE.Vector3(lookAt[0] - x, 0, lookAt[2] - z).normalize();
-      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-      const adjustedLookAt = new THREE.Vector3(lookAt[0], lookAt[1], lookAt[2]).addScaledVector(right, 0.32 * r);
+      _forward.set(lookAt[0] - x, 0, lookAt[2] - z).normalize();
+      _right.crossVectors(_forward, _up).normalize();
+      _adjustedLookAt.set(lookAt[0], lookAt[1], lookAt[2]).addScaledVector(_right, 0.32 * r);
 
-      camera.position.lerp(new THREE.Vector3(x, y, z), 0.15);
-      camera.lookAt(adjustedLookAt.x, adjustedLookAt.y, adjustedLookAt.z);
+      _tempPos.set(x, y, z);
+      camera.position.lerp(_tempPos, 0.15);
+      camera.lookAt(_adjustedLookAt.x, _adjustedLookAt.y, _adjustedLookAt.z);
     }
     return;
   }
 
   // MODE 3: NORMAL FIRST-PERSON WALKING
   if (mode === 'WALKING') {
-    const moveDirection = new THREE.Vector3();
+    _moveDirection.set(0, 0, 0);
     const isSprinting = keys.current.sprint;
     const currentSpeed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
 
     // Extract forward and right vectors from camera (ignoring vertical pitch)
-    const forward = new THREE.Vector3();
-    camera.getWorldDirection(forward);
-    forward.y = 0;
-    forward.normalize();
+    camera.getWorldDirection(_forward);
+    _forward.y = 0;
+    _forward.normalize();
 
-    const right = new THREE.Vector3();
-    right.crossVectors(camera.up, forward).normalize();
-    right.negate();
+    _right.crossVectors(camera.up, _forward).normalize().negate();
 
-    if (keys.current.forward) moveDirection.add(forward);
-    if (keys.current.backward) moveDirection.sub(forward);
-    if (keys.current.right) moveDirection.add(right);
-    if (keys.current.left) moveDirection.sub(right);
+    if (keys.current.forward) _moveDirection.add(_forward);
+    if (keys.current.backward) _moveDirection.sub(_forward);
+    if (keys.current.right) _moveDirection.add(_right);
+    if (keys.current.left) _moveDirection.sub(_right);
 
-    if (moveDirection.lengthSq() > 0) {
-      moveDirection.normalize();
-      velocity.current.x = moveDirection.x * currentSpeed;
-      velocity.current.z = moveDirection.z * currentSpeed;
+    if (_moveDirection.lengthSq() > 0) {
+      _moveDirection.normalize();
+      velocity.current.x = _moveDirection.x * currentSpeed;
+      velocity.current.z = _moveDirection.z * currentSpeed;
     } else {
       velocity.current.x *= Math.max(0, 1 - dt * 12);
       velocity.current.z *= Math.max(0, 1 - dt * 12);
@@ -702,10 +717,9 @@ useFrame((_, delta) => {
     const targetEyeY = targetGround + EYE_HEIGHT;
 
     // Calculate 3D Compass Heading (0 - 360°)
-    const viewDir = new THREE.Vector3();
-    camera.getWorldDirection(viewDir);
+    camera.getWorldDirection(_viewDir);
     // In Three.js: -Z is North (0°), +X is East (90°), +Z is South (180°), -X is West (270°)
-    const heading = Math.round(((Math.atan2(viewDir.x, -viewDir.z) * 180 / Math.PI) + 360) % 360);
+    const heading = Math.round(((Math.atan2(_viewDir.x, -_viewDir.z) * 180 / Math.PI) + 360) % 360);
     setCameraHeading(heading);
 
     // Jump & gravity physics
@@ -742,7 +756,7 @@ useFrame((_, delta) => {
     playerWorldState.z = position.current.z;
     playerWorldState.isMoving = isMoving;
 
-    const camYaw = Math.atan2(viewDir.x, viewDir.z);
+    const camYaw = Math.atan2(_viewDir.x, _viewDir.z);
     playerWorldState.yaw = camYaw;
 
     if (isMoving) {
@@ -753,15 +767,15 @@ useFrame((_, delta) => {
     const isThirdPerson = useLabStore.getState().isThirdPersonView;
     if (isThirdPerson) {
       // Third-person camera position: 2.2m behind the player, at eye level with Doraemon
-      const thirdPersonPos = new THREE.Vector3(
-        position.current.x - viewDir.x * 2.2,
+      _thirdPersonPos.set(
+        position.current.x - _viewDir.x * 2.2,
         position.current.y - 0.25,
-        position.current.z - viewDir.z * 2.2
+        position.current.z - _viewDir.z * 2.2
       );
       // Soft clamp to room bounding box so camera never slips outside the workshop walls
-      thirdPersonPos.x = THREE.MathUtils.clamp(thirdPersonPos.x, -9.4, 9.4);
-      thirdPersonPos.z = THREE.MathUtils.clamp(thirdPersonPos.z, -15.4, 11.4);
-      camera.position.copy(thirdPersonPos);
+      _thirdPersonPos.x = THREE.MathUtils.clamp(_thirdPersonPos.x, -9.4, 9.4);
+      _thirdPersonPos.z = THREE.MathUtils.clamp(_thirdPersonPos.z, -15.4, 11.4);
+      camera.position.copy(_thirdPersonPos);
     } else {
       camera.position.copy(position.current);
     }
@@ -769,26 +783,19 @@ useFrame((_, delta) => {
     // Multi-Target Proximity Detection: Collect all interactive stations in range
     const nearbyCandidates: { id: StationId; dist: number; dot: number }[] = [];
 
-    const aimDir = new THREE.Vector3();
-    camera.getWorldDirection(aimDir);
-    aimDir.y = 0;
-    aimDir.normalize();
+    camera.getWorldDirection(_aimDir);
+    _aimDir.y = 0;
+    _aimDir.normalize();
 
     // Ground floor stations
     for (const st of Object.values(STATIONS)) {
-      const dx = position.current.x - st.position[0];
-      const dz = position.current.z - st.position[2];
+      const dx = st.position[0] - position.current.x;
+      const dz = st.position[2] - position.current.z;
       const dy = Math.abs(position.current.y - (st.position[1] + EYE_HEIGHT));
       const dist = Math.sqrt(dx * dx + dz * dz);
 
       if (dist < INTERACTION_DISTANCE && dy < 1.5) {
-        const dirToStation = new THREE.Vector3(
-          st.position[0] - position.current.x,
-          0,
-          st.position[2] - position.current.z
-        ).normalize();
-
-        const dot = aimDir.dot(dirToStation);
+        const dot = (dx * _aimDir.x + dz * _aimDir.z) / (dist || 1);
         const isFacing = dist < 2.4 ? dot > 0.1 : dot > 0.35;
         if (isFacing) {
           nearbyCandidates.push({ id: st.id, dist, dot });
@@ -799,18 +806,12 @@ useFrame((_, delta) => {
     // Ground floor Wall Switches (Aptomat CB-01 & CB-02 on North Wall)
     if (position.current.y < 2.5) {
       for (const sw of Object.values(WALL_SWITCHES)) {
-        const dx = position.current.x - sw.position[0];
-        const dz = position.current.z - sw.position[2];
+        const dx = sw.position[0] - position.current.x;
+        const dz = sw.position[2] - position.current.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
 
         if (dist < 4.2) {
-          const dirToSwitch = new THREE.Vector3(
-            sw.position[0] - position.current.x,
-            0,
-            sw.position[2] - position.current.z
-          ).normalize();
-
-          const dot = aimDir.dot(dirToSwitch);
+          const dot = (dx * _aimDir.x + dz * _aimDir.z) / (dist || 1);
           // Facing check: player must be looking towards the switch
           if (dot > 0.2) {
             nearbyCandidates.push({ id: sw.id, dist, dot });
@@ -830,8 +831,7 @@ useFrame((_, delta) => {
         const maxDist = st.id === 'chemical_rack' ? 3.8 : 3.0;
 
         if (dist < maxDist) {
-          const dirToStation = new THREE.Vector3(dx, 0, dz).normalize();
-          const dot = aimDir.dot(dirToStation);
+          const dot = (dx * _aimDir.x + dz * _aimDir.z) / (dist || 1);
           const isFacing = dist < 1.8 ? dot > -0.2 : dot > 0.2;
           if (isFacing) {
             nearbyCandidates.push({ id: st.id, dist, dot });
@@ -845,8 +845,7 @@ useFrame((_, delta) => {
         const dz = tb.position[2] - position.current.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < 2.4) {
-          const dirToTable = new THREE.Vector3(dx, 0, dz).normalize();
-          const dot = aimDir.dot(dirToTable);
+          const dot = (dx * _aimDir.x + dz * _aimDir.z) / (dist || 1);
           if (dot > 0.2) {
             nearbyCandidates.push({ id: tb.id as StationId, dist, dot });
           }
@@ -858,34 +857,34 @@ useFrame((_, delta) => {
     const getTargetWorldPos = (id: StationId): THREE.Vector3 | null => {
       if (id in STATIONS) {
         const s = STATIONS[id as MachineId];
-        return new THREE.Vector3(s.position[0], s.position[1] + 0.9, s.position[2]);
+        return _targetWorldPos.set(s.position[0], s.position[1] + 0.9, s.position[2]);
       }
       if (id === 'aptomat_tube_lights') {
-        return new THREE.Vector3(WALL_SWITCHES.aptomat_tube_lights.position[0], 1.55, WALL_SWITCHES.aptomat_tube_lights.position[2]);
+        return _targetWorldPos.set(WALL_SWITCHES.aptomat_tube_lights.position[0], 1.55, WALL_SWITCHES.aptomat_tube_lights.position[2]);
       }
       if (id === 'aptomat_ceiling_lamps') {
-        return new THREE.Vector3(WALL_SWITCHES.aptomat_ceiling_lamps.position[0], 1.55, WALL_SWITCHES.aptomat_ceiling_lamps.position[2]);
+        return _targetWorldPos.set(WALL_SWITCHES.aptomat_ceiling_lamps.position[0], 1.55, WALL_SWITCHES.aptomat_ceiling_lamps.position[2]);
       }
       if (id === 'npc_dung') {
         const pos = useLabStore.getState().npcDungPosition || SECOND_FLOOR_STATIONS.NPC_DUNG.position;
-        return new THREE.Vector3(pos[0], pos[1] + 1.2, pos[2]);
+        return _targetWorldPos.set(pos[0], pos[1] + 1.2, pos[2]);
       }
       if (id === 'chemical_rack') {
         const pos = SECOND_FLOOR_STATIONS.CHEMICAL_RACK.position;
-        return new THREE.Vector3(pos[0], MEZZANINE_CONFIG.floorY + 1.1, pos[2]);
+        return _targetWorldPos.set(pos[0], MEZZANINE_CONFIG.floorY + 1.1, pos[2]);
       }
       if (id === 'equipment_rack') {
-        return new THREE.Vector3(7.5, MEZZANINE_CONFIG.floorY + 1.1, 9.8);
+        return _targetWorldPos.set(7.5, MEZZANINE_CONFIG.floorY + 1.1, 9.8);
       }
       if (id === 'lab_sink') {
-        return new THREE.Vector3(0.0, MEZZANINE_CONFIG.floorY + 1.0, 9.8);
+        return _targetWorldPos.set(0.0, MEZZANINE_CONFIG.floorY + 1.0, 9.8);
       }
       if (id === 'computer_desk') {
-        return new THREE.Vector3(-6.0, MEZZANINE_CONFIG.floorY + 0.9, 9.8);
+        return _targetWorldPos.set(-6.0, MEZZANINE_CONFIG.floorY + 0.9, 9.8);
       }
       if (typeof id === 'string' && id.startsWith('table_')) {
         const tb = LAB_TABLES.find((t) => t.id === id);
-        if (tb) return new THREE.Vector3(tb.position[0], tb.position[1] + 0.85, tb.position[2]);
+        if (tb) return _targetWorldPos.set(tb.position[0], tb.position[1] + 0.85, tb.position[2]);
       }
       return null;
     };
@@ -901,13 +900,13 @@ useFrame((_, delta) => {
     }[] = nearbyCandidates.map((cand) => {
       const worldPos = getTargetWorldPos(cand.id);
       if (!worldPos) return cand;
-      const proj = worldPos.clone().project(camera);
-      if (proj.z < 1.0) {
-        const screenDist = Math.hypot(proj.x, proj.y);
+      _tempPos.copy(worldPos).project(camera);
+      if (_tempPos.z < 1.0) {
+        const screenDist = Math.hypot(_tempPos.x, _tempPos.y);
         return {
           ...cand,
-          screenX: proj.x,
-          screenY: proj.y,
+          screenX: _tempPos.x,
+          screenY: _tempPos.y,
           screenDist,
         };
       }

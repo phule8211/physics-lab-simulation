@@ -18,6 +18,8 @@ import {
   Layers,
   Eye,
   Sparkles,
+  Zap,
+  Settings,
 } from 'lucide-react';
 import { CompassWidget } from './CompassWidget';
 import { CatHandsDropdown } from './CatHandsDropdown';
@@ -84,6 +86,10 @@ export function CrosshairHUD() {
     openSinkModal,
     openDesignModal,
     openLandingPage,
+    graphicsQuality,
+    cycleGraphicsQuality,
+    targetFps,
+    openSettingsModal,
   } = useLabStore();
 
   const getTargetDisplayName = (id: StationId): string => {
@@ -217,6 +223,28 @@ export function CrosshairHUD() {
               <Sparkles className="w-4 h-4 text-cyan-400" />
               <span className="font-semibold text-[11px] hidden md:inline">Phanulab</span>
             </button>
+            {/* System Graphics & FPS Settings Button */}
+            <button
+              onClick={openSettingsModal}
+              className={`glass-pill px-2.5 py-2 rounded-lg text-xs font-medium flex items-center space-x-1.5 border transition-all duration-200 ${
+                graphicsQuality === 'LOW'
+                  ? 'text-emerald-400 border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20'
+                  : graphicsQuality === 'MEDIUM'
+                  ? 'text-sky-400 border-sky-500/50 bg-sky-500/10 hover:bg-sky-500/20'
+                  : 'text-purple-400 border-purple-500/50 bg-purple-500/10 hover:bg-purple-500/20'
+              }`}
+              aria-label="Cài đặt 3 mức đồ họa Low/Medium/High & Khóa FPS 30/60"
+              title="Cài đặt Đồ họa & FPS (Low / Medium / High & 30 / 60 FPS)"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="font-semibold text-[11px] hidden sm:inline">
+                Cài đặt
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900/80 border border-slate-700/80 font-bold">
+                {graphicsQuality} • {targetFps}fps
+              </span>
+            </button>
+
             {/* Performance Stats HUD Toggle */}
             <button
               onClick={toggleStats}

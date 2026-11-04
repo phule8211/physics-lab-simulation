@@ -76,17 +76,16 @@ function SingleTubeFixture({ position, length = 5.2, dimFactor }: SingleTubeFixt
         />
       </mesh>
 
-      {/* 5. Distributed Downward Clean Light Emitters (5500K Neutral White) with Smooth Height-aware Attenuation */}
-      {isGlowing && [-length / 4, length / 4].map((lightX, i) => (
+      {/* 5. Consolidated Downward Clean Light Emitter (5500K Neutral White, Optimized single emitter) */}
+      {isGlowing && (
         <pointLight
-          key={`emitter-${i}`}
-          position={[lightX, -0.2, 0]}
-          intensity={2.4 * dimFactor}
-          distance={11}
+          position={[0, -0.2, 0]}
+          intensity={4.2 * dimFactor}
+          distance={12}
           decay={1.8}
           color="#f8fafc"
         />
-      ))}
+      )}
     </group>
   );
 }

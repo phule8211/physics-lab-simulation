@@ -9,6 +9,7 @@ import { SpecimenInspectionModal } from './components/ui/SpecimenInspectionModal
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { PerformanceStatsHUD } from './components/ui/PerformanceStatsHUD';
 import { HelpGuideModal } from './components/ui/HelpGuideModal';
+import { SettingsModal } from './components/ui/SettingsModal';
 import { NpcDialogModal } from './components/ui/NpcDialogModal';
 import { ChemicalDispenserModal } from './components/ui/ChemicalDispenserModal';
 import { LabEquipmentRackModal } from './components/ui/LabEquipmentRackModal';
@@ -67,6 +68,9 @@ export function App() {
 
       {/* Interactive Keyboard Shortcuts & Laboratory Help Modal */}
       <HelpGuideModal />
+
+      {/* Graphics Quality & Target FPS Settings Modal */}
+      <SettingsModal />
 
       {/* 2nd Floor Interactive Stations Modals */}
       <NpcDialogModal />

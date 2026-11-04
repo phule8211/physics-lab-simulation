@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import { livePerformanceMetrics } from '../3d/PerformanceTracker';
-import { Activity, Gauge, Cpu, Layers, Image, X, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Activity, Gauge, Cpu, Layers, Image, X, CheckCircle, AlertTriangle, Zap } from 'lucide-react';
 
 export function PerformanceStatsHUD() {
   const isStatsVisible = useLabStore((state) => state.isStatsVisible);
   const toggleStats = useLabStore((state) => state.toggleStats);
+  const graphicsQuality = useLabStore((state) => state.graphicsQuality);
+  const setGraphicsQuality = useLabStore((state) => state.setGraphicsQuality);
+  const targetFps = useLabStore((state) => state.targetFps);
+  const setTargetFps = useLabStore((state) => state.setTargetFps);
 
   const [metrics, setMetrics] = useState({ ...livePerformanceMetrics });
 
@@ -64,6 +68,81 @@ export function PerformanceStatsHUD() {
         <Cpu className="w-4 h-4 text-lab-cyan flex-shrink-0 mt-0.5" />
         <div className="text-[11px] font-mono text-slate-300 leading-tight truncate">
           {metrics.gpuName || 'WebGL 2.0 Hardware Render Engine'}
+        </div>
+      </div>
+
+      {/* Graphics Quality Preset Selector */}
+      <div className="mt-2.5 p-1.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-xs font-mono">
+        <span className="text-[10px] text-slate-400 pl-1 flex items-center space-x-1">
+          <Zap className="w-3.5 h-3.5 text-amber-400" />
+          <span>Đồ họa:</span>
+        </span>
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => setGraphicsQuality('LOW')}
+            className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+              graphicsQuality === 'LOW'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="Mượt (Tối ưu card onboard & cấu hình yếu): Tắt post-processing, tắt bóng nặng, DPR 1.0"
+          >
+            Mượt
+          </button>
+          <button
+            onClick={() => setGraphicsQuality('MEDIUM')}
+            className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+              graphicsQuality === 'MEDIUM'
+                ? 'bg-sky-500 text-slate-950 shadow-md shadow-sky-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="Cân bằng (Mặc định): Bloom nhẹ + Vignette, shadow 512-1024, DPR 1.0-1.25"
+          >
+            Cân bằng
+          </button>
+          <button
+            onClick={() => setGraphicsQuality('HIGH')}
+            className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+              graphicsQuality === 'HIGH'
+                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="Đồ họa cao: N8AO contact shadows, cinematic bloom, SMAA khử răng cưa"
+          >
+            Cao
+          </button>
+        </div>
+      </div>
+
+      {/* Target FPS Selector (30 / 60 FPS) */}
+      <div className="mt-2 p-1.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-xs font-mono">
+        <span className="text-[10px] text-slate-400 pl-1 flex items-center space-x-1">
+          <Activity className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Khóa FPS:</span>
+        </span>
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => setTargetFps(30)}
+            className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
+              targetFps === 30
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="Khóa 30 FPS: Giảm tải GPU, tiết kiệm pin, chống nóng máy"
+          >
+            30 FPS
+          </button>
+          <button
+            onClick={() => setTargetFps(60)}
+            className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
+              targetFps === 60
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="Khóa 60 FPS: Mượt mà tiêu chuẩn"
+          >
+            60 FPS
+          </button>
         </div>
       </div>
 

@@ -49,6 +49,9 @@ export type CoatingFinishId =
   | 'NEON_CYAN_GLOW'
   | 'NANO_HYDROPHOBIC';
 
+export type GraphicsQuality = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TargetFps = 30 | 60;
+
 export interface CoatingFinishConfig {
   id: CoatingFinishId;
   name: string;
