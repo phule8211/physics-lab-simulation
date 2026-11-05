@@ -6,6 +6,12 @@ import { STATIONS } from '../../data/labConfig';
 import { computeBoundingBox } from '../../data/vectorDesigns';
 import { COATING_FINISHES } from '../../data/coatingFinishes';
 import {
+  getRecommendedParameters,
+  simulateLaserPhysics,
+  MATERIAL_PHYSICAL_SPECS,
+} from '../../utils/laserPhysicsEngine';
+import { ScientificRationaleModal } from './ScientificRationaleModal';
+import {
   DoorOpen,
   DoorClosed,
   Play,
@@ -81,6 +87,8 @@ export function MachineControlOverlay() {
     setLaserPowerWatts,
     setScanSpeedMmS,
     setPulseFrequencyKhz,
+    applyRecommendedParameters,
+    setRationaleModalOpen,
     sampleTemperature,
     chillerFlowRate,
     smokeDensity,
@@ -573,6 +581,23 @@ export function MachineControlOverlay() {
   }
 
   const currentMatConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
+  const matPhys = MATERIAL_PHYSICAL_SPECS[selectedMaterial] || MATERIAL_PHYSICAL_SPECS.WOOD;
+
+  const recSettings = useMemo(() => {
+    return getRecommendedParameters(currentStationId as MachineId, selectedMaterial, processMode);
+  }, [currentStationId, selectedMaterial, processMode]);
+
+  const liveSim = useMemo(() => {
+    return simulateLaserPhysics(
+      laserPowerWatts,
+      scanSpeedMmS,
+      pulseFrequencyKhz,
+      currentStationId as MachineId,
+      selectedMaterial,
+      processMode
+    );
+  }, [laserPowerWatts, scanSpeedMmS, pulseFrequencyKhz, currentStationId, selectedMaterial, processMode]);
+
   const interaction = currentMatConfig?.interactions?.[currentStationId] || {
     status: 'COMPATIBLE' as const,
     statusText: 'KHẢ DỤNG',
@@ -904,70 +929,193 @@ export function MachineControlOverlay() {
           </div>
         </div>
 
-        {/* Laser Parameter Tuning Row (Công suất P, Tốc độ v, Tần số f, Năng lượng đường E_line) */}
-        <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex flex-col md:flex-row items-center gap-3 text-xs">
-          <div className="flex items-center space-x-1.5 text-slate-400 font-mono text-[11px] flex-shrink-0">
-            <Sliders className="w-3.5 h-3.5 text-lab-cyan" />
-            <span>Thông số công nghệ:</span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 flex-1 w-full">
-            {/* P slider */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[10px] font-mono">
-                <span className="text-slate-400">Công suất (P):</span>
-                <span className="text-amber-300 font-bold">{laserPowerWatts} W</span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max="100"
-                step="1"
-                value={laserPowerWatts}
-                onChange={(e) => setLaserPowerWatts(parseInt(e.target.value))}
-                className="accent-amber-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-              />
+        {/* 1. Smart Recommendation Banner (Khuyến nghị thông số phù hợp theo vật liệu & máy) */}
+        <div className="p-2.5 rounded-xl bg-gradient-to-r from-slate-900/95 via-cyan-950/40 to-slate-900/95 border border-cyan-500/40 flex flex-wrap items-center justify-between gap-2 shadow-lg">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 flex-shrink-0 animate-pulse">
+              <Sparkles className="w-4 h-4" />
             </div>
-
-            {/* v slider */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[10px] font-mono">
-                <span className="text-slate-400">Tốc độ (v):</span>
-                <span className="text-cyan-300 font-bold">{scanSpeedMmS} mm/s</span>
+            <div>
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 uppercase">
+                  {recSettings.standardScenarioCode}
+                </span>
+                <span className="text-[11px] font-bold text-white font-mono">
+                  Gợi ý chuẩn: <span className="text-amber-300">{recSettings.powerWatts}W</span> •{' '}
+                  <span className="text-cyan-300">{recSettings.speedMmS}mm/s</span> •{' '}
+                  <span className="text-emerald-300">{recSettings.frequencyKhz}kHz</span>
+                </span>
               </div>
-              <input
-                type="range"
-                min="30"
-                max="800"
-                step="10"
-                value={scanSpeedMmS}
-                onChange={(e) => setScanSpeedMmS(parseInt(e.target.value))}
-                className="accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-              />
-            </div>
-
-            {/* f slider */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-[10px] font-mono">
-                <span className="text-slate-400">Tần số xung (f):</span>
-                <span className="text-emerald-300 font-bold">{pulseFrequencyKhz} kHz</span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max="80"
-                step="1"
-                value={pulseFrequencyKhz}
-                onChange={(e) => setPulseFrequencyKhz(parseInt(e.target.value))}
-                className="accent-emerald-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-              />
+              <p className="text-[10px] text-slate-300 line-clamp-1 mt-0.5">
+                {recSettings.surfaceFinishDescription}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono flex-shrink-0">
-            <span className="text-slate-400">E_line:</span>
-            <span className="text-amber-400 font-bold">{(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm</span>
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <button
+              onClick={() => setRationaleModalOpen(true)}
+              className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-cyan-300 hover:text-white text-[11px] font-mono font-semibold transition-all border border-slate-700 hover:border-cyan-500/50 flex items-center space-x-1 active:scale-95 shadow-sm"
+              title="Xem mô hình toán lý quang - nhiệt và lý do chọn thông số này"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Tại sao chọn?</span>
+            </button>
+
+            <button
+              onClick={applyRecommendedParameters}
+              className="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-[11px] font-mono font-bold transition-all shadow-md shadow-cyan-950/50 flex items-center space-x-1 active:scale-95"
+              title="Tự động nạp các thông số khuyến nghị chuẩn vào thanh trượt"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Áp Dụng Chuẩn</span>
+            </button>
           </div>
+        </div>
+
+        {/* 2. Laser Parameter Tuning Controls (P, v, f, E_line) */}
+        <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800/80 flex flex-col gap-2.5 text-xs shadow-inner">
+          <div className="flex flex-col md:flex-row items-center gap-3">
+            <div className="flex items-center space-x-1.5 text-slate-400 font-mono text-[11px] flex-shrink-0">
+              <Sliders className="w-3.5 h-3.5 text-lab-cyan" />
+              <span>Thông số công nghệ:</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 flex-1 w-full">
+              {/* P slider */}
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">Công suất (P):</span>
+                  <span className="text-amber-300 font-bold">{laserPowerWatts} W</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  step="1"
+                  value={laserPowerWatts}
+                  onChange={(e) => setLaserPowerWatts(parseInt(e.target.value))}
+                  className="accent-amber-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                />
+              </div>
+
+              {/* v slider */}
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">Tốc độ (v):</span>
+                  <span className="text-cyan-300 font-bold">{scanSpeedMmS} mm/s</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="800"
+                  step="5"
+                  value={scanSpeedMmS}
+                  onChange={(e) => setScanSpeedMmS(parseInt(e.target.value))}
+                  className="accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                />
+              </div>
+
+              {/* f slider */}
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">Tần số xung (f):</span>
+                  <span className="text-emerald-300 font-bold">{pulseFrequencyKhz} kHz</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  step="1"
+                  value={pulseFrequencyKhz}
+                  onChange={(e) => setPulseFrequencyKhz(parseInt(e.target.value))}
+                  className="accent-emerald-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono flex-shrink-0">
+              <span className="text-slate-400">E_line:</span>
+              <span className="text-amber-400 font-bold">{(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm</span>
+            </div>
+          </div>
+
+          {/* Real-time Dynamic Physical Feedback Under Sliders */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80 text-[10px] font-mono">
+            {/* Projected Depth */}
+            <div className="p-1.5 px-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
+              <span className="text-slate-400">Độ sâu dự kiến:</span>
+              <span className={`font-bold ${
+                liveSim.isCutThrough
+                  ? 'text-emerald-400'
+                  : processMode === 'CUT'
+                  ? 'text-rose-400 animate-pulse'
+                  : 'text-cyan-300'
+              }`}>
+                {liveSim.actualDepthMm}mm / {matPhys.plateThicknessMm}mm ({liveSim.cutThroughPercentage}%)
+              </span>
+            </div>
+
+            {/* Pulse Overlap & Roughness */}
+            <div className="p-1.5 px-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
+              <span className="text-slate-400">Chồng lấp & Ra:</span>
+              <span className={`font-bold ${
+                liveSim.pulseOverlapPercent > 75
+                  ? 'text-emerald-400'
+                  : liveSim.pulseOverlapPercent < 30
+                  ? 'text-amber-400'
+                  : 'text-slate-200'
+              }`}>
+                η {liveSim.pulseOverlapPercent}% • Ra {liveSim.surfaceRoughnessRaUm}µm
+              </span>
+            </div>
+
+            {/* Kerf Width */}
+            <div className="p-1.5 px-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
+              <span className="text-slate-400">Rãnh Kerf:</span>
+              <span className="font-bold text-amber-300">{liveSim.kerfWidthMm} mm</span>
+            </div>
+
+            {/* Surface Quality */}
+            <div className="p-1.5 px-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
+              <span className="text-slate-400">Chất lượng mép:</span>
+              <span className={`font-bold truncate max-w-[120px] ${
+                liveSim.qualityRating === 'PERFECT'
+                  ? 'text-emerald-400'
+                  : liveSim.qualityRating === 'POOR_OVERBURNT'
+                  ? 'text-amber-400'
+                  : liveSim.qualityRating === 'FAILED_UNCUT'
+                  ? 'text-rose-400 font-extrabold'
+                  : 'text-cyan-300'
+              }`} title={liveSim.hazQuality}>
+                {liveSim.qualityRating === 'PERFECT'
+                  ? '✓ Hoàn hảo'
+                  : liveSim.qualityRating === 'POOR_OVERBURNT'
+                  ? '⚠️ Quá nhiệt'
+                  : liveSim.qualityRating === 'FAILED_UNCUT'
+                  ? '❌ Chưa đứt phôi'
+                  : '✓ Tối ưu'}
+              </span>
+            </div>
+          </div>
+
+          {/* Alert Banner if Cut Mode will Fail */}
+          {processMode === 'CUT' && !liveSim.isCutThrough && (
+            <div className="p-2 px-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-[11px] text-rose-300 flex items-center justify-between animate-pulse">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
+                <span>
+                  <strong>CẢNH BÁO:</strong> Với thông số hiện tại, tia laser chỉ cắt sâu {liveSim.actualDepthMm}mm (chưa xuyên đứt tấm phôi {matPhys.plateThicknessMm}mm). Chi tiết sẽ bị dính kẹt!
+                </span>
+              </div>
+              <button
+                onClick={applyRecommendedParameters}
+                className="underline font-bold text-cyan-300 hover:text-white flex-shrink-0 pl-2 cursor-pointer"
+              >
+                Khắc phục ngay
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Live Interaction Physics Hint Description */}
@@ -981,6 +1129,9 @@ export function MachineControlOverlay() {
           </span>
         </div>
       </section>
+
+      {/* Scientific Rationale & Mathematical Proof Modal */}
+      <ScientificRationaleModal />
     </div>
   );
 }

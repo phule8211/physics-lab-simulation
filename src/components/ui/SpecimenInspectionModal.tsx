@@ -17,6 +17,7 @@ import {
   Cpu,
   Move3d,
   CheckCircle2,
+  AlertTriangle,
   Scissors,
   Flame,
   ArrowUpRight,
@@ -267,8 +268,10 @@ function Specimen3DObject() {
   const liftGroupRef = useRef<THREE.Group>(null);
   const liftY = useRef(0);
 
+  const isCutSuccess = isCut ? (lastProcessedJob ? lastProcessedJob.isCutThrough : true) : true;
+
   useFrame((_, delta) => {
-    const targetY = isCut && isPartDetached ? 0.38 : 0;
+    const targetY = isCut && isCutSuccess && isPartDetached ? 0.38 : 0;
     liftY.current = THREE.MathUtils.damp(liftY.current, targetY, 8, delta);
     if (liftGroupRef.current) {
       liftGroupRef.current.position.y = liftY.current;
@@ -565,6 +568,12 @@ export function SpecimenInspectionModal() {
   const frequency = job ? job.frequencyKhz : pulseFrequencyKhz;
   const energyDensity = job ? job.energyDensityJPerMm : Number((power / Math.max(1, speed)).toFixed(3));
 
+  const isCut = effectiveProcessMode === 'CUT';
+  const isCutSuccess = isCut ? (job ? job.isCutThrough : true) : true;
+  const targetThickness = job ? job.targetThicknessMm : (effectiveMaterial === 'ACRYLIC' ? 5.0 : effectiveMaterial === 'WOOD' ? 3.0 : 1.0);
+  const actualDepth = job ? job.actualDepthMm : (isCut ? targetThickness : 0.1);
+  const cutPercentage = job ? job.cutThroughPercentage : (isCut ? 100 : 10);
+
   // Laser Quality Metrics & HAZ Descriptions
   const hazEvaluation =
     effectiveMaterial === 'WOOD'
@@ -628,24 +637,40 @@ export function SpecimenInspectionModal() {
                 <h3 className="text-base font-bold text-white tracking-wide">
                   KIỂM TRA THÀNH PHẨM GIA CÔNG LASER 3D
                 </h3>
-                {processMode === 'CUT' ? (
+                {isCut ? (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center space-x-1">
                     <Scissors className="w-3 h-3" />
-                    <span>CẮT XUYÊN (THRU-CUT 3.0mm)</span>
+                    <span>CẮT XUYÊN ({targetThickness}mm)</span>
                   </span>
                 ) : (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold flex items-center space-x-1">
                     <Flame className="w-3 h-3" />
-                    <span>KHẮC BỀ MẶT (ENGRAVE 0.1mm)</span>
+                    <span>KHẮC BỀ MẶT (ENGRAVE)</span>
                   </span>
                 )}
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                  QC PASSED (100%)
-                </span>
+                {isCut ? (
+                  isCutSuccess ? (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold flex items-center space-x-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>QC PASSED (100% CẮT ĐỨT)</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/25 text-rose-300 border border-rose-500/50 font-bold flex items-center space-x-1 animate-pulse">
+                      <AlertTriangle className="w-3 h-3 text-rose-400" />
+                      <span>QC FAILED: CHƯA ĐỨT PHÔI ({cutPercentage}%)</span>
+                    </span>
+                  )
+                ) : (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                    QC PASSED (100%)
+                  </span>
+                )}
               </div>
               <p className="text-xs text-lab-muted">
-                {processMode === 'CUT'
-                  ? 'Mẫu đã cắt xuyên đứt rời khỏi phôi. Bạn có thể nhấc rời chi tiết ra để xem từng phần độc lập!'
+                {isCut
+                  ? isCutSuccess
+                    ? 'Mẫu đã cắt xuyên đứt hoàn toàn khỏi phôi. Bạn có thể nhấc rời chi tiết ra để xem từng phần độc lập!'
+                    : `CẢNH BÁO: Năng lượng không đủ, rãnh cắt chỉ đạt ${actualDepth}mm / ${targetThickness}mm. Chi tiết bị dính kẹt, không thể nhấc rời!`
                   : 'Mẫu đã được khắc laser bề mặt sắc nét, tấm phôi nguyên vẹn không đứt rời.'}
               </p>
             </div>
@@ -693,18 +718,29 @@ export function SpecimenInspectionModal() {
             </div>
 
             {/* Interactive Part Detach Button on 3D Viewport for CUT Mode */}
-            {processMode === 'CUT' && (
+            {isCut && (
               <div className="absolute top-3 left-3 z-10">
                 <button
                   onClick={togglePartDetached}
                   className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xl active:scale-95 border ${
-                    isPartDetached
+                    !isCutSuccess
+                      ? 'bg-rose-950/80 hover:bg-rose-900 border-rose-600/80 text-rose-300 shadow-rose-950/60'
+                      : isPartDetached
                       ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-300 shadow-amber-950/60'
                       : 'bg-lab-cyan hover:bg-cyan-400 text-slate-950 border-cyan-300 shadow-cyan-950/60 animate-bounce'
                   }`}
-                  title="Nhấn phím Space hoặc phím X để nhấc rời hoặc lắp lại chi tiết"
+                  title={
+                    !isCutSuccess
+                      ? `Chi tiết bị dính kẹt (độ sâu ${actualDepth}mm / ${targetThickness}mm). Cần tăng P hoặc giảm v để cắt đứt!`
+                      : 'Nhấn phím Space hoặc phím X để nhấc rời hoặc lắp lại chi tiết'
+                  }
                 >
-                  {isPartDetached ? (
+                  {!isCutSuccess ? (
+                    <>
+                      <AlertTriangle className="w-4 h-4 text-rose-400" />
+                      <span>Dính Kẹt (Cắt Chưa Đứt {cutPercentage}%)</span>
+                    </>
+                  ) : isPartDetached ? (
                     <>
                       <Box className="w-4 h-4" />
                       <span>Lắp Lại Vào Phôi [Space]</span>
@@ -749,7 +785,13 @@ export function SpecimenInspectionModal() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Chế độ gia công:</span>
                     <span className={`font-bold font-mono ${effectiveProcessMode === 'CUT' ? 'text-amber-400' : 'text-cyan-400'}`}>
-                      {effectiveProcessMode === 'CUT' ? 'CẮT XUYÊN PHÔI (3.0mm)' : 'KHẮC BỀ MẶT (0.1mm)'}
+                      {effectiveProcessMode === 'CUT' ? `CẮT XUYÊN PHÔI (${targetThickness}mm)` : 'KHẮC BỀ MẶT (0.1mm)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Độ sâu gia công (d_cut):</span>
+                    <span className={`font-mono font-bold ${isCutSuccess ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {actualDepth} mm / {targetThickness} mm ({cutPercentage}%)
                     </span>
                   </div>
                   <div className="pt-2 border-t border-slate-800/80 grid grid-cols-3 gap-1.5 text-center font-mono text-[10px]">
@@ -766,20 +808,39 @@ export function SpecimenInspectionModal() {
                       <span className="font-bold text-emerald-300 text-xs">{frequency} kHz</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] pt-1 font-mono">
-                    <span className="text-slate-400">Mật độ năng lượng đường (E_line):</span>
-                    <span className="font-bold text-amber-400">{energyDensity} J/mm</span>
+                  <div className="pt-1.5 border-t border-slate-800/60 grid grid-cols-2 gap-1.5 text-[11px] font-mono">
+                    <div className="p-1 rounded bg-slate-900/60 px-2 flex justify-between">
+                      <span className="text-slate-400">Năng lượng E_line:</span>
+                      <span className="font-bold text-amber-400">{energyDensity} J/mm</span>
+                    </div>
+                    <div className="p-1 rounded bg-slate-900/60 px-2 flex justify-between">
+                      <span className="text-slate-400">Chồng lấp xung η:</span>
+                      <span className="font-bold text-emerald-400">{job ? `${job.pulseOverlapPercent}%` : '85%'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Scientific Physics Evaluation Box */}
+              {job?.scientificFeedback && (
+                <div className="p-3.5 rounded-xl bg-gradient-to-br from-slate-950 to-cyan-950/20 border border-cyan-500/30 space-y-1.5">
+                  <div className="flex items-center space-x-1.5 text-cyan-300 font-mono font-bold text-xs uppercase">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Phân Tích Cơ Chế Vật Lý Thực Nghiệm</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    {job.scientificFeedback}
+                  </p>
+                </div>
+              )}
 
               {/* Mode switch & Detachment Status Box */}
               <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-400">Trạng thái tách rời:</span>
                   {effectiveProcessMode === 'CUT' ? (
-                    <span className={`font-bold text-xs ${isPartDetached ? 'text-emerald-400' : 'text-amber-300'}`}>
-                      {isPartDetached ? '✓ ĐÃ NHẤC RỜI KHỎI TẤM' : 'ĐANG LẮP KHÍT TRONG PHÔI'}
+                    <span className={`font-bold text-xs ${!isCutSuccess ? 'text-rose-400' : isPartDetached ? 'text-emerald-400' : 'text-amber-300'}`}>
+                      {!isCutSuccess ? '❌ DÍNH KẸT (CHƯA ĐỨT PHÔI)' : isPartDetached ? '✓ ĐÃ NHẤC RỜI KHỎI TẤM' : 'ĐANG LẮP KHÍT TRONG PHÔI'}
                     </span>
                   ) : (
                     <span className="text-slate-400 text-xs">Khắc bề mặt (Không tách rời)</span>
@@ -817,20 +878,28 @@ export function SpecimenInspectionModal() {
               <div>
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono flex items-center space-x-1.5">
                   <Thermometer className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Vùng Ảnh Hưởng Nhiệt (HAZ & Kerf)</span>
+                  <span>Vùng Ảnh Hưởng Nhiệt (HAZ, Kerf & Độ Nhám Ra)</span>
                 </h4>
                 <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Độ rộng rãnh cắt (Kerf Width):</span>
-                    <span className="font-mono font-bold text-emerald-400">{effectiveKerf}</span>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Độ rộng rãnh Kerf:</span>
+                      <span className="font-bold text-emerald-400">{effectiveKerf}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Độ nhám rãnh Ra:</span>
+                      <span className="font-bold text-cyan-300">{job ? `${job.surfaceRoughnessRaUm} µm` : '1.5 µm'}</span>
+                    </div>
                   </div>
                   <div className="text-xs">
                     <span className="font-semibold text-white block mb-0.5">{effectiveHazTitle}</span>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">{hazEvaluation.desc}</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      {job?.surfaceFinishDescription || hazEvaluation.desc}
+                    </p>
                   </div>
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-slate-400">Đánh giá mép biên:</span>
-                    <span className="text-emerald-400 font-bold">{hazEvaluation.quality}</span>
+                    <span className="text-slate-400">Tương phản Michelson (C_M):</span>
+                    <span className="text-amber-400 font-bold">{job?.contrastRatioCm || 0.85}</span>
                   </div>
                 </div>
               </div>

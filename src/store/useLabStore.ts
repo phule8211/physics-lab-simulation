@@ -12,6 +12,7 @@ import {
   autoFitToolpaths,
 } from '../data/vectorDesigns';
 import { sound } from '../utils/audioSystem';
+import { simulateLaserPhysics, getRecommendedParameters, MATERIAL_PHYSICAL_SPECS } from '../utils/laserPhysicsEngine';
 
 export interface ActionToast {
   id: number;
@@ -97,6 +98,9 @@ interface LabState {
   setLaserPowerWatts: (p: number) => void;
   setScanSpeedMmS: (v: number) => void;
   setPulseFrequencyKhz: (f: number) => void;
+  applyRecommendedParameters: () => void;
+  isRationaleModalOpen: boolean;
+  setRationaleModalOpen: (open: boolean) => void;
 
   // Last Processed Job Snapshot (Guarantees 100% state accuracy in Inspection Modal)
   lastProcessedJob: ProcessedJobInfo | null;
@@ -520,9 +524,10 @@ export const useLabStore = create<LabState>((set, get) => ({
   isPartDetached: false,
 
   // Laser Process Technology Tuning Parameters (P, v, f)
-  laserPowerWatts: 60,
-  scanSpeedMmS: 300,
-  pulseFrequencyKhz: 30,
+  laserPowerWatts: 45,
+  scanSpeedMmS: 12,
+  pulseFrequencyKhz: 10,
+  isRationaleModalOpen: false,
 
   // Last Processed Job Snapshot (Guarantees 100% state accuracy in Inspection Modal)
   lastProcessedJob: null,
@@ -666,6 +671,7 @@ export const useLabStore = create<LabState>((set, get) => ({
     let hasClosed = false;
 
     const isAnyModalOpen =
+      s.isRationaleModalOpen ||
       s.isNpcDialogOpen ||
       s.isChemicalModalOpen ||
       s.isEquipmentModalOpen ||
@@ -680,6 +686,7 @@ export const useLabStore = create<LabState>((set, get) => ({
     if (isAnyModalOpen) {
       sound.playClick();
       set({
+        isRationaleModalOpen: false,
         isNpcDialogOpen: false,
         npcCurrentTopic: null,
         isChemicalModalOpen: false,
@@ -1094,6 +1101,10 @@ export const useLabStore = create<LabState>((set, get) => ({
   setSelectedMaterial: (material) => {
     sound.playMaterialPlaceSound();
     const item = MATERIALS_CATALOG[material];
+    const machineId = get().activeStationId || 'CO2_LASER';
+    const mode = get().processMode;
+    const rec = getRecommendedParameters(machineId, material, mode);
+
     set({
       selectedMaterial: material,
       cutProgress: 0,
@@ -1101,7 +1112,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       isPartDetached: false,
       actionMessage: {
         id: ++toastIdCounter,
-        text: `Đã đặt phôi: ${item.name} (${item.category}) vào buồng làm việc.`,
+        text: `Đã nạp phôi: ${item.name}! 💡 Khuyến nghị ${rec.standardScenarioCode}: P = ${rec.powerWatts}W, v = ${rec.speedMmS}mm/s, f = ${rec.frequencyKhz}kHz. Bấm "Áp Dụng Chuẩn" trên thanh thông số.`,
         type: 'success',
       },
     });
@@ -1252,20 +1263,10 @@ export const useLabStore = create<LabState>((set, get) => ({
       const p = get().laserPowerWatts;
       const v = Math.max(1, get().scanSpeedMmS);
       const f = get().pulseFrequencyKhz;
-      const energyDensity = Number((p / v).toFixed(3));
       const mode = get().processMode;
 
-      let kerf = 0.15;
-      if (machineId === 'UV_LASER') kerf = 0.02 + (p / 100) * 0.015;
-      else if (machineId === 'FIBER_LASER') kerf = 0.04 + (p / 100) * 0.025;
-      else kerf = 0.12 + (p / 100) * 0.06;
-
-      let hazQuality = 'Tối ưu (Mép cắt sắc nét, không biến tính)';
-      if (energyDensity > 0.45 && machineId === 'CO2_LASER') {
-        hazQuality = 'Nhiệt ảnh hưởng lớn (Mép sém nhẹ do năng lượng đường thẳng cao)';
-      } else if (machineId === 'UV_LASER') {
-        hazQuality = 'Hoàn hảo (Gia công lạnh quang hóa Cold Ablation, HAZ = 0)';
-      }
+      // Dynamic Laser Physics Simulation according to PDF Equations
+      const sim = simulateLaserPhysics(p, v, f, machineId, get().selectedMaterial, mode);
 
       const job: ProcessedJobInfo = {
         machineId,
@@ -1278,14 +1279,32 @@ export const useLabStore = create<LabState>((set, get) => ({
         powerWatts: p,
         speedMmS: v,
         frequencyKhz: f,
-        energyDensityJPerMm: energyDensity,
-        kerfWidthMm: Number(kerf.toFixed(3)),
-        hazQuality,
+        energyDensityJPerMm: sim.energyDensityJPerMm,
+        kerfWidthMm: sim.kerfWidthMm,
+        hazQuality: sim.hazQuality,
+        actualDepthMm: sim.actualDepthMm,
+        targetThicknessMm: sim.targetThicknessMm,
+        isCutThrough: sim.isCutThrough,
+        cutThroughPercentage: sim.cutThroughPercentage,
+        pulseOverlapPercent: sim.pulseOverlapPercent,
+        surfaceRoughnessRaUm: sim.surfaceRoughnessRaUm,
+        contrastRatioCm: sim.contrastRatioCm,
+        surfaceFinishDescription: sim.surfaceFinishDescription,
+        qualityRating: sim.qualityRating,
+        scientificFeedback: sim.scientificFeedback,
         timestamp: Date.now(),
       };
 
       sound.stopLaserHum();
       sound.playCutCompleteSound();
+
+      let toastText = `HOÀN THÀNH: Đã gia công xong "${job.designName}" trên ${mat.name}! Nhấn [G] hoặc nhấp nút để lấy mẫu ra kiểm tra.`;
+      let toastType: 'success' | 'warning' = 'success';
+
+      if (mode === 'CUT' && !sim.isCutThrough) {
+        toastText = `CẢNH BÁO: Đã chạy xong nhưng VẾT CẮT CHƯA ĐỨT PHÔI (độ sâu ${sim.actualDepthMm}mm / ${sim.targetThicknessMm}mm - ${sim.cutThroughPercentage}%)! Chi tiết bị dính kẹt. Nhấn [G] xem mẫu.`;
+        toastType = 'warning';
+      }
 
       set({
         cutProgress: 100,
@@ -1293,8 +1312,8 @@ export const useLabStore = create<LabState>((set, get) => ({
         lastProcessedJob: job,
         actionMessage: {
           id: ++toastIdCounter,
-          text: `HOÀN THÀNH: Đã gia công xong "${job.designName}" trên ${mat.name}! Nhấn [G] hoặc nhấp nút để lấy mẫu ra kiểm tra.`,
-          type: 'success',
+          text: toastText,
+          type: toastType,
         },
       });
       return;
@@ -1495,6 +1514,18 @@ export const useLabStore = create<LabState>((set, get) => ({
   togglePartDetached: () => {
     const next = !get().isPartDetached;
     if (next) {
+      const job = get().lastProcessedJob;
+      if (job && job.processMode === 'CUT' && !job.isCutThrough) {
+        sound.playInterlockTripSound();
+        set({
+          actionMessage: {
+            id: ++toastIdCounter,
+            text: `KHÔNG THỂ NHẤC RỜI: Vết cắt chưa đứt phôi (độ sâu ${job.actualDepthMm}mm / ${job.targetThicknessMm}mm - ${job.cutThroughPercentage}%)! Chi tiết bị dính kẹt trong phôi. Tăng P hoặc giảm v để cắt xuyên.`,
+            type: 'warning',
+          },
+        });
+        return;
+      }
       sound.playRelayClick();
     } else {
       sound.playMaterialPlaceSound();
@@ -1517,8 +1548,28 @@ export const useLabStore = create<LabState>((set, get) => ({
   // LASER PROCESS TECHNOLOGY TUNING PARAMETERS (P, v, f)
   // =========================================================================
   setLaserPowerWatts: (p: number) => set({ laserPowerWatts: Math.max(1, Math.min(100, p)) }),
-  setScanSpeedMmS: (v: number) => set({ scanSpeedMmS: Math.max(10, Math.min(1000, v)) }),
+  setScanSpeedMmS: (v: number) => set({ scanSpeedMmS: Math.max(1, Math.min(1000, v)) }),
   setPulseFrequencyKhz: (f: number) => set({ pulseFrequencyKhz: Math.max(1, Math.min(100, f)) }),
+
+  applyRecommendedParameters: () => {
+    const machineId = get().activeStationId || 'CO2_LASER';
+    const material = get().selectedMaterial;
+    const mode = get().processMode;
+    const rec = getRecommendedParameters(machineId, material, mode);
+    sound.playClick();
+    set({
+      laserPowerWatts: rec.powerWatts,
+      scanSpeedMmS: rec.speedMmS,
+      pulseFrequencyKhz: rec.frequencyKhz,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: `ĐÃ ÁP DỤNG THÔNG SỐ CHUẨN: P = ${rec.powerWatts}W, v = ${rec.speedMmS}mm/s, f = ${rec.frequencyKhz}kHz (${rec.standardScenarioCode}).`,
+        type: 'success',
+      },
+    });
+  },
+
+  setRationaleModalOpen: (open: boolean) => set({ isRationaleModalOpen: open }),
 
   // =========================================================================
   // SENSOR STATION TELEMETRY & FAULT INJECTION ACTIONS

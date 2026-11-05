@@ -81,5 +81,15 @@ export interface ProcessedJobInfo {
   energyDensityJPerMm: number;
   kerfWidthMm: number;
   hazQuality: string;
+  actualDepthMm: number;
+  targetThicknessMm: number;
+  isCutThrough: boolean;
+  cutThroughPercentage: number;
+  pulseOverlapPercent: number;
+  surfaceRoughnessRaUm: number;
+  contrastRatioCm: number;
+  surfaceFinishDescription: string;
+  qualityRating: 'PERFECT' | 'OPTIMAL' | 'ACCEPTABLE' | 'POOR_OVERBURNT' | 'FAILED_UNCUT';
+  scientificFeedback: string;
   timestamp: number;
 }
