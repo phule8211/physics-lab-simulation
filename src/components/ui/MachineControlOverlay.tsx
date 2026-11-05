@@ -124,6 +124,24 @@ export function MachineControlOverlay() {
 
   const currentStationId = activeStationId || (mode === 'WALKING' && hoveredStationId ? hoveredStationId : null);
   const currentStation = currentStationId ? STATIONS[currentStationId] : null;
+  const targetMachineId = (currentStationId && currentStationId in STATIONS ? currentStationId : 'CO2_LASER') as MachineId;
+
+  const matPhys = MATERIAL_PHYSICAL_SPECS[selectedMaterial] || MATERIAL_PHYSICAL_SPECS.WOOD;
+
+  const recSettings = useMemo(() => {
+    return getRecommendedParameters(targetMachineId, selectedMaterial, processMode);
+  }, [targetMachineId, selectedMaterial, processMode]);
+
+  const liveSim = useMemo(() => {
+    return simulateLaserPhysics(
+      laserPowerWatts,
+      scanSpeedMmS,
+      pulseFrequencyKhz,
+      targetMachineId,
+      selectedMaterial,
+      processMode
+    );
+  }, [laserPowerWatts, scanSpeedMmS, pulseFrequencyKhz, targetMachineId, selectedMaterial, processMode]);
 
   // Auto clear action message after 4.5 seconds
   useEffect(() => {
@@ -581,22 +599,6 @@ export function MachineControlOverlay() {
   }
 
   const currentMatConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
-  const matPhys = MATERIAL_PHYSICAL_SPECS[selectedMaterial] || MATERIAL_PHYSICAL_SPECS.WOOD;
-
-  const recSettings = useMemo(() => {
-    return getRecommendedParameters(currentStationId as MachineId, selectedMaterial, processMode);
-  }, [currentStationId, selectedMaterial, processMode]);
-
-  const liveSim = useMemo(() => {
-    return simulateLaserPhysics(
-      laserPowerWatts,
-      scanSpeedMmS,
-      pulseFrequencyKhz,
-      currentStationId as MachineId,
-      selectedMaterial,
-      processMode
-    );
-  }, [laserPowerWatts, scanSpeedMmS, pulseFrequencyKhz, currentStationId, selectedMaterial, processMode]);
 
   const interaction = currentMatConfig?.interactions?.[currentStationId] || {
     status: 'COMPATIBLE' as const,
