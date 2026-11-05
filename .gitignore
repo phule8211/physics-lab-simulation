@@ -36,6 +36,11 @@ dist-ssr/
 .env.test.local
 .env.production.local
 
-# Agent internal state
+# Agent internal state & configs
 .agents/
-.vercel
+.vercel/
+.*
+!.gitignore
+!.github/
+skills-lock.json
+data/
