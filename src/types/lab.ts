@@ -54,3 +54,39 @@ export interface CoatingFinishConfig {
   cureTimeSec: number;
   description: string;
 }
+
+/**
+ * Laser micro-machining and engraving operational modes
+ */
+export type ProcessMode =
+  | 'through-cut'
+  | 'surface-engrave'
+  | 'color-annealing'
+  | 'relief-2.5d'
+  | 'CUT'
+  | 'ENGRAVE';
+
+/**
+ * Cleanroom and laser safety personal protective equipment (PPE)
+ */
+export interface OperatorPPE {
+  gogglesWavelength: string;
+  glovesESD: boolean;
+  hardhat?: boolean;
+  coatCleanroom?: boolean;
+}
+
+/**
+ * CW-5200 industrial recirculating chiller operational status
+ */
+export type ChillerStatus = 'normal' | 'overheat';
+
+/**
+ * Backwards-compatible mode check helpers
+ */
+export const isThroughCut = (mode: ProcessMode): boolean =>
+  mode === 'through-cut' || mode === 'CUT';
+
+export const isSurfaceEngrave = (mode: ProcessMode): boolean =>
+  mode === 'surface-engrave' || mode === 'ENGRAVE';
+

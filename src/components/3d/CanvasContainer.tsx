@@ -6,6 +6,10 @@ import { ProceduralStation } from './fallbacks/ProceduralMachineBox';
 import { PlayerController } from './PlayerController';
 import { PostProcessingEffects } from './PostProcessingEffects';
 import { STATIONS } from '../../data/labConfig';
+import { IndustrialAuxiliaryProps } from './props/IndustrialAuxiliaryProps';
+import { LabEngineerNPC } from './characters/LabEngineerNPC';
+import { SafetyGearVisualizer } from './characters/SafetyGearVisualizer';
+import { OperatorHandsHUD } from './characters/OperatorHandsHUD';
 
 export function CanvasContainer() {
   return (
@@ -32,6 +36,15 @@ export function CanvasContainer() {
         {/* Workshop Architectural Scene, PBR Materials, Lighting & Procedural HDRI */}
         <WorkshopEnvironment />
 
+        {/* R2: Industrial Auxiliary Props (8 InstancedMesh Groups, Water Chiller, Fume Extractor) */}
+        <IndustrialAuxiliaryProps />
+
+        {/* R2: Cleanroom Lab Engineer NPC with Dynamic OD7+ Goggles */}
+        <LabEngineerNPC position={[3.6, 0, 3.2]} rotation={[0, -Math.PI / 3, 0]} />
+
+        {/* R2: Mandatory PPE Station & Safety Gear Visualizer */}
+        <SafetyGearVisualizer />
+
         {/* 4 Interactive Machine Workstations */}
         {Object.values(STATIONS).map((st) => (
           <ProceduralStation
@@ -45,9 +58,13 @@ export function CanvasContainer() {
         {/* First-Person Controller with Collision & Inspection Lerp */}
         <PlayerController />
 
+        {/* R2: First-Person Operator Hands HUD */}
+        <OperatorHandsHUD />
+
         {/* Cinematic Post-Processing: Bloom, SMAA Anti-Aliasing & Vignette */}
         <PostProcessingEffects />
       </Canvas>
     </div>
   );
 }
+

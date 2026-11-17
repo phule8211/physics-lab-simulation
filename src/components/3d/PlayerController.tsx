@@ -114,6 +114,12 @@ export function PlayerController() {
         } else {
           store.startFraming();
         }
+      } else if (e.code === 'Space') {
+        const store = useLabStore.getState();
+        if (store.mode === 'INSPECTING' || store.isSpecimenModalOpen) {
+          e.preventDefault();
+          store.togglePartDetached();
+        }
       }
     };
 
@@ -286,8 +292,9 @@ export function PlayerController() {
         velocity.current.z *= Math.max(0, 1 - dt * 12);
       }
 
-      // Jump & gravity
-      if (keys.current.jump && !isJumping.current) {
+      // Jump & gravity (only when walking freely and specimen modal is not open)
+      const isModalOpen = useLabStore.getState().isSpecimenModalOpen;
+      if (keys.current.jump && !isJumping.current && !isModalOpen) {
         isJumping.current = true;
         verticalVelocity.current = 4.2;
       }

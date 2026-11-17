@@ -1,5 +1,13 @@
 import { create } from 'zustand';
-import { MachineId, AppMode, InfoTab, CoatingFinishId } from '../types/lab';
+import {
+  MachineId,
+  AppMode,
+  InfoTab,
+  CoatingFinishId,
+  ProcessMode,
+  OperatorPPE,
+  ChillerStatus,
+} from '../types/lab';
 import { MaterialType, MATERIALS_CATALOG } from '../data/materialsConfig';
 import { COATING_FINISHES } from '../data/coatingFinishes';
 import {
@@ -61,12 +69,34 @@ interface LabState {
   scaleCurrentDesign: (factor: number) => void;
   nudgeCurrentDesign: (dx: number, dy: number) => void;
 
-  // Laser Processing Mode: Cắt xuyên (Through Cut) vs Khắc bề mặt (Surface Engrave)
-  processMode: 'CUT' | 'ENGRAVE';
-  setProcessMode: (mode: 'CUT' | 'ENGRAVE') => void;
+  // Laser Processing Mode: Through Cut, Surface Engrave, Color Annealing, Relief 2.5D
+  processMode: ProcessMode & any;
+  setProcessMode: (mode: ProcessMode) => void;
+
+  // Real-time engraving depth map buffer (256x256 float values)
+  engravingDepthMap: Float32Array;
+  setEngravingDepthMap: (depthMap: Float32Array) => void;
+  resetEngravingDepthMap: () => void;
+
+  // Active 3D specimen mesh reference for inspection and manipulation
+  activeSpecimenMesh: any;
+  setActiveSpecimenMesh: (mesh: any) => void;
+
+  // Finished Specimen detachment state
   isPartDetached: boolean;
   togglePartDetached: () => void;
   setPartDetached: (detached: boolean) => void;
+
+  // Industrial auxiliary chiller state
+  chillerStatus: ChillerStatus;
+  setChillerStatus: (status: ChillerStatus) => void;
+  toggleChillerStatus: () => void;
+
+  // Personal protective equipment (PPE) state
+  operatorPPE: OperatorPPE;
+  setOperatorPPE: (ppe: Partial<OperatorPPE>) => void;
+  toggleGlovesESD: () => void;
+  setGogglesWavelength: (wavelength: string) => void;
 
   // Spray Coating & Finishing State
   selectedCoatingFinish: CoatingFinishId;
@@ -143,8 +173,17 @@ export const useLabStore = create<LabState>((set, get) => ({
   isDesignModalOpen: false,
   isSpecimenModalOpen: false,
   isFraming: false,
-  processMode: 'CUT',
+  processMode: 'through-cut',
+  engravingDepthMap: new Float32Array(256 * 256),
+  activeSpecimenMesh: null,
   isPartDetached: false,
+  chillerStatus: 'normal',
+  operatorPPE: {
+    gogglesWavelength: '10600nm',
+    glovesESD: true,
+    hardhat: true,
+    coatCleanroom: true,
+  },
 
   // Spray Coating & Finishing State
   selectedCoatingFinish: 'CLEAR_GLOSS',
@@ -415,6 +454,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       isCuttingJob: false,
       isPartDetached: false,
       isSpecimenModalOpen: false,
+      engravingDepthMap: new Float32Array(256 * 256),
       actionMessage: {
         id: ++toastIdCounter,
         text: 'Đã nạp phôi mới chưa cắt vào bàn làm việc.',
@@ -570,7 +610,7 @@ export const useLabStore = create<LabState>((set, get) => ({
     set({ currentToolpaths: nudged, cutProgress: 0 });
   },
 
-  setProcessMode: (mode: 'CUT' | 'ENGRAVE') => {
+  setProcessMode: (mode: ProcessMode) => {
     sound.playClick();
     set({
       processMode: mode,
@@ -578,13 +618,66 @@ export const useLabStore = create<LabState>((set, get) => ({
       actionMessage: {
         id: ++toastIdCounter,
         text:
-          mode === 'CUT'
+          mode === 'through-cut' || mode === 'CUT'
             ? 'Chế độ: CẮT XUYÊN PHÔI (Through Cut). Công suất cao cắt đứt rời chi tiết khỏi tấm.'
+            : mode === 'color-annealing'
+            ? 'Chế độ: LÊN MÀU NHIỆT (Color Annealing). Màng oxit giao thoa ánh sáng không biến dạng phôi.'
+            : mode === 'relief-2.5d'
+            ? 'Chế độ: KHẮC NỔI 2.5D (Relief Engrave). Ăn mòn bóc tách đa lớp theo bản đồ độ sâu.'
             : 'Chế độ: KHẮC BỀ MẶT (Surface Engrave). Công suất thấp chỉ khắc hoa văn nông trên mặt tấm.',
         type: 'info',
       },
     });
   },
+
+  setEngravingDepthMap: (depthMap: Float32Array) => set({ engravingDepthMap: depthMap }),
+
+  resetEngravingDepthMap: () => set({ engravingDepthMap: new Float32Array(256 * 256) }),
+
+  setActiveSpecimenMesh: (mesh: any) => set({ activeSpecimenMesh: mesh }),
+
+  setChillerStatus: (status: ChillerStatus) =>
+    set({
+      chillerStatus: status,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text:
+          status === 'overheat'
+            ? 'CẢNH BÁO MÁY LÀM LẠNH (CHILLER): Quá nhiệt cảnh báo! Nhiệt độ nước vượt ngưỡng an toàn.'
+            : 'MÁY LÀM LẠNH (CHILLER): Trạng thái hoạt động bình thường (22.4°C, 4.8 L/M).',
+        type: status === 'overheat' ? 'warning' : 'info',
+      },
+    }),
+
+  toggleChillerStatus: () => {
+    const nextStatus: ChillerStatus = get().chillerStatus === 'normal' ? 'overheat' : 'normal';
+    get().setChillerStatus(nextStatus);
+  },
+
+  setOperatorPPE: (ppe: Partial<OperatorPPE>) =>
+    set((state) => ({
+      operatorPPE: { ...state.operatorPPE, ...ppe },
+    })),
+
+  toggleGlovesESD: () =>
+    set((state) => ({
+      operatorPPE: {
+        ...state.operatorPPE,
+        glovesESD: !state.operatorPPE.glovesESD,
+      },
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: !state.operatorPPE.glovesESD
+          ? 'Đã chuyển sang Găng tay chống tĩnh điện ESD (Phòng sạch).'
+          : 'Đã chuyển sang Găng tay chịu nhiệt Kevlar/Nomex.',
+        type: 'info',
+      },
+    })),
+
+  setGogglesWavelength: (wavelength: string) =>
+    set((state) => ({
+      operatorPPE: { ...state.operatorPPE, gogglesWavelength: wavelength },
+    })),
 
   togglePartDetached: () => {
     const next = !get().isPartDetached;
