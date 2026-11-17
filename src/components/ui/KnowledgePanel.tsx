@@ -32,22 +32,69 @@ import {
 } from 'lucide-react';
 
 function formatFormula(raw: string) {
+  if (!raw) return '';
   return raw
+    .replace(/\\rightarrow/g, '→')
+    .replace(/\\xrightarrow\{([^\}]+)\}/g, ' ──[$1]──> ')
+    .replace(/\\nu/g, 'ν')
+    .replace(/\\lambda/g, 'λ')
+    .replace(/\\mu/g, 'µ')
+    .replace(/\\omega/g, 'ω')
+    .replace(/\\Delta/g, 'Δ')
+    .replace(/\\theta/g, 'θ')
+    .replace(/\\gamma/g, 'γ')
     .replace(/\\epsilon/g, 'ε')
     .replace(/\\sigma/g, 'σ')
-    .replace(/\\lambda/g, 'λ')
+    .replace(/\\propto/g, '∝')
     .replace(/\\approx/g, '≈')
     .replace(/\\cdot/g, '·')
     .replace(/\\times/g, '×')
+    .replace(/\\cos/g, 'cos')
+    .replace(/\\circ/g, '°')
     .replace(/\\quad/g, '   ')
+    .replace(/\\,/g, ' ')
     .replace(/\\text\{([^\}]+)\}/g, '$1')
-    .replace(/\\mu/g, 'µ')
-    .replace(/\^4/g, '⁴')
-    .replace(/\^2/g, '²')
+    .replace(/\\frac\{([^\}]+)\}\{([^\}]+)\}/g, '($1) / ($2)')
     .replace(/_2/g, '₂')
     .replace(/_0/g, '₀')
-    .replace(/\\xrightarrow\{([^\}]+)\}/g, ' ──[$1]──> ')
-    .replace(/\\,/g, ' ');
+    .replace(/_1/g, '₁')
+    .replace(/_3/g, '₃')
+    .replace(/\^4/g, '⁴')
+    .replace(/\^2/g, '²')
+    .replace(/\^0/g, '⁰')
+    .replace(/\^1/g, '¹')
+    .replace(/\^3/g, '³')
+    .replace(/\^\{-8\}/g, '⁻⁸')
+    .replace(/\^\{-1\}/g, '⁻¹')
+    .replace(/\^-1/g, '⁻¹')
+    .replace(/\^\*/g, '*')
+    .replace(/\(00\^01\)/g, '(00⁰1)')
+    .replace(/\(10\^00\)/g, '(10⁰0)')
+    .replace(/\(00\^00\)/g, '(00⁰0)')
+    .replace(/CO_2/g, 'CO₂')
+    .replace(/N_2/g, 'N₂')
+    .replace(/e\^-/g, 'e⁻')
+    .replace(/\$/g, '');
+}
+
+function formatPhysicsText(text: string) {
+  if (!text) return '';
+  return text
+    .replace(/\\lambda/g, 'λ')
+    .replace(/\\mu\s*m/g, 'µm')
+    .replace(/\\mu/g, 'µ')
+    .replace(/\\nu/g, 'ν')
+    .replace(/\\rightarrow/g, '→')
+    .replace(/00\^01/g, '00⁰1')
+    .replace(/10\^00/g, '10⁰0')
+    .replace(/00\^00/g, '00⁰0')
+    .replace(/\bCO2\b/g, 'CO₂')
+    .replace(/\bN2\b/g, 'N₂')
+    .replace(/cm\^-1/g, 'cm⁻¹')
+    .replace(/T\^4/g, 'T⁴')
+    .replace(/h\*nu/g, 'h·ν')
+    .replace(/\$([^\$]+)\$/g, '$1')
+    .replace(/\\cdot/g, '·');
 }
 
 export function KnowledgePanel() {
@@ -278,7 +325,7 @@ export function KnowledgePanel() {
                 <span>Nguyên Lý Cốt Lõi</span>
               </div>
               <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-                {data.principles.coreConcept}
+                {formatPhysicsText(data.principles.coreConcept)}
               </p>
             </section>
 
@@ -287,7 +334,7 @@ export function KnowledgePanel() {
               <section className="space-y-3">
                 <h3 className="text-sm font-bold text-white flex items-center space-x-2">
                   <span className="w-1.5 h-4 bg-lab-cyan rounded-full" />
-                  <span>{data.principles.gasMixtureOrMedium.title}</span>
+                  <span>{formatPhysicsText(data.principles.gasMixtureOrMedium.title)}</span>
                 </h3>
 
                 <div className="grid gap-2.5">
@@ -298,7 +345,7 @@ export function KnowledgePanel() {
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-white text-xs sm:text-sm">
-                          {item.name}
+                          {formatPhysicsText(item.name)}
                         </span>
                         {item.percentage && (
                           <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-lab-cyan/10 text-lab-cyan border border-lab-cyan/30">
@@ -307,7 +354,7 @@ export function KnowledgePanel() {
                         )}
                       </div>
                       <p className="text-xs text-slate-300 leading-relaxed">
-                        {item.role}
+                        {formatPhysicsText(item.role)}
                       </p>
                     </div>
                   ))}
@@ -333,17 +380,17 @@ export function KnowledgePanel() {
                         {step.step}
                       </span>
                       <h4 className="font-bold text-white text-xs sm:text-sm">
-                        {step.name}
+                        {formatPhysicsText(step.name)}
                       </h4>
                     </div>
 
                     <p className="text-xs text-slate-300 leading-relaxed pl-7">
-                      {step.description}
+                      {formatPhysicsText(step.description)}
                     </p>
 
                     {step.formula && (
                       <div className="mt-2.5 ml-7 p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-xs text-lab-cyan/95 overflow-x-auto shadow-inner flex items-center">
-                        <span className="text-slate-500 select-none mr-2">fx =</span>
+                        <span className="text-slate-500 select-none mr-2 font-bold">fx =</span>
                         <code className="font-semibold tracking-wide text-cyan-300">{formatFormula(step.formula)}</code>
                       </div>
                     )}
@@ -358,7 +405,7 @@ export function KnowledgePanel() {
                 <Info className="w-4 h-4" />
                 <span>Đặc Tính Bước Sóng & Tương Tác Vật Liệu</span>
               </div>
-              <p>{data.principles.wavelengthDetails}</p>
+              <p>{formatPhysicsText(data.principles.wavelengthDetails)}</p>
             </section>
 
             {/* Interactive Electromagnetic Spectrum Visualizer */}

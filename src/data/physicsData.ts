@@ -95,29 +95,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Kích thích điện tử (Electron Impact)',
           description:
-            'Khi đặt điện áp cao (hàng chục kV) qua hai điện cực, các electron tự do được gia tốc mạnh trong điện trường và va chạm trực tiếp với các phân tử Nitơ (N2). Phân tử N2 chuyển lên trạng thái kích thích dao động v=1 có thời gian sống rất dài (trạng thái giả bền - metastable state).',
-          formula: 'e^- + N_2 \\rightarrow N_2^* (v=1) + e^-',
+            'Khi đặt điện áp cao (hàng chục kV) qua hai điện cực, các electron tự do được gia tốc mạnh trong điện trường và va chạm trực tiếp với các phân tử Nitơ (N₂). Phân tử N₂ chuyển lên trạng thái kích thích dao động v=1 có thời gian sống rất dài (trạng thái giả bền - metastable state).',
+          formula: 'e⁻ + N₂ → N₂* (v=1) + e⁻',
         },
         {
           step: 2,
           name: 'Truyền năng lượng cộng hưởng (Resonant Energy Transfer)',
           description:
-            'Phân tử N2 kích thích va chạm va chạm loại 2 với phân tử CO2 ở trạng thái cơ bản. Vì mức năng lượng dao động v=1 của N2 (2331 cm^-1) gần như trùng khít với mức dao động kéo giãn bất đối xứng (00^01, 2349 cm^-1) của CO2, năng lượng được truyền qua gần như 100%.',
-          formula: 'N_2^* (v=1) + CO_2 (00^00) \\rightarrow N_2 (v=0) + CO_2 (00^01) - \\Delta E',
+            'Phân tử N₂ kích thích va chạm loại 2 với phân tử CO₂ ở trạng thái cơ bản. Vì mức năng lượng dao động v=1 của N₂ (2331 cm⁻¹) gần như trùng khít với mức dao động kéo giãn bất đối xứng (00⁰1, 2349 cm⁻¹) của CO₂, năng lượng được truyền qua gần như 100%.',
+          formula: 'N₂* (v=1) + CO₂ (00⁰0) → N₂ (v=0) + CO₂ (00⁰1) - ΔE',
         },
         {
           step: 3,
           name: 'Phát xạ cảm ứng (Stimulated Emission)',
           description:
-            'Phân tử CO2 từ trạng thái 00^01 bị kích thích bởi một photon cùng pha để chuyển dời cưỡng bức xuống mức dao động kéo giãn đối xứng 10^00, giải phóng photon có bước sóng λ = 10.6 µm. Đây là bước sóng chiếm ưu thế quang học với tiết diện phát xạ lớn nhất.',
-          formula: 'CO_2^* (00^01) + h\\nu \\rightarrow CO_2 (10^00) + 2h\\nu \\quad (\\lambda = 10.6\\,\\mu\\text{m})',
+            'Phân tử CO₂ từ trạng thái 00⁰1 bị kích thích bởi một photon cùng pha để chuyển dời cưỡng bức xuống mức dao động kéo giãn đối xứng 10⁰0, giải phóng photon có bước sóng λ = 10.6 µm. Đây là bước sóng chiếm ưu thế quang học với tiết diện phát xạ lớn nhất.',
+          formula: 'CO₂* (00⁰1) + hν → CO₂ (10⁰0) + 2hν  (λ = 10.6 µm)',
         },
         {
           step: 4,
           name: 'Làm rỗng mức dưới & Tản nhiệt (De-excitation via Helium)',
           description:
-            'Từ mức 10^00, phân tử CO2 va chạm liên tục với các nguyên tử Helium (He) nhẹ để khử kích thích nhanh chóng về mức cơ bản 00^00. Nhiệt năng sinh ra được He dẫn nhanh ra thành ống làm mát bằng nước tuần hoàn.',
-          formula: 'CO_2 (10^00) + He \\rightarrow CO_2 (00^00) + He + \\text{Nhiệt năng}',
+            'Từ mức 10⁰0, phân tử CO₂ va chạm liên tục với các nguyên tử Helium (He) nhẹ để khử kích thích nhanh chóng về mức cơ bản 00⁰0. Nhiệt năng sinh ra được He dẫn nhanh ra thành ống làm mát bằng nước tuần hoàn.',
+          formula: 'CO₂ (10⁰0) + He → CO₂ (00⁰0) + He + Nhiệt năng',
         },
       ],
       wavelengthDetails:
@@ -264,28 +264,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Bơm Diode & Phát xạ hồng ngoại gốc',
           description:
-            'Diode laser 808 nm bơm kích thích các ion Neodymium trong tinh thể Nd:YVO4, tạo hiện tượng đảo lộn mật độ và phát xung laser ngắn ở bước sóng 1064 nm.',
-          formula: '\\lambda_0 = 1064\\,\\text{nm} \\quad (h\\nu_0 \\approx 1.17\\,\\text{eV})',
+            'Diode laser 808 nm bơm kích thích các ion Neodymium trong tinh thể Nd:YVO₄, tạo hiện tượng đảo lộn mật độ và phát xung laser ngắn ở bước sóng 1064 nm.',
+          formula: 'λ₀ = 1064 nm  (hν₀ ≈ 1.17 eV)',
         },
         {
           step: 2,
           name: 'Nhân đôi tần số quang học (SHG - Second Harmonic)',
           description:
             'Chùm tia 1064 nm đi qua tinh thể phi tuyến LBO được căn chỉnh góc pha chính xác, hai photon 1064 nm kết hợp thành một photon 532 nm (bước sóng giảm một nửa).',
-          formula: '\\omega_1 = 2\\omega_0 \\rightarrow \\lambda_1 = 532\\,\\text{nm} \\quad (h\\nu_1 \\approx 2.33\\,\\text{eV})',
+          formula: 'ω₁ = 2ω₀ → λ₁ = 532 nm  (hν₁ ≈ 2.33 eV)',
         },
         {
           step: 3,
           name: 'Trộn tổng tần số (THG - Third Harmonic Generation)',
           description:
             'Chùm tia 532 nm trộn pha với phần còn lại của chùm 1064 nm trong tinh thể phi tuyến thứ hai để sinh ra photon có năng lượng bằng tổng hai photon, tạo ra bước sóng 355 nm.',
-          formula: '\\omega_2 = \\omega_0 + \\omega_1 \\rightarrow \\lambda_2 = 355\\,\\text{nm} \\quad (h\\nu_2 \\approx 3.49\\,\\text{eV})',
+          formula: 'ω₂ = ω₀ + ω₁ → λ₂ = 355 nm  (hν₂ ≈ 3.49 eV)',
         },
         {
           step: 4,
           name: 'Bẻ gãy liên kết phân tử lạnh (Photochemical Ablation)',
           description:
             'Năng lượng photon 3.49 eV lớn hơn năng lượng liên kết của hầu hết các liên kết cộng hóa trị (C-C: 3.6 eV, C-H: 4.3 eV, C-O: 3.7 eV). Vật liệu bị phân ly trực tiếp thành các phân tử khí nhỏ mà không nung nóng chảy, vùng ảnh hưởng nhiệt (HAZ) gần như bằng không.',
+          formula: 'E_photon = 3.49 eV > E_liên_kết (C-C, C-H) → Bẻ gãy quang hóa (Cold Cut)',
         },
       ],
       wavelengthDetails:
@@ -414,25 +415,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Bơm quang học từ Diode bán dẫn',
           description:
-            'Nhiều diode laser bán dẫn công suất cao phát bước sóng 976 nm bơm năng lượng vào vỏ sợi quang kép (Double-clad fiber). Ánh sáng bơm phản xạ toàn phần bên trong và cắt qua lõi pha tạp Ytterbium nhiều lần.',
+            'Nhiều diode laser bán dẫn công suất cao phát bước sóng 976 nm bơm năng lượng vào vỏ sợi quang kép (Double-clad fiber). Ánh sáng bơm phản xạ toàn phần bên trong và cắt qua lõi pha tạp Ytterbium (Yb³⁺) nhiều lần.',
+          formula: 'P_bơm (976 nm) → Yb³⁺ (Kích thích mức ²F₅/₂)',
         },
         {
           step: 2,
           name: 'Khuếch đại photon trong lõi sợi quang (FBG Cavity)',
           description:
-            'Các ion Yb3+ bị kích thích chuyển dời năng lượng và phát ra photon 1064 nm. Cặp cách tử sợi quang FBG ở hai đầu phản hồi chùm photon qua lại hàng triệu lần trong lõi sợi, tạo hiện tượng khuếch đại ánh sáng cảm ứng.',
+            'Các ion Yb³⁺ bị kích thích chuyển dời năng lượng và phát ra photon 1064 nm. Cặp cách tử sợi quang FBG ở hai đầu phản hồi chùm photon qua lại hàng triệu lần trong lõi sợi, tạo hiện tượng khuếch đại ánh sáng cảm ứng.',
+          formula: 'Yb³⁺ (²F₅/₂) + hν → Yb³⁺ (²F₇/₂) + 2hν  (λ = 1064 nm)',
         },
         {
           step: 3,
           name: 'Dẫn truyền qua cáp sợi quang mềm (Beam Delivery)',
           description:
             'Chùm tia laser sau khi ra khỏi buồng cộng hưởng được dẫn trực tiếp qua cáp bọc thép quang học đến đầu khắc mà không cần hệ thống gương chuyển hướng cồng kềnh.',
+          formula: 'TEM₀₀ (M² < 1.1) → Dẫn truyền sợi quang không suy hao',
         },
         {
           step: 4,
           name: 'Điều hướng bằng cặp gương Galvo điện động siêu tốc',
           description:
             'Thay vì dùng cụm trục cơ khí XY nặng nề, chùm tia phản xạ qua 2 gương siêu nhẹ gắn trên trục động cơ servo độ chính xác cao. Chùm tia có thể vẽ ký tự, mã QR hoặc hình ảnh với tốc độ lên đến 7.000 - 12.000 mm/s.',
+          formula: 'v_quét = 7.000 - 12.000 mm/s  (Gương Galvo θ_x, θ_y)',
         },
       ],
       wavelengthDetails:
@@ -538,27 +543,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Đo nhiệt hồng ngoại không tiếp xúc (Định luật Stefan-Boltzmann)',
           description:
-            'Mọi vật thể tại nhiệt độ T phát ra bức xạ nhiệt theo định luật E = ε σ T^4. Cảm biến nhiệt điện trở (Thermopile) thu nhận quang phổ hồng ngoại 5.5 - 14 µm từ điểm gia công và chuyển thành tín hiệu điện áp tỷ lệ với nhiệt độ thực tế mà không cần chạm vào vật.',
-          formula: 'E = \\epsilon \\cdot \\sigma \\cdot T^4 \\quad (\\sigma = 5.67 \\times 10^{-8}\\,\\text{W/m}^2\\text{K}^4)',
+            'Mọi vật thể tại nhiệt độ T phát ra bức xạ nhiệt theo định luật E = ε · σ · T⁴. Cảm biến nhiệt điện trở (Thermopile) thu nhận quang phổ hồng ngoại 5.5 - 14 µm từ điểm gia công và chuyển thành tín hiệu điện áp tỷ lệ với nhiệt độ thực tế mà không cần chạm vào vật.',
+          formula: 'E = ε · σ · T⁴  (σ = 5.67 × 10⁻⁸ W/m²K⁴)',
         },
         {
           step: 2,
           name: 'Giám sát lưu lượng nước giải nhiệt (Hiệu ứng Hall)',
           description:
             'Nước làm mát từ Chiller chảy qua buồng cảm biến làm quay cánh quạt từ tính. Khi các cực từ quét qua chip bán dẫn Hall, điện áp Hall biến thiên sinh ra xung vuông số. Tần số xung tỉ lệ thuận với lưu lượng nước (Lít/phút).',
-          formula: 'V_H = \\frac{I \\cdot B}{n \\cdot e \\cdot t} \\rightarrow f_{\\text{xung}} \\propto Q_{\\text{lưu lượng}}',
+          formula: 'V_H = (I · B) / (n · e · t) → f_xung ∝ Q_lưu_lượng',
         },
         {
           step: 3,
           name: 'Phát hiện khói quang điện (Hiệu ứng tán xạ Tyndall)',
           description:
             'Một diode phát hồng ngoại và một photodiode thu đặt lệch góc nhau 90 độ trong buồng tối chữ Mê cung (Labyrinth). Ở trạng thái bình thường, ánh sáng đi thẳng và không chạm photodiode. Khi có hạt khói/bụi lọt vào buồng, ánh sáng bị tán xạ đập vào photodiode, kích hoạt mạch ngắt khẩn cấp.',
+          formula: 'I_tán_xạ ∝ I₀ · (1 + cos²θ) / λ⁴  (Kích hoạt ngắt khẩn cấp)',
         },
         {
           step: 4,
           name: 'Khóa an toàn nắp máy quang học (Photo-Interrupter Switch)',
           description:
             'Khi nắp bảo vệ máy bị mở, chùm quang hồng ngoại rãnh chữ U bị ngắt, rơ-le an toàn ngắt trực tiếp đường cấp cao áp của nguồn laser trong vòng 10 phần triệu giây (10 µs), ngăn tia laser phát ra khi người dùng đang thao tác tay.',
+          formula: 'Interlock = 0 (Nắp mở) → Ngắt nguồn cao áp Laser trong < 20 ms',
         },
       ],
       wavelengthDetails:
@@ -683,21 +690,21 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           name: 'Phun sương tĩnh điện & Hiệu ứng bao bọc (Electrostatic Wrap-Around)',
           description:
             'Đầu béc súng phun tích điện áp âm (-30kV đến -60kV) vào các hạt sơn khi thoát ra khỏi vòi. Theo định luật Coulomb, các hạt sơn bị hút mãnh liệt về phía phôi nối đất, len lỏi vào cả các rãnh cắt laser và mặt sau mà không bị thất thoát ra không khí.',
-          formula: 'F = k \\cdot \\frac{|q_1 q_2|}{r^2} \\quad (\\text{Lực hút tĩnh điện Coulomb})',
+          formula: 'F = k · (|q₁ · q₂|) / r²  (Lực hút tĩnh điện Coulomb)',
         },
         {
           step: 2,
           name: 'Lực căng bề mặt & Thấm ướt rãnh cắt (Phương trình Young-Dupré)',
           description:
-            'Màng sơn ướt trải đều trên bề mặt phôi nhờ năng lượng tự do bề mặt. Độ thấm ướt tối ưu giúp sơn điền đầy các vi rãnh cắt nhiệt của laser CO2 hoặc vi nứt oxit của laser Fiber mà không để lại bọt khí.',
-          formula: '\\gamma_{SG} = \\gamma_{SL} + \\gamma_{LG} \\cdot \\cos\\theta \\quad (\\theta < 30^\\circ \\text{ thấm ướt hoàn hảo})',
+            'Màng sơn ướt trải đều trên bề mặt phôi nhờ năng lượng tự do bề mặt. Độ thấm ướt tối ưu giúp sơn điền đầy các vi rãnh cắt nhiệt của laser CO₂ hoặc vi nứt oxit của laser Fiber mà không để lại bọt khí.',
+          formula: 'γ_SG = γ_SL + γ_LG · cosθ  (θ < 30°: Thấm ướt hoàn hảo)',
         },
         {
           step: 3,
           name: 'Đóng rắn tức thì bằng tia cực tím (UV Photo-Polymerization)',
           description:
-            'Photon tử ngoại có năng lượng cao E = h*nu bẻ gãy liên kết trong chất kích hoạt quang, tạo các gốc tự do kích hoạt phản ứng trùng hợp chuỗi monome thành mạng lưới polyme liên kết chéo 3 chiều. Màng sơn khô cứng hoàn toàn chỉ sau 3-5 giây mà không làm nóng cong vênh phôi.',
-          formula: 'E = h \\cdot \\nu = \\frac{h \\cdot c}{\\lambda} \\quad (\\lambda = 395\\,\\text{nm})',
+            'Photon tử ngoại có năng lượng cao E = h · ν bẻ gãy liên kết trong chất kích hoạt quang, tạo các gốc tự do kích hoạt phản ứng trùng hợp chuỗi monome thành mạng lưới polyme liên kết chéo 3 chiều. Màng sơn khô cứng hoàn toàn chỉ sau 3-5 giây mà không làm nóng cong vênh phôi.',
+          formula: 'E = h · ν = (h · c) / λ  (λ = 395 nm)',
         },
       ],
       wavelengthDetails:
