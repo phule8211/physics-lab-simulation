@@ -1,4 +1,13 @@
 export type MachineId = 'CO2_LASER' | 'UV_LASER' | 'FIBER_LASER' | 'SENSOR_STATION' | 'COATING_STATION';
+export type SecondFloorStationId =
+  | 'computer_desk'
+  | 'npc_dung'
+  | 'lab_sink'
+  | 'chemical_rack'
+  | 'equipment_rack'
+  | `table_${string}`;
+export type WallSwitchId = 'aptomat_tube_lights' | 'aptomat_ceiling_lamps';
+export type StationId = MachineId | SecondFloorStationId | WallSwitchId;
 
 export type AppMode = 'WALKING' | 'TRANSITIONING' | 'INSPECTING';
 
@@ -39,6 +48,9 @@ export type CoatingFinishId =
   | 'TITANIUM_GOLD'
   | 'NEON_CYAN_GLOW'
   | 'NANO_HYDROPHOBIC';
+
+export type GraphicsQuality = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TargetFps = 30 | 60;
 
 export interface CoatingFinishConfig {
   id: CoatingFinishId;
@@ -90,3 +102,29 @@ export const isThroughCut = (mode: ProcessMode): boolean =>
 export const isSurfaceEngrave = (mode: ProcessMode): boolean =>
   mode === 'surface-engrave' || mode === 'ENGRAVE';
 
+export interface ProcessedJobInfo {
+  machineId: MachineId;
+  machineName: string;
+  wavelength: string;
+  material: string;
+  materialName: string;
+  designName: string;
+  processMode: ProcessMode;
+  powerWatts: number;
+  speedMmS: number;
+  frequencyKhz: number;
+  energyDensityJPerMm: number;
+  kerfWidthMm: number;
+  hazQuality: string;
+  actualDepthMm: number;
+  targetThicknessMm: number;
+  isCutThrough: boolean;
+  cutThroughPercentage: number;
+  pulseOverlapPercent: number;
+  surfaceRoughnessRaUm: number;
+  contrastRatioCm: number;
+  surfaceFinishDescription: string;
+  qualityRating: 'PERFECT' | 'OPTIMAL' | 'ACCEPTABLE' | 'POOR_OVERBURNT' | 'FAILED_UNCUT';
+  scientificFeedback: string;
+  timestamp: number;
+}

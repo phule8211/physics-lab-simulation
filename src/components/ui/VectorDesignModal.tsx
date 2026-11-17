@@ -112,6 +112,15 @@ export function VectorDesignModal() {
     return [Math.max(-0.95, Math.min(0.95, x)), Math.max(-0.95, Math.min(0.95, y))];
   };
 
+  const getTouchPoint = (touch: React.Touch): Point2D => {
+    const canvas = canvasRef.current;
+    if (!canvas) return [0, 0];
+    const rect = canvas.getBoundingClientRect();
+    const x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -(((touch.clientY - rect.top) / rect.height) * 2 - 1);
+    return [Math.max(-0.95, Math.min(0.95, x)), Math.max(-0.95, Math.min(0.95, y))];
+  };
+
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
     const pt = getCanvasPoint(e);
@@ -129,6 +138,30 @@ export function VectorDesignModal() {
   };
 
   const handleMouseUp = () => {
+    if (isDrawing && currentStroke.length > 1) {
+      setStrokes((prev) => [...prev, currentStroke]);
+    }
+    setIsDrawing(false);
+    setCurrentStroke([]);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length === 0) return;
+    setIsDrawing(true);
+    const pt = getTouchPoint(e.touches[0]);
+    setCurrentStroke([pt]);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || e.touches.length === 0) return;
+    const pt = getTouchPoint(e.touches[0]);
+    const last = currentStroke[currentStroke.length - 1];
+    if (!last || Math.hypot(pt[0] - last[0], pt[1] - last[1]) > 0.02) {
+      setCurrentStroke((prev) => [...prev, pt]);
+    }
+  };
+
+  const handleTouchEnd = () => {
     if (isDrawing && currentStroke.length > 1) {
       setStrokes((prev) => [...prev, currentStroke]);
     }
@@ -644,6 +677,10 @@ export function VectorDesignModal() {
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchEnd}
                   className="block touch-none"
                 />
 

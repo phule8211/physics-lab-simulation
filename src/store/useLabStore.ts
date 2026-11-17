@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 import {
   MachineId,
+  StationId,
   AppMode,
   InfoTab,
   CoatingFinishId,
+  ProcessedJobInfo,
+  GraphicsQuality,
+  TargetFps,
   ProcessMode,
   OperatorPPE,
   ChillerStatus,
 } from '../types/lab';
+export type { StationId, MachineId, GraphicsQuality, TargetFps, ProcessMode, OperatorPPE, ChillerStatus };
+import { STATIONS } from '../data/labConfig';
 import { MaterialType, MATERIALS_CATALOG } from '../data/materialsConfig';
 import { COATING_FINISHES } from '../data/coatingFinishes';
 import {
@@ -18,6 +24,7 @@ import {
   autoFitToolpaths,
 } from '../data/vectorDesigns';
 import { sound } from '../utils/audioSystem';
+import { simulateLaserPhysics, getRecommendedParameters, MATERIAL_PHYSICAL_SPECS } from '../utils/laserPhysicsEngine';
 
 export interface ActionToast {
   id: number;
@@ -25,16 +32,36 @@ export interface ActionToast {
   type: 'info' | 'warning' | 'error' | 'success';
 }
 
+export type HeldItemType = 'NONE' | 'WORKPIECE' | 'BEAKER' | 'TEST_TUBE' | 'PIPETTE' | 'CALIPER';
+
+// Shared mutable player world transform for 60 FPS 3D avatars without React render churn
+export const playerWorldState = {
+  x: 0,
+  y: 1.7,
+  z: 5,
+  yaw: 0,
+  moveAngle: 0,
+  isMoving: false,
+  handTapTrigger: 0,
+};
+
 interface LabState {
   // Navigation & Core State
   mode: AppMode;
-  hoveredStationId: MachineId | null;
+  hoveredStationId: StationId | null;
   hoveredDistance: number | null;
   activeStationId: MachineId | null;
   isPointerLocked: boolean;
 
   // Saved transform prior to inspection
   savedPlayerPosition: [number, number, number];
+
+  // 3D Compass & Floor Position HUD State
+  cameraHeading: number; // 0 - 360 degrees
+  playerElevation: number; // ground height in meters (0 on floor 1, 3.06 on floor 2)
+  currentFloor: 1 | 2;
+  setCameraHeading: (heading: number) => void;
+  setPlayerElevation: (elevation: number) => void;
 
   // UI state
   activeTab: InfoTab;
@@ -98,6 +125,31 @@ interface LabState {
   toggleGlovesESD: () => void;
   setGogglesWavelength: (wavelength: string) => void;
 
+  // Laser Process Technology Tuning Parameters (P, v, f)
+  laserPowerWatts: number;
+  scanSpeedMmS: number;
+  pulseFrequencyKhz: number;
+  setLaserPowerWatts: (p: number) => void;
+  setScanSpeedMmS: (v: number) => void;
+  setPulseFrequencyKhz: (f: number) => void;
+  applyRecommendedParameters: () => void;
+  isRationaleModalOpen: boolean;
+  setRationaleModalOpen: (open: boolean) => void;
+
+  // Last Processed Job Snapshot (Guarantees 100% state accuracy in Inspection Modal)
+  lastProcessedJob: ProcessedJobInfo | null;
+
+  // Sensor Station Telemetry & Interactive Fault Injection
+  sampleTemperature: number; // °C (Normal: 26.5, Trip: > 95)
+  chillerFlowRate: number; // L/min (Normal: 4.8, Trip: < 2.0)
+  smokeDensity: number; // ppm (Normal: 5, Trip: > 60)
+  isAlarmBuzzerActive: boolean;
+  setSampleTemperature: (temp: number) => void;
+  setChillerFlowRate: (flow: number) => void;
+  setSmokeDensity: (smoke: number) => void;
+  triggerEmergencyStop: () => void;
+  resetSensors: () => void;
+
   // Spray Coating & Finishing State
   selectedCoatingFinish: CoatingFinishId;
   coatingCoverage: number; // 0 - 100%
@@ -115,8 +167,101 @@ interface LabState {
   resetCoating: () => void;
   toggleTurntable: () => void;
 
+  // Machine Anatomy X-Ray Mode & Bi-directional Component Highlighting
+  isXRayMode: boolean;
+  hoveredComponentId: string | null;
+  setXRayMode: (enabled: boolean) => void;
+  toggleXRayMode: () => void;
+  setHoveredComponentId: (id: string | null) => void;
+
+  // Phase 4: Performance Monitoring & Help Shortcuts Modal
+  isStatsVisible: boolean;
+  toggleStats: () => void;
+  setStatsVisible: (visible: boolean) => void;
+  isHelpModalOpen: boolean;
+  openHelpModal: () => void;
+  closeHelpModal: () => void;
+  toggleHelpModal: () => void;
+
+  // Graphics Quality & Optimization Settings ('LOW' | 'MEDIUM' | 'HIGH' & 30 / 60 FPS)
+  graphicsQuality: GraphicsQuality;
+  setGraphicsQuality: (quality: GraphicsQuality) => void;
+  cycleGraphicsQuality: () => void;
+  targetFps: TargetFps;
+  setTargetFps: (fps: TargetFps) => void;
+  isSettingsModalOpen: boolean;
+  openSettingsModal: () => void;
+  closeSettingsModal: () => void;
+  toggleSettingsModal: () => void;
+
+  // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
+  isNpcDialogOpen: boolean;
+  npcCurrentTopic: string | null;
+  npcDungPosition: [number, number, number];
+  setNpcDungPosition: (pos: [number, number, number]) => void;
+  openNpcDialog: () => void;
+  closeNpcDialog: () => void;
+  setNpcTopic: (topic: string | null) => void;
+
+  // Chemical Reagent Station (HCl, HNO3, H2O2 & Large Beakers)
+  isChemicalModalOpen: boolean;
+  chemicalBeaker: {
+    hcl: number;
+    hno3: number;
+    h2o2: number;
+    water: number;
+    capacity: number;
+  };
+  addChemicalToTestBeaker: (type: 'HCl' | 'HNO3' | 'H2O2' | 'WATER', amount: number) => void;
+  resetChemicalBeaker: () => void;
+  openChemicalModal: () => void;
+  closeChemicalModal: () => void;
+
+  // Lab Glassware & Equipment Rack
+  isEquipmentModalOpen: boolean;
+  collectedEquipment: {
+    beakers: number;
+    testTubes: number;
+    pipettes: number;
+  };
+  takeEquipmentItem: (type: 'BEAKER' | 'TEST_TUBE' | 'PIPETTE') => void;
+  openEquipmentModal: () => void;
+  closeEquipmentModal: () => void;
+
+  // Laboratory Water Sink & Gooseneck Faucet
+  isSinkModalOpen: boolean;
+  sinkWaterFlowRate: number; // 0 - 100%
+  isSinkTapRunning: boolean;
+  setSinkWaterFlowRate: (rate: number) => void;
+  toggleSinkTap: () => void;
+  dispenseWaterIntoBeaker: (amount: number) => void;
+  openSinkModal: () => void;
+  closeSinkModal: () => void;
+
+  // Machine Power Switch State for Floor 1 machines
+  machinePower: Record<MachineId, boolean>;
+  toggleMachinePower: (id: MachineId) => void;
+  setMachinePower: (id: MachineId, on: boolean) => void;
+
+  // Lab Workbench Interaction Modal (Bàn thí nghiệm)
+  isWorkbenchModalOpen: boolean;
+  selectedWorkbenchId: string | null;
+  openWorkbenchModal: (tableId?: string) => void;
+  closeWorkbenchModal: () => void;
+
+  // Phanulab Landing Page State
+  isLandingPageOpen: boolean;
+  openLandingPage: () => void;
+  closeLandingPage: () => void;
+  closeActiveLabUI: () => boolean;
+
+  // Knowledge Sidebar Panel Toggle State
+  isKnowledgePanelCollapsed: boolean;
+  toggleKnowledgePanelCollapsed: () => void;
+  setKnowledgePanelCollapsed: (collapsed: boolean) => void;
+
   // Actions
-  setHoveredStation: (id: MachineId | null, distance?: number | null) => void;
+  setHoveredStation: (id: StationId | null, distance?: number | null) => void;
   setPointerLocked: (locked: boolean) => void;
   enterInspection: (id: MachineId) => void;
   exitInspection: () => void;
@@ -136,6 +281,39 @@ interface LabState {
   clearActionMessage: () => void;
   setActionMessage: (text: string, type?: 'info' | 'warning' | 'error' | 'success') => void;
 
+  // Aptomat Circuit Breaker State (Công tắc Aptomat 4 đèn dài xưởng)
+  isAptomatOn: boolean;
+  toggleAptomat: () => void;
+  setAptomat: (on: boolean) => void;
+
+  // Aptomat Circuit Breaker State cho 8 đèn âm trần
+  isCeilingLampsAptomatOn: boolean;
+  toggleCeilingLampsAptomat: () => void;
+  setCeilingLampsAptomat: (on: boolean) => void;
+
+  // Machine dock dismiss state (tự ẩn cursor khi dừng thao tác máy)
+  isMachineDockDismissed: boolean;
+  dismissMachineDock: () => void;
+  showMachineDock: () => void;
+
+  // Multi-target interaction switching (đổi đối tượng tương tác khi ở gần nhiều vật)
+  nearbyStations: StationId[];
+  activeTargetIndex: number;
+  setNearbyStations: (stations: StationId[]) => void;
+  cycleInteractiveTarget: () => void;
+
+  // Hands & Held Item Manipulation State (Cầm nắm & Thao tác vật dụng trên tay mèo)
+  heldItem: HeldItemType;
+  setHeldItem: (item: HeldItemType) => void;
+
+  teleportTarget: [number, number, number] | null;
+  teleportTo: (pos: [number, number, number]) => void;
+  clearTeleportTarget: () => void;
+
+  // Third-person camera view (Nhìn toàn bộ nhân vật Doraemon)
+  isThirdPersonView: boolean;
+  toggleThirdPersonView: () => void;
+
   // CAD Vector Design actions
   openDesignModal: () => void;
   closeDesignModal: () => void;
@@ -146,18 +324,221 @@ interface LabState {
 
 let toastIdCounter = 0;
 
+const getInitialGraphicsQuality = (): GraphicsQuality => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('phanulab_graphics_quality') as GraphicsQuality | null;
+      if (saved && (saved === 'LOW' || saved === 'MEDIUM' || saved === 'HIGH')) {
+        return saved;
+      }
+      // Low-spec hardware heuristic: low cores or low device memory
+      if (typeof navigator !== 'undefined') {
+        const cores = navigator.hardwareConcurrency || 8;
+        const memory = (navigator as unknown as { deviceMemory?: number }).deviceMemory || 8;
+        if (cores <= 4 || memory <= 4) {
+          return 'LOW';
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 'MEDIUM';
+};
+
+const getInitialTargetFps = (): TargetFps => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('phanulab_target_fps');
+      if (saved === '30' || saved === '60') {
+        return Number(saved) as TargetFps;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return 60;
+};
+
 export const useLabStore = create<LabState>((set, get) => ({
   mode: 'WALKING',
   hoveredStationId: null,
   hoveredDistance: null,
   activeStationId: null,
   isPointerLocked: false,
-  savedPlayerPosition: [0, 1.7, 4],
+  savedPlayerPosition: [0, 1.7, 0],
+
+  // 3D Compass & Floor State
+  cameraHeading: 0,
+  playerElevation: 0,
+  currentFloor: 1,
+  setCameraHeading: (heading: number) => {
+    const current = get().cameraHeading;
+    if (Math.abs(current - heading) >= 1) {
+      set({ cameraHeading: heading });
+    }
+  },
+  setPlayerElevation: (elevation: number) => {
+    const floor = elevation >= 1.8 ? 2 : 1;
+    if (Math.abs(get().playerElevation - elevation) > 0.05 || get().currentFloor !== floor) {
+      set({ playerElevation: elevation, currentFloor: floor });
+    }
+  },
 
   activeTab: 'PHYSICS_PRINCIPLE',
   isMachineRunning: true,
   soundEnabled: true,
 
+  teleportTarget: null,
+  teleportTo: (pos: [number, number, number]) => {
+    sound.playWhoosh();
+    set({ teleportTarget: pos });
+  },
+  clearTeleportTarget: () => set({ teleportTarget: null }),
+
+  // Third-person camera view (Bấm phím 9 để xem toàn bộ Doraemon)
+  isThirdPersonView: false,
+  toggleThirdPersonView: () => {
+    sound.playClick();
+    const next = !get().isThirdPersonView;
+    set({
+      isThirdPersonView: next,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: next
+          ? 'Đã bật góc nhìn toàn thân Doraemon 3D [Phím 9]'
+          : 'Đã quay lại góc nhìn thứ nhất (Tay Doraemon) [Phím 9]',
+        type: 'info',
+      },
+    });
+  },
+
+  // Aptomat Circuit Breaker State (Công tắc Aptomat chiếu sáng xưởng)
+  isAptomatOn: true,
+  toggleAptomat: () => {
+    const next = !get().isAptomatOn;
+    sound.playRelayClick();
+    set({
+      isAptomatOn: next,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: next
+          ? 'ĐÃ ĐÓNG APTOMAT 4 ĐÈN DÀI (ON) — 4 cụm đèn LED tuýp xưởng đã bật nguồn!'
+          : 'ĐÃ NGẮT APTOMAT 4 ĐÈN DÀI (OFF) — 4 cụm đèn LED tuýp xưởng đã ngắt điện an toàn!',
+        type: next ? 'success' : 'warning',
+      },
+    });
+  },
+  setAptomat: (on: boolean) => {
+    sound.playRelayClick();
+    set({
+      isAptomatOn: on,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: on
+          ? 'ĐÃ ĐÓNG APTOMAT 4 ĐÈN DÀI (ON) — 4 cụm đèn LED tuýp xưởng đã bật nguồn!'
+          : 'ĐÃ NGẮT APTOMAT 4 ĐÈN DÀI (OFF) — 4 cụm đèn LED tuýp xưởng đã ngắt điện an toàn!',
+        type: on ? 'success' : 'warning',
+      },
+    });
+  },
+
+  // Aptomat Circuit Breaker State cho 8 đèn âm trần
+  isCeilingLampsAptomatOn: true,
+  toggleCeilingLampsAptomat: () => {
+    const next = !get().isCeilingLampsAptomatOn;
+    sound.playRelayClick();
+    set({
+      isCeilingLampsAptomatOn: next,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: next
+          ? 'ĐÃ ĐÓNG APTOMAT 8 ĐÈN ÂM TRẦN (ON) — 8 cụm đèn trần phòng lab đã bật sáng!'
+          : 'ĐÃ NGẮT APTOMAT 8 ĐÈN ÂM TRẦN (OFF) — 8 cụm đèn trần phòng lab đã ngắt điện an toàn!',
+        type: next ? 'success' : 'warning',
+      },
+    });
+  },
+  setCeilingLampsAptomat: (on: boolean) => {
+    sound.playRelayClick();
+    set({
+      isCeilingLampsAptomatOn: on,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: on
+          ? 'ĐÃ ĐÓNG APTOMAT 8 ĐÈN ÂM TRẦN (ON) — 8 cụm đèn trần phòng lab đã bật sáng!'
+          : 'ĐÃ NGẮT APTOMAT 8 ĐÈN ÂM TRẦN (OFF) — 8 cụm đèn trần phòng lab đã ngắt điện an toàn!',
+        type: on ? 'success' : 'warning',
+      },
+    });
+  },
+
+  // Machine dock dismiss state (tự ẩn cursor khi dừng thao tác máy)
+  isMachineDockDismissed: false,
+  dismissMachineDock: () => {
+    set({ isMachineDockDismissed: true });
+    if (typeof document !== 'undefined') {
+      document.querySelector('canvas')?.requestPointerLock();
+    }
+  },
+  showMachineDock: () => set({ isMachineDockDismissed: false }),
+
+  // Multi-target interaction switching (đổi đối tượng tương tác khi ở gần nhiều vật)
+  nearbyStations: [],
+  activeTargetIndex: 0,
+  setNearbyStations: (stations: StationId[]) => {
+    const prev = get().nearbyStations;
+    const isSame = prev.length === stations.length && prev.every((v, i) => v === stations[i]);
+    if (!isSame) {
+      const currentHovered = get().hoveredStationId;
+      let newIndex = 0;
+      if (currentHovered && stations.includes(currentHovered)) {
+        newIndex = stations.indexOf(currentHovered);
+      } else {
+        newIndex = stations.length > 0 ? Math.min(get().activeTargetIndex, stations.length - 1) : 0;
+      }
+      set({
+        nearbyStations: stations,
+        activeTargetIndex: newIndex,
+        hoveredStationId: stations[newIndex] || null,
+      });
+    }
+  },
+  cycleInteractiveTarget: () => {
+    const list = get().nearbyStations;
+    if (list.length <= 1) return;
+    sound.playClick();
+    const nextIdx = (get().activeTargetIndex + 1) % list.length;
+    set({
+      activeTargetIndex: nextIdx,
+      hoveredStationId: list[nextIdx],
+    });
+  },
+
+  // Hands & Held Item Manipulation State
+  heldItem: 'NONE',
+  setHeldItem: (item: HeldItemType) => {
+    sound.playClick();
+    set({
+      heldItem: item,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text:
+          item === 'NONE'
+            ? '🐾 Đã cất dụng cụ — Đôi tay mèo cam ở trạng thái tự do'
+            : item === 'WORKPIECE'
+            ? '⚙️ Đang cầm trên tay mèo: Mẫu phôi bánh răng cơ khí gia công laser'
+            : item === 'BEAKER'
+            ? '🧪 Đang cầm trên tay mèo: Cốc đong chia vạch Borosilicate 250ml'
+            : item === 'TEST_TUBE'
+            ? '🧬 Đang cầm trên tay mèo: Ống nghiệm thủy tinh quang phổ'
+            : item === 'PIPETTE'
+            ? '💉 Đang cầm trên tay mèo: Ống hút định lượng Micropipette'
+            : '📏 Đang cầm trên tay mèo: Thước kẹp điện tử laser Caliper',
+        type: 'info',
+      },
+    });
+  },
   // Default lid closed, default wood plywood
   isLidOpen: false,
   selectedMaterial: 'WOOD',
@@ -185,6 +566,423 @@ export const useLabStore = create<LabState>((set, get) => ({
     coatCleanroom: true,
   },
 
+  // Laser Process Technology Tuning Parameters (P, v, f)
+  laserPowerWatts: 45,
+  scanSpeedMmS: 12,
+  pulseFrequencyKhz: 10,
+  isRationaleModalOpen: false,
+
+  // Last Processed Job Snapshot (Guarantees 100% state accuracy in Inspection Modal)
+  lastProcessedJob: null,
+
+  // Sensor Station Telemetry & Interactive Fault Injection
+  sampleTemperature: 26.5,
+  chillerFlowRate: 4.8,
+  smokeDensity: 5,
+  isAlarmBuzzerActive: false,
+
+  // Machine Anatomy X-Ray Mode & Bi-directional Component Highlighting
+  isXRayMode: false,
+  hoveredComponentId: null,
+  setXRayMode: (enabled) => set({ isXRayMode: enabled }),
+  toggleXRayMode: () => {
+    sound.playClick();
+    set({ isXRayMode: !get().isXRayMode });
+  },
+  setHoveredComponentId: (id) => set({ hoveredComponentId: id }),
+
+  // Phase 4: Performance Monitoring & Help Shortcuts Modal
+  isStatsVisible: false,
+  toggleStats: () => {
+    sound.playClick();
+    set({ isStatsVisible: !get().isStatsVisible });
+  },
+  setStatsVisible: (visible) => set({ isStatsVisible: visible }),
+  isHelpModalOpen: false,
+  openHelpModal: () => {
+    sound.playClick();
+    set({ isHelpModalOpen: true });
+  },
+  closeHelpModal: () => {
+    sound.playClick();
+    set({ isHelpModalOpen: false });
+  },
+  toggleHelpModal: () => {
+    sound.playClick();
+    set({ isHelpModalOpen: !get().isHelpModalOpen });
+  },
+
+  // Graphics Quality & Optimization Settings ('LOW' | 'MEDIUM' | 'HIGH')
+  graphicsQuality: getInitialGraphicsQuality(),
+  setGraphicsQuality: (quality) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('phanulab_graphics_quality', quality);
+      }
+    } catch {
+      // ignore
+    }
+    const label =
+      quality === 'LOW'
+        ? '⚡ Mượt (Tối ưu cấu hình yếu)'
+        : quality === 'MEDIUM'
+        ? '⚖️ Cân bằng (Mặc định 60 FPS)'
+        : '✨ Đồ họa cao (Đầy đủ hiệu ứng)';
+    set({
+      graphicsQuality: quality,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: `Đồ họa: ${label}`,
+        type: 'info',
+      },
+    });
+  },
+  cycleGraphicsQuality: () => {
+    sound.playClick();
+    const current = get().graphicsQuality;
+    const next: GraphicsQuality =
+      current === 'LOW' ? 'MEDIUM' : current === 'MEDIUM' ? 'HIGH' : 'LOW';
+    get().setGraphicsQuality(next);
+  },
+
+  // Target FPS (30 FPS / 60 FPS)
+  targetFps: getInitialTargetFps(),
+  setTargetFps: (fps) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('phanulab_target_fps', String(fps));
+      }
+    } catch {
+      // ignore
+    }
+    set({
+      targetFps: fps,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: `Khóa tốc độ: ${fps} FPS ${fps === 30 ? '(Tiết kiệm tải GPU)' : '(Mượt mà tiêu chuẩn)'}`,
+        type: 'info',
+      },
+    });
+  },
+
+  // Settings Modal State
+  isSettingsModalOpen: false,
+  openSettingsModal: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isSettingsModalOpen: true });
+  },
+  closeSettingsModal: () => {
+    sound.playClick();
+    set({ isSettingsModalOpen: false });
+  },
+  toggleSettingsModal: () => {
+    sound.playClick();
+    const willOpen = !get().isSettingsModalOpen;
+    if (willOpen && typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isSettingsModalOpen: willOpen });
+  },
+
+  // 2nd Floor Chemistry, Equipment, Sink & NPC Dialog State
+  isNpcDialogOpen: false,
+  npcCurrentTopic: null,
+  npcDungPosition: [-4.6, 3.06, 9.6],
+  setNpcDungPosition: (pos) => set({ npcDungPosition: pos }),
+  openNpcDialog: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isNpcDialogOpen: true, npcCurrentTopic: null });
+  },
+  closeNpcDialog: () => {
+    sound.playClick();
+    set({
+      isNpcDialogOpen: false,
+      npcCurrentTopic: null,
+      hoveredStationId: null,
+      hoveredDistance: null,
+      activeStationId: null,
+    });
+  },
+  closeActiveLabUI: () => {
+    const s = get();
+    let hasClosed = false;
+
+    const isAnyModalOpen =
+      s.isRationaleModalOpen ||
+      s.isNpcDialogOpen ||
+      s.isChemicalModalOpen ||
+      s.isEquipmentModalOpen ||
+      s.isSinkModalOpen ||
+      s.isWorkbenchModalOpen ||
+      s.isDesignModalOpen ||
+      s.isSpecimenModalOpen ||
+      s.isHelpModalOpen ||
+      s.isLandingPageOpen ||
+      s.isSettingsModalOpen;
+
+    if (isAnyModalOpen) {
+      sound.playClick();
+      set({
+        isRationaleModalOpen: false,
+        isNpcDialogOpen: false,
+        npcCurrentTopic: null,
+        isChemicalModalOpen: false,
+        isEquipmentModalOpen: false,
+        isSinkModalOpen: false,
+        isWorkbenchModalOpen: false,
+        selectedWorkbenchId: null,
+        isDesignModalOpen: false,
+        isSpecimenModalOpen: false,
+        isHelpModalOpen: false,
+        isLandingPageOpen: false,
+        isSettingsModalOpen: false,
+        hoveredStationId: null,
+        hoveredDistance: null,
+        activeStationId: null,
+      });
+      hasClosed = true;
+    }
+
+    if (s.mode === 'INSPECTING' || s.activeStationId !== null) {
+      sound.playWhoosh();
+      sound.stopLaserHum();
+      set({
+        mode: 'TRANSITIONING',
+        activeStationId: null,
+        isCuttingJob: false,
+        isXRayMode: false,
+        hoveredComponentId: null,
+        hoveredStationId: null,
+        hoveredDistance: null,
+      });
+      hasClosed = true;
+    }
+
+    s.dismissMachineDock();
+
+    if (hasClosed) {
+      try {
+        const canvas = document.querySelector('canvas');
+        if (canvas && typeof canvas.requestPointerLock === 'function') {
+          const p = canvas.requestPointerLock();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        }
+      } catch {}
+    }
+
+    return hasClosed;
+  },
+  setNpcTopic: (topic) => {
+    sound.playClick();
+    set({ npcCurrentTopic: topic });
+  },
+
+  // Chemical Reagent Station (HCl, HNO3, H2O2 & Large Beakers)
+  isChemicalModalOpen: false,
+  chemicalBeaker: {
+    hcl: 0,
+    hno3: 0,
+    h2o2: 0,
+    water: 0,
+    capacity: 500,
+  },
+  addChemicalToTestBeaker: (type, amount) => {
+    const beaker = get().chemicalBeaker;
+    const currentTotal = beaker.hcl + beaker.hno3 + beaker.h2o2 + beaker.water;
+    const allowed = Math.min(amount, beaker.capacity - currentTotal);
+    if (allowed <= 0) return;
+
+    sound.playLiquidPour();
+    const updated = { ...beaker };
+    if (type === 'HCl') updated.hcl += allowed;
+    else if (type === 'HNO3') updated.hno3 += allowed;
+    else if (type === 'H2O2') updated.h2o2 += allowed;
+    else if (type === 'WATER') updated.water += allowed;
+
+    set({ chemicalBeaker: updated });
+  },
+  resetChemicalBeaker: () => {
+    sound.playClick();
+    set({
+      chemicalBeaker: {
+        hcl: 0,
+        hno3: 0,
+        h2o2: 0,
+        water: 0,
+        capacity: 500,
+      },
+    });
+  },
+  openChemicalModal: () => {
+    sound.playGlassClink();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isChemicalModalOpen: true });
+  },
+  closeChemicalModal: () => {
+    sound.playClick();
+    set({ isChemicalModalOpen: false });
+  },
+
+  // Lab Glassware & Equipment Rack
+  isEquipmentModalOpen: false,
+  collectedEquipment: {
+    beakers: 1,
+    testTubes: 0,
+    pipettes: 1,
+  },
+  takeEquipmentItem: (type) => {
+    sound.playGlassClink();
+    const current = get().collectedEquipment;
+    if (type === 'BEAKER') {
+      set({ collectedEquipment: { ...current, beakers: current.beakers + 1 }, heldItem: 'BEAKER' });
+    } else if (type === 'TEST_TUBE') {
+      set({ collectedEquipment: { ...current, testTubes: current.testTubes + 1 }, heldItem: 'TEST_TUBE' });
+    } else if (type === 'PIPETTE') {
+      set({ collectedEquipment: { ...current, pipettes: current.pipettes + 1 }, heldItem: 'PIPETTE' });
+    }
+  },
+  openEquipmentModal: () => {
+    sound.playGlassClink();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isEquipmentModalOpen: true });
+  },
+  closeEquipmentModal: () => {
+    sound.playClick();
+    set({ isEquipmentModalOpen: false });
+  },
+
+  // Laboratory Water Sink & Gooseneck Faucet
+  isSinkModalOpen: false,
+  sinkWaterFlowRate: 50,
+  isSinkTapRunning: false,
+  setSinkWaterFlowRate: (rate) => {
+    set({ sinkWaterFlowRate: Math.max(0, Math.min(100, rate)) });
+    if (get().isSinkTapRunning) {
+      sound.stopWaterFlow();
+      sound.startWaterFlow(rate / 100);
+    }
+  },
+  toggleSinkTap: () => {
+    const willBeRunning = !get().isSinkTapRunning;
+    if (willBeRunning) {
+      sound.startWaterFlow(get().sinkWaterFlowRate / 100);
+    } else {
+      sound.stopWaterFlow();
+    }
+    set({ isSinkTapRunning: willBeRunning });
+  },
+  dispenseWaterIntoBeaker: (amount) => {
+    sound.startWaterFlow(get().sinkWaterFlowRate / 100);
+    setTimeout(() => {
+      sound.stopWaterFlow();
+      get().addChemicalToTestBeaker('WATER', amount);
+    }, 600);
+  },
+  openSinkModal: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isSinkModalOpen: true });
+  },
+  closeSinkModal: () => {
+    sound.playClick();
+    if (get().isSinkTapRunning) {
+      sound.stopWaterFlow();
+    }
+    set({ isSinkModalOpen: false, isSinkTapRunning: false });
+  },
+
+  // Machine Power Switch State for Floor 1 machines
+  machinePower: {
+    CO2_LASER: true,
+    UV_LASER: true,
+    FIBER_LASER: true,
+    SENSOR_STATION: true,
+    COATING_STATION: true,
+  },
+  toggleMachinePower: (id: MachineId) => {
+    sound.playRelayClick();
+    const current = get().machinePower[id] ?? true;
+    const next = !current;
+    const machineName = STATIONS[id]?.shortName || id;
+
+    set({
+      machinePower: {
+        ...get().machinePower,
+        [id]: next,
+      },
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: next
+          ? `Đã BẬT công tắc nguồn điện động lực cho ${machineName}.`
+          : `Đã TẮT toàn bộ nguồn điện cho ${machineName}.`,
+        type: next ? 'success' : 'warning',
+      },
+    });
+  },
+  setMachinePower: (id: MachineId, on: boolean) => {
+    sound.playRelayClick();
+    set({
+      machinePower: {
+        ...get().machinePower,
+        [id]: on,
+      },
+    });
+  },
+
+  // Lab Workbench Interaction Modal
+  isWorkbenchModalOpen: false,
+  selectedWorkbenchId: null,
+  openWorkbenchModal: (tableId?: string) => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({
+      isWorkbenchModalOpen: true,
+      selectedWorkbenchId: tableId || 'table_1',
+    });
+  },
+  closeWorkbenchModal: () => {
+    sound.playClick();
+    set({
+      isWorkbenchModalOpen: false,
+      selectedWorkbenchId: null,
+    });
+    if (typeof document !== 'undefined') {
+      document.querySelector('canvas')?.requestPointerLock();
+    }
+  },
+
+  // Phanulab Landing Page State
+  isLandingPageOpen: true,
+  openLandingPage: () => {
+    sound.playClick();
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+    set({ isLandingPageOpen: true });
+  },
+  closeLandingPage: () => {
+    sound.playRelayClick();
+    set({ isLandingPageOpen: false });
+    if (typeof document !== 'undefined') {
+      const canvas = document.querySelector('canvas');
+      canvas?.requestPointerLock();
+    }
+  },
+
   // Spray Coating & Finishing State
   selectedCoatingFinish: 'CLEAR_GLOSS',
   coatingCoverage: 0,
@@ -193,12 +991,25 @@ export const useLabStore = create<LabState>((set, get) => ({
   isCuring: false,
   isTurntableRotating: true,
 
+  // Knowledge Sidebar Panel Toggle State
+  isKnowledgePanelCollapsed: false,
+  toggleKnowledgePanelCollapsed: () => {
+    sound.playClick();
+    set((state) => ({ isKnowledgePanelCollapsed: !state.isKnowledgePanelCollapsed }));
+  },
+  setKnowledgePanelCollapsed: (collapsed) => {
+    set({ isKnowledgePanelCollapsed: collapsed });
+  },
+
   setHoveredStation: (id, distance = null) =>
     set({ hoveredStationId: id, hoveredDistance: distance }),
 
   setPointerLocked: (locked) => set({ isPointerLocked: locked }),
 
   enterInspection: (id) => {
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
     sound.playWhoosh();
     setTimeout(() => {
       sound.playRelayClick();
@@ -212,6 +1023,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       activeStationId: id,
       activeTab: 'PHYSICS_PRINCIPLE',
       isCuttingJob: false,
+      isKnowledgePanelCollapsed: false,
     });
   },
 
@@ -224,6 +1036,9 @@ export const useLabStore = create<LabState>((set, get) => ({
       activeStationId: null,
       isCuttingJob: false,
       isDesignModalOpen: false,
+      isXRayMode: false,
+      hoveredComponentId: null,
+      isKnowledgePanelCollapsed: false,
     });
   },
 
@@ -231,7 +1046,12 @@ export const useLabStore = create<LabState>((set, get) => ({
 
   setActiveTab: (tab) => {
     sound.playClick();
-    set({ activeTab: tab });
+    const isComponents = tab === 'COMPONENTS';
+    set({
+      activeTab: tab,
+      isXRayMode: isComponents ? true : get().isXRayMode,
+      hoveredComponentId: null,
+    });
   },
 
   toggleMachineRunning: () => {
@@ -324,6 +1144,10 @@ export const useLabStore = create<LabState>((set, get) => ({
   setSelectedMaterial: (material) => {
     sound.playMaterialPlaceSound();
     const item = MATERIALS_CATALOG[material];
+    const machineId = get().activeStationId || 'CO2_LASER';
+    const mode = get().processMode;
+    const rec = getRecommendedParameters(machineId, material, mode);
+
     set({
       selectedMaterial: material,
       cutProgress: 0,
@@ -331,14 +1155,68 @@ export const useLabStore = create<LabState>((set, get) => ({
       isPartDetached: false,
       actionMessage: {
         id: ++toastIdCounter,
-        text: `Đã đặt phôi: ${item.name} (${item.category}) vào buồng làm việc.`,
+        text: `Đã nạp phôi: ${item.name}! 💡 Khuyến nghị ${rec.standardScenarioCode}: P = ${rec.powerWatts}W, v = ${rec.speedMmS}mm/s, f = ${rec.frequencyKhz}kHz. Bấm "Áp Dụng Chuẩn" trên thanh thông số.`,
         type: 'success',
       },
     });
   },
 
   startCuttingJob: () => {
-    const { isLidOpen, activeStationId, selectedMaterial, currentDesignName } = get();
+    const {
+      isLidOpen,
+      activeStationId,
+      selectedMaterial,
+      currentDesignName,
+      chillerFlowRate,
+      sampleTemperature,
+      smokeDensity,
+    } = get();
+
+    // 0. Safety Sensor Threshold Checks
+    if (chillerFlowRate < 2.0) {
+      sound.playInterlockTripSound();
+      sound.startAlarmBuzzer();
+      set({
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `KHÔNG THỂ PHÁT TIA: Lưu lượng nước làm mát Chiller quá thấp (${chillerFlowRate.toFixed(1)} L/min < 2.0 L/min)! Cảnh báo nổ bóng laser.`,
+          type: 'error',
+        },
+      });
+      return false;
+    }
+
+    if (sampleTemperature > 95) {
+      sound.playInterlockTripSound();
+      sound.startAlarmBuzzer();
+      set({
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `KHÔNG THỂ PHÁT TIA: Cảm biến phát hiện phôi quá nhiệt (${sampleTemperature.toFixed(1)}°C > 95°C)! Nguy cơ cháy nổ.`,
+          type: 'error',
+        },
+      });
+      return false;
+    }
+
+    if (smokeDensity > 60) {
+      sound.playInterlockTripSound();
+      sound.startAlarmBuzzer();
+      set({
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `KHÔNG THỂ PHÁT TIA: Mật độ khói khoang cắt vượt ngưỡng (${smokeDensity.toFixed(0)} ppm > 60 ppm)! Kiểm tra quạt hút.`,
+          type: 'error',
+        },
+      });
+      return false;
+    }
 
     // 1. Safety Interlock check: lid must be closed!
     if (isLidOpen) {
@@ -355,11 +1233,11 @@ export const useLabStore = create<LabState>((set, get) => ({
     }
 
     const machineId = activeStationId || 'CO2_LASER';
-    const matConfig = MATERIALS_CATALOG[selectedMaterial];
-    const interaction = matConfig.interactions[machineId];
+    const matConfig = MATERIALS_CATALOG[selectedMaterial] || MATERIALS_CATALOG.WOOD;
+    const interaction = matConfig?.interactions?.[machineId];
 
     // 2. Physical Reflectivity / Damage check
-    if (interaction.status === 'BLOCKED_REFLECTIVE') {
+    if (interaction && interaction.status === 'BLOCKED_REFLECTIVE') {
       sound.playInterlockTripSound();
       set({
         actionMessage: {
@@ -372,7 +1250,7 @@ export const useLabStore = create<LabState>((set, get) => ({
     }
 
     // 3. Ineffective check
-    if (interaction.status === 'INEFFECTIVE') {
+    if (interaction && interaction.status === 'INEFFECTIVE') {
       sound.playClick();
       set({
         actionMessage: {
@@ -390,6 +1268,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 
     set({
       isCuttingJob: true,
+      isKnowledgePanelCollapsed: true,
       cutProgress: 0,
       isMachineRunning: true,
       interlockTriggered: false,
@@ -405,6 +1284,7 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   stopCuttingJob: () => {
+    sound.stopLaserHum();
     sound.playRelayClick();
     set({
       isCuttingJob: false,
@@ -420,16 +1300,63 @@ export const useLabStore = create<LabState>((set, get) => ({
   setCutProgress: (progress) => {
     const prev = get().cutProgress;
     if (prev < 100 && progress >= 100) {
+      const machineId = get().activeStationId || 'CO2_LASER';
+      const station = STATIONS[machineId] || STATIONS.CO2_LASER;
+      const mat = MATERIALS_CATALOG[get().selectedMaterial];
+      const p = get().laserPowerWatts;
+      const v = Math.max(1, get().scanSpeedMmS);
+      const f = get().pulseFrequencyKhz;
+      const mode = get().processMode;
+
+      // Dynamic Laser Physics Simulation according to PDF Equations
+      const sim = simulateLaserPhysics(p, v, f, machineId, get().selectedMaterial, mode);
+
+      const job: ProcessedJobInfo = {
+        machineId,
+        machineName: station.name,
+        wavelength: station.wavelength,
+        material: get().selectedMaterial,
+        materialName: mat.name,
+        designName: get().currentDesignName,
+        processMode: mode,
+        powerWatts: p,
+        speedMmS: v,
+        frequencyKhz: f,
+        energyDensityJPerMm: sim.energyDensityJPerMm,
+        kerfWidthMm: sim.kerfWidthMm,
+        hazQuality: sim.hazQuality,
+        actualDepthMm: sim.actualDepthMm,
+        targetThicknessMm: sim.targetThicknessMm,
+        isCutThrough: sim.isCutThrough,
+        cutThroughPercentage: sim.cutThroughPercentage,
+        pulseOverlapPercent: sim.pulseOverlapPercent,
+        surfaceRoughnessRaUm: sim.surfaceRoughnessRaUm,
+        contrastRatioCm: sim.contrastRatioCm,
+        surfaceFinishDescription: sim.surfaceFinishDescription,
+        qualityRating: sim.qualityRating,
+        scientificFeedback: sim.scientificFeedback,
+        timestamp: Date.now(),
+      };
+
+      sound.stopLaserHum();
       sound.playCutCompleteSound();
-      const mat = MATERIALS_CATALOG[get().selectedMaterial].name;
-      const design = get().currentDesignName;
+
+      let toastText = `HOÀN THÀNH: Đã gia công xong "${job.designName}" trên ${mat.name}! Nhấn [G] hoặc nhấp nút để lấy mẫu ra kiểm tra.`;
+      let toastType: 'success' | 'warning' = 'success';
+
+      if (mode === 'CUT' && !sim.isCutThrough) {
+        toastText = `CẢNH BÁO: Đã chạy xong nhưng VẾT CẮT CHƯA ĐỨT PHÔI (độ sâu ${sim.actualDepthMm}mm / ${sim.targetThicknessMm}mm - ${sim.cutThroughPercentage}%)! Chi tiết bị dính kẹt. Nhấn [G] xem mẫu.`;
+        toastType = 'warning';
+      }
+
       set({
         cutProgress: 100,
         isCuttingJob: false,
+        lastProcessedJob: job,
         actionMessage: {
           id: ++toastIdCounter,
-          text: `HOÀN THÀNH: Đã gia công xong "${design}" trên ${mat}! Nhấn [G] hoặc nhấp nút để lấy mẫu ra kiểm tra.`,
-          type: 'success',
+          text: toastText,
+          type: toastType,
         },
       });
       return;
@@ -438,8 +1365,9 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   openSpecimenModal: () => {
+    sound.stopLaserHum();
     sound.playClick();
-    set({ isSpecimenModalOpen: true });
+    set({ isSpecimenModalOpen: true, heldItem: 'WORKPIECE' });
   },
 
   closeSpecimenModal: () => {
@@ -478,6 +1406,7 @@ export const useLabStore = create<LabState>((set, get) => ({
   // VECTOR CAD DESIGN ACTIONS
   // =========================================================================
   openDesignModal: () => {
+    sound.stopLaserHum();
     sound.playClick();
     set({ isDesignModalOpen: true });
   },
@@ -682,6 +1611,18 @@ export const useLabStore = create<LabState>((set, get) => ({
   togglePartDetached: () => {
     const next = !get().isPartDetached;
     if (next) {
+      const job = get().lastProcessedJob;
+      if (job && job.processMode === 'CUT' && !job.isCutThrough) {
+        sound.playInterlockTripSound();
+        set({
+          actionMessage: {
+            id: ++toastIdCounter,
+            text: `KHÔNG THỂ NHẤC RỜI: Vết cắt chưa đứt phôi (độ sâu ${job.actualDepthMm}mm / ${job.targetThicknessMm}mm - ${job.cutThroughPercentage}%)! Chi tiết bị dính kẹt trong phôi. Tăng P hoặc giảm v để cắt xuyên.`,
+            type: 'warning',
+          },
+        });
+        return;
+      }
       sound.playRelayClick();
     } else {
       sound.playMaterialPlaceSound();
@@ -699,6 +1640,158 @@ export const useLabStore = create<LabState>((set, get) => ({
   },
 
   setPartDetached: (detached: boolean) => set({ isPartDetached: detached }),
+
+  // =========================================================================
+  // LASER PROCESS TECHNOLOGY TUNING PARAMETERS (P, v, f)
+  // =========================================================================
+  setLaserPowerWatts: (p: number) => set({ laserPowerWatts: Math.max(1, Math.min(100, p)) }),
+  setScanSpeedMmS: (v: number) => set({ scanSpeedMmS: Math.max(1, Math.min(1000, v)) }),
+  setPulseFrequencyKhz: (f: number) => set({ pulseFrequencyKhz: Math.max(1, Math.min(100, f)) }),
+
+  applyRecommendedParameters: () => {
+    const machineId = get().activeStationId || 'CO2_LASER';
+    const material = get().selectedMaterial;
+    const mode = get().processMode;
+    const rec = getRecommendedParameters(machineId, material, mode);
+    sound.playClick();
+    set({
+      laserPowerWatts: rec.powerWatts,
+      scanSpeedMmS: rec.speedMmS,
+      pulseFrequencyKhz: rec.frequencyKhz,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: `ĐÃ ÁP DỤNG THÔNG SỐ CHUẨN: P = ${rec.powerWatts}W, v = ${rec.speedMmS}mm/s, f = ${rec.frequencyKhz}kHz (${rec.standardScenarioCode}).`,
+        type: 'success',
+      },
+    });
+  },
+
+  setRationaleModalOpen: (open: boolean) => set({ isRationaleModalOpen: open }),
+
+  // =========================================================================
+  // SENSOR STATION TELEMETRY & FAULT INJECTION ACTIONS
+  // =========================================================================
+  setSampleTemperature: (temp: number) => {
+    const isTripped = temp > 95;
+    if (isTripped && !get().isAlarmBuzzerActive) {
+      sound.startAlarmBuzzer();
+    } else if (!isTripped && get().chillerFlowRate >= 2.0 && get().smokeDensity <= 60) {
+      sound.stopAlarmBuzzer();
+    }
+    if (isTripped && get().isCuttingJob) {
+      sound.playInterlockTripSound();
+      sound.stopLaserHum();
+      set({
+        sampleTemperature: temp,
+        isCuttingJob: false,
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `CẢNH BÁO NHIỆT ĐỘ: Cảm biến phát hiện phôi quá nhiệt (${temp.toFixed(1)}°C > 95°C)! Đã tự động ngắt phát tia laser.`,
+          type: 'error',
+        },
+      });
+      return;
+    }
+    set({
+      sampleTemperature: temp,
+      isAlarmBuzzerActive: isTripped || get().chillerFlowRate < 2.0 || get().smokeDensity > 60,
+    });
+  },
+
+  setChillerFlowRate: (flow: number) => {
+    const isTripped = flow < 2.0;
+    if (isTripped && !get().isAlarmBuzzerActive) {
+      sound.startAlarmBuzzer();
+    } else if (!isTripped && get().sampleTemperature <= 95 && get().smokeDensity <= 60) {
+      sound.stopAlarmBuzzer();
+    }
+    if (isTripped && get().isCuttingJob) {
+      sound.playInterlockTripSound();
+      sound.stopLaserHum();
+      set({
+        chillerFlowRate: flow,
+        isCuttingJob: false,
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `CẢNH BÁO LƯU LƯỢNG NƯỚC: Nước giải nhiệt Chiller tụt dưới 2.0 L/min (${flow.toFixed(1)} L/min)! Khóa liên động đã ngắt nguồn laser.`,
+          type: 'error',
+        },
+      });
+      return;
+    }
+    set({
+      chillerFlowRate: flow,
+      isAlarmBuzzerActive: isTripped || get().sampleTemperature > 95 || get().smokeDensity > 60,
+    });
+  },
+
+  setSmokeDensity: (smoke: number) => {
+    const isTripped = smoke > 60;
+    if (isTripped && !get().isAlarmBuzzerActive) {
+      sound.startAlarmBuzzer();
+    } else if (!isTripped && get().sampleTemperature <= 95 && get().chillerFlowRate >= 2.0) {
+      sound.stopAlarmBuzzer();
+    }
+    if (isTripped && get().isCuttingJob) {
+      sound.playInterlockTripSound();
+      sound.stopLaserHum();
+      set({
+        smokeDensity: smoke,
+        isCuttingJob: false,
+        interlockTriggered: true,
+        isAlarmBuzzerActive: true,
+        actionMessage: {
+          id: ++toastIdCounter,
+          text: `CẢNH BÁO MẬT ĐỘ KHÓI: Cảm biến Tyndall phát hiện khói đậm đặc (${smoke.toFixed(0)} ppm > 60 ppm)! Đã ngắt tia laser khẩn cấp.`,
+          type: 'error',
+        },
+      });
+      return;
+    }
+    set({
+      smokeDensity: smoke,
+      isAlarmBuzzerActive: isTripped || get().sampleTemperature > 95 || get().chillerFlowRate < 2.0,
+    });
+  },
+
+  triggerEmergencyStop: () => {
+    sound.playInterlockTripSound();
+    sound.stopLaserHum();
+    sound.startAlarmBuzzer();
+    set({
+      isMachineRunning: false,
+      isCuttingJob: false,
+      cutProgress: 0,
+      interlockTriggered: true,
+      isAlarmBuzzerActive: true,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: 'DỪNG KHẨN CẤP (E-STOP): Đã ngắt toàn bộ nguồn cao áp, hệ thống laser và chiller!',
+        type: 'error',
+      },
+    });
+  },
+
+  resetSensors: () => {
+    sound.stopAlarmBuzzer();
+    sound.playClick();
+    set({
+      sampleTemperature: 26.5,
+      chillerFlowRate: 4.8,
+      smokeDensity: 5,
+      isAlarmBuzzerActive: false,
+      interlockTriggered: false,
+      actionMessage: {
+        id: ++toastIdCounter,
+        text: 'Hệ thống cảm biến đã được reset về trạng thái định mức bình thường.',
+        type: 'success',
+      },
+    });
+  },
 
   // =========================================================================
   // SPRAY COATING & UV CURING FINISHING ACTIONS
@@ -719,7 +1812,7 @@ export const useLabStore = create<LabState>((set, get) => ({
 
   startSpraying: () => {
     sound.startSpraySound();
-    set({ isSpraying: true });
+    set({ isSpraying: true, isKnowledgePanelCollapsed: true });
   },
 
   stopSpraying: () => {
@@ -751,6 +1844,7 @@ export const useLabStore = create<LabState>((set, get) => ({
     sound.playRelayClick();
     set({
       isCuring: true,
+      isKnowledgePanelCollapsed: true,
       actionMessage: {
         id: ++toastIdCounter,
         text: 'Đang kích hoạt dàn đèn sấy quang hóa UV (395nm) & Hồng ngoại sấy khô bề mặt...',

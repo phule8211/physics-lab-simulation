@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLabStore } from '../../store/useLabStore';
 import { PHYSICS_DATA } from '../../data/physicsData';
+import { STATIONS } from '../../data/labConfig';
 import { InfoTab } from '../../types/lab';
 import { MATERIALS_CATALOG, MaterialType } from '../../data/materialsConfig';
 import { SpectrumVisualizer } from './SpectrumVisualizer';
@@ -22,6 +23,12 @@ import {
   DoorClosed,
   Square,
   Sparkles,
+  Scan,
+  Eye,
+  ChevronRight,
+  ChevronLeft,
+  BookOpen,
+  PanelRightClose,
 } from 'lucide-react';
 
 function formatFormula(raw: string) {
@@ -59,6 +66,13 @@ export function KnowledgePanel() {
     cutProgress,
     startCuttingJob,
     stopCuttingJob,
+    isXRayMode,
+    toggleXRayMode,
+    hoveredComponentId,
+    setHoveredComponentId,
+    isKnowledgePanelCollapsed,
+    toggleKnowledgePanelCollapsed,
+    setKnowledgePanelCollapsed,
   } = useLabStore();
 
   // Ensure pointer lock is released when entering station inspection so user has cursor to scroll & click tabs
@@ -72,6 +86,29 @@ export function KnowledgePanel() {
 
   const data = PHYSICS_DATA[activeStationId];
   if (!data) return null;
+  const stationConfig = STATIONS[activeStationId];
+
+  // If collapsed: show compact, unobtrusive floating button to reopen anytime
+  if (isKnowledgePanelCollapsed) {
+    return (
+      <div className="pointer-events-auto fixed top-20 right-4 z-50 flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
+        <button
+          onClick={() => setKnowledgePanelCollapsed(false)}
+          className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-lab-cyan border border-lab-cyan/50 shadow-2xl shadow-cyan-950/60 backdrop-blur-xl transition-all duration-200 hover:scale-105 active:scale-95 group cursor-pointer"
+          title="Mở lại bảng thông tin lý thuyết & cấu tạo máy [Phím Tab]"
+        >
+          <BookOpen className="w-4 h-4 text-lab-cyan group-hover:rotate-6 transition-transform" />
+          <span className="text-xs font-bold text-white tracking-wide">
+            {stationConfig?.shortName || data.title}
+          </span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300">
+            Tab
+          </span>
+          <ChevronLeft className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-300 group-hover:-translate-x-0.5 transition-transform" />
+        </button>
+      </div>
+    );
+  }
 
   const tabs: { id: InfoTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'PHYSICS_PRINCIPLE', label: 'Nguyên Lý Hoạt Động', icon: Zap },
@@ -85,15 +122,26 @@ export function KnowledgePanel() {
       aria-label={`Bảng tri thức chi tiết: ${data.title}`}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
       className="pointer-events-auto fixed inset-y-0 right-0 w-full md:w-[540px] lg:w-[620px] z-50 flex flex-col bg-slate-900/95 backdrop-blur-2xl border-l border-slate-700/80 shadow-2xl text-slate-100 animate-in slide-in-from-right duration-300 select-text"
     >
+      {/* Quick Collapse Tab Handle on left border */}
+      <button
+        onClick={() => setKnowledgePanelCollapsed(true)}
+        className="absolute -left-9 top-24 z-50 p-2 rounded-l-xl bg-slate-900/95 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border-l border-y border-slate-700/80 shadow-xl backdrop-blur-xl transition-all duration-150 cursor-pointer flex items-center justify-center group"
+        title="Thu gọn bảng thông tin để xem rõ máy cắt [Phím Tab]"
+        aria-label="Thu gọn bảng thông tin"
+      >
+        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+      </button>
+
       {/* =========================================================================
           1. HEADER
          ========================================================================= */}
       <header className="p-5 border-b border-slate-800 bg-slate-950/60 relative flex-shrink-0">
         {/* Top Badges */}
-        <div className="flex flex-wrap items-center gap-2 mb-2 pr-12">
+        <div className="flex flex-wrap items-center gap-2 mb-2 pr-36 sm:pr-40">
           <span
             className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border"
             style={{
@@ -110,7 +158,7 @@ export function KnowledgePanel() {
         </div>
 
         {/* Title & Subtitle */}
-        <h2 className="text-xl font-bold tracking-tight text-white mb-1">
+        <h2 className="text-xl font-bold tracking-tight text-white mb-1 pr-28">
           {data.title}
         </h2>
         <p className="text-xs text-lab-muted leading-relaxed">
@@ -123,15 +171,33 @@ export function KnowledgePanel() {
           <span>{data.inventorInfo}</span>
         </div>
 
-        {/* Close Button [X] */}
-        <button
-          onClick={exitInspection}
-          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-200 border border-slate-700 hover:border-slate-500"
-          aria-label="Đóng bảng kiến thức và quay lại xưởng"
-          title="Đóng (ESC)"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Header Action Buttons: Collapse [Tab] + Close [ESC/X] */}
+        <div className="absolute top-4 right-4 flex items-center space-x-2">
+          {/* Collapse Button (stays in machine inspection) */}
+          <button
+            onClick={() => setKnowledgePanelCollapsed(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 transition-all duration-150 border border-slate-700 hover:border-cyan-500/50 flex items-center space-x-1.5 text-xs font-medium cursor-pointer"
+            title="Thu gọn bảng thông tin để quan sát mô phỏng 3D [Phím Tab]"
+          >
+            <PanelRightClose className="w-4 h-4 text-cyan-400" />
+            <span className="hidden sm:inline">Thu gọn</span>
+            <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
+              Tab
+            </kbd>
+          </button>
+
+          {/* Close & Exit to Workshop Button */}
+          <button
+            onClick={() => {
+              useLabStore.getState().closeActiveLabUI();
+            }}
+            className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-all duration-150 border border-slate-700 hover:border-rose-500/50 cursor-pointer"
+            aria-label="Đóng bảng kiến thức và quay lại xưởng (Phím X / ESC)"
+            title="Quay lại xưởng (X / ESC)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
         {/* Toggle Simulation Run */}
         <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-slate-800/60">
@@ -301,10 +367,43 @@ export function KnowledgePanel() {
         )}
 
         {/* =====================================================================
-            TAB 2: CẤU TẠO CHI TIẾT BỘ PHẬN (COMPONENTS)
+            TAB 2: CẤU TẠO CHI TIẾT BỘ PHẬN (COMPONENTS) - X-RAY ANATOMY MODE
            ===================================================================== */}
         {activeTab === 'COMPONENTS' && (
-          <div className="space-y-6">
+          <div className="space-y-5">
+            {/* X-Ray Anatomy Mode Interactive Banner */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/60 to-slate-900 border border-cyan-500/40 flex items-center justify-between shadow-xl">
+              <div className="flex items-center space-x-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${
+                  isXRayMode ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 animate-pulse' : 'bg-slate-800 border-slate-700 text-slate-400'
+                }`}>
+                  <Scan className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white flex items-center space-x-1.5">
+                    <span>Chế Độ Giải Phẫu Máy (X-Ray View)</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">3D</span>
+                  </span>
+                  <span className="text-[11px] text-cyan-200 block">
+                    {isXRayMode ? 'Vỏ máy đang trong suốt • Rê chuột vào linh kiện bên dưới để soi vị trí 3D' : 'Vỏ máy đóng kín • Bấm nút bên cạnh để xem quang học bên trong'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={toggleXRayMode}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all border active:scale-95 flex items-center space-x-1.5 ${
+                  isXRayMode
+                    ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border-cyan-300 shadow-md shadow-cyan-950/50'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                }`}
+                title="Bật / tắt chế độ nhìn xuyên thấu buồng máy 3D"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>{isXRayMode ? 'BẬT X-RAY' : 'TẮT'}</span>
+              </button>
+            </div>
+
             {data.components.map((group, groupIndex) => (
               <section key={groupIndex} className="space-y-3">
                 <h3 className="text-sm font-bold text-white flex items-center space-x-2">
@@ -313,32 +412,56 @@ export function KnowledgePanel() {
                 </h3>
 
                 <div className="space-y-2.5">
-                  {group.parts.map((part, partIndex) => (
-                    <div
-                      key={partIndex}
-                      className="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-slate-700 transition-all duration-200 space-y-1.5"
-                    >
-                      <div className="flex flex-wrap items-baseline justify-between gap-1">
-                        <span className="font-bold text-white text-xs sm:text-sm">
-                          {part.name}
-                        </span>
-                        <span className="text-[11px] font-mono text-slate-400">
-                          {part.englishName}
-                        </span>
-                      </div>
+                  {group.parts.map((part, partIndex) => {
+                    const isHovered = hoveredComponentId === part.name || hoveredComponentId === part.englishName;
 
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        {part.description}
-                      </p>
-
-                      {part.materialOrSpec && (
-                        <div className="pt-1.5 flex items-center space-x-1.5 text-[11px] text-lab-cyan font-mono">
-                          <span className="text-slate-400 font-sans">Quy cách:</span>
-                          <span>{part.materialOrSpec}</span>
+                    return (
+                      <div
+                        key={partIndex}
+                        onMouseEnter={() => setHoveredComponentId(part.name)}
+                        onMouseLeave={() => setHoveredComponentId(null)}
+                        className={`p-3.5 rounded-xl border transition-all duration-200 space-y-1.5 cursor-pointer ${
+                          isHovered
+                            ? 'bg-cyan-950/50 border-cyan-400 shadow-lg shadow-cyan-950/50 ring-1 ring-cyan-400/60 scale-[1.01]'
+                            : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/50'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-baseline justify-between gap-1">
+                          <span className={`font-bold text-xs sm:text-sm ${isHovered ? 'text-cyan-300' : 'text-white'}`}>
+                            {part.name}
+                          </span>
+                          <span className="text-[11px] font-mono text-slate-400">
+                            {part.englishName}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {part.description}
+                        </p>
+
+                        <div className="pt-1.5 flex items-center justify-between text-[11px] font-mono border-t border-slate-800/60">
+                          {part.materialOrSpec ? (
+                            <div className="text-lab-cyan">
+                              <span className="text-slate-400 font-sans">Quy cách: </span>
+                              <span>{part.materialOrSpec}</span>
+                            </div>
+                          ) : (
+                            <span />
+                          )}
+
+                          {isHovered ? (
+                            <span className="text-cyan-300 font-bold flex items-center space-x-1 animate-pulse">
+                              <span>⚡ ĐANG PHÁT SÁNG TRONG MÁY 3D</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 text-[10px] flex items-center space-x-1">
+                              <span>Rê chuột để soi 3D</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             ))}
@@ -491,7 +614,12 @@ export function KnowledgePanel() {
                   <div className="grid grid-cols-3 gap-1.5">
                     {(['WOOD', 'ACRYLIC', 'STEEL', 'ALUMINUM', 'SILICON', 'GLASS'] as MaterialType[]).map((matKey) => {
                       const matItem = MATERIALS_CATALOG[matKey];
-                      const inter = matItem.interactions[activeStationId];
+                      const inter = matItem?.interactions?.[activeStationId] || {
+                        status: 'COMPATIBLE' as const,
+                        statusText: 'KHẢ DỤNG',
+                        badgeColor: '#10b981',
+                        effectDescription: 'Tương thích gia công tiêu chuẩn.',
+                      };
                       const isSel = selectedMaterial === matKey;
 
                       return (
@@ -507,9 +635,9 @@ export function KnowledgePanel() {
                           <div className="flex items-center space-x-1.5 font-medium">
                             <span
                               className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: matItem.color }}
+                              style={{ backgroundColor: matItem?.color || '#cbd5e1' }}
                             />
-                            <span className="truncate">{matItem.name.split(' ')[0]}</span>
+                            <span className="truncate">{matItem?.name ? matItem.name.split(' ')[0] : matKey}</span>
                           </div>
                           <span
                             className="text-[9px] font-mono mt-1 font-semibold truncate"
@@ -532,15 +660,15 @@ export function KnowledgePanel() {
                     <span
                       className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded"
                       style={{
-                        color: MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.badgeColor,
-                        backgroundColor: `${MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.badgeColor}20`,
+                        color: MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.badgeColor || '#10b981',
+                        backgroundColor: `${MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.badgeColor || '#10b981'}20`,
                       }}
                     >
-                      {MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.statusText}
+                      {MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.statusText || 'KHẢ DỤNG'}
                     </span>
                   </div>
                   <p className="text-slate-300 text-[11px] leading-relaxed">
-                    {MATERIALS_CATALOG[selectedMaterial]?.interactions[activeStationId]?.effectDescription}
+                    {MATERIALS_CATALOG[selectedMaterial]?.interactions?.[activeStationId]?.effectDescription || 'Tương thích hoạt động bình thường.'}
                   </p>
                 </div>
               </div>
@@ -617,7 +745,10 @@ export function KnowledgePanel() {
           Phím tắt: <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-lab-cyan">ESC</kbd> để thoát
         </span>
         <button
-          onClick={exitInspection}
+          onClick={() => {
+            exitInspection();
+            document.querySelector('canvas')?.requestPointerLock();
+          }}
           className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-all duration-200 border border-slate-700 active:scale-95"
         >
           Quay lại xưởng
