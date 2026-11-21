@@ -45,10 +45,13 @@ import {
   LayoutGrid,
   Activity,
   CheckCircle,
+  Eye,
 } from 'lucide-react';
 
 export function MachineControlOverlay() {
   const [laserStep, setLaserStep] = React.useState<1 | 2 | 3 | 4>(1);
+  const [coatingStep, setCoatingStep] = React.useState<1 | 2 | 3 | 4>(1);
+  const [sensorStep, setSensorStep] = React.useState<1 | 2 | 3>(1);
   const [dockViewMode, setDockViewMode] = React.useState<'GUIDED' | 'PRO'>('GUIDED');
   const {
     mode,
@@ -180,7 +183,7 @@ export function MachineControlOverlay() {
   }
 
   // =========================================================================
-  // SENSOR STATION FAULT INJECTION & SAFETY DOCK
+  // SENSOR STATION FAULT INJECTION & SAFETY DOCK (STEP-BY-STEP WORKFLOW)
   // =========================================================================
   if (currentStationId === 'SENSOR_STATION') {
     const isFlowTripped = chillerFlowRate < 2.0;
@@ -201,12 +204,14 @@ export function MachineControlOverlay() {
         <CursorGuideBanner isPointerLocked={isPointerLocked} isCuttingJob={isCuttingJob} />
 
         <section
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
           aria-label="Bảng giả lập sự cố cảm biến và ngắt khẩn cấp"
           className="glass-panel w-full max-w-4xl rounded-2xl border border-slate-700/80 shadow-2xl p-3 md:p-4 pointer-events-auto text-slate-100 flex flex-col gap-3 backdrop-blur-xl bg-slate-950/85"
         >
           {/* Offline Power Warning Banner */}
           {!machinePower['SENSOR_STATION'] && (
-            <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-600/70 flex items-center justify-between mb-2">
+            <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-600/70 flex items-center justify-between mb-1">
               <div className="flex items-center space-x-2 text-rose-300 text-xs font-semibold">
                 <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
                 <span>TRẠM CẢM BIẾN ĐANG TẮT NGUỒN. Hãy bật công tắc nguồn để kích hoạt telemetry và interlock.</span>
@@ -226,17 +231,17 @@ export function MachineControlOverlay() {
             <div className="flex items-center space-x-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               <h3 className="text-xs md:text-sm font-bold tracking-wide text-white uppercase font-mono">
-                BẢNG GIẢ LẬP SỰ CỐ AN TOÀN (FAULT INJECTION)
+                TRẠM CẢM BIẾN & KHÓA LIÊN ĐỘNG AN TOÀN
               </h3>
               <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700">
-                ACTIVE HARDWARE INTERLOCK
+                SAFETY TELEMETRY & INTERLOCK
               </span>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 font-mono text-xs">
               <button
                 onClick={() => toggleMachinePower('SENSOR_STATION')}
-                className={`flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-semibold transition-all active:scale-95 ${
+                className={`flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-semibold transition-all active:scale-95 font-sans ${
                   machinePower['SENSOR_STATION']
                     ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-rose-500/20 hover:border-rose-500/50'
                     : 'bg-rose-500/25 border-rose-500/70 text-rose-300 hover:bg-emerald-500/20 hover:border-emerald-500/50'
@@ -246,141 +251,400 @@ export function MachineControlOverlay() {
                 <Power className={`w-3.5 h-3.5 ${machinePower['SENSOR_STATION'] ? 'text-emerald-400' : 'text-rose-400'}`} />
                 <span>{machinePower['SENSOR_STATION'] ? 'Nguồn: BẬT' : 'Nguồn: TẮT'}</span>
               </button>
-              {hasAnyFault ? (
-                <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/60 text-rose-300 text-xs font-mono font-bold animate-pulse">
-                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-                  <span>SỰ CỐ KÍCH HOẠT: INTERLOCK NGẮT TIA LASER</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-semibold">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>CẢM BIẾN ĐỊNH MỨC AN TOÀN</span>
-                </div>
+
+              {activeStationId && (
+                <button
+                  onClick={toggleKnowledgePanelCollapsed}
+                  className={`flex items-center space-x-1 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all active:scale-95 font-sans ${
+                    !isKnowledgePanelCollapsed
+                      ? 'bg-lab-cyan/20 border-lab-cyan/60 text-lab-cyan shadow-sm shadow-cyan-950/40'
+                      : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                  }`}
+                  title="Bật/Tắt bảng lý thuyết trạm [Phím Tab]"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Lý thuyết</span>
+                  <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-700">Tab</kbd>
+                </button>
               )}
 
               <button
                 onClick={handleStopUsingMachine}
-                className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/90 hover:bg-rose-500/25 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all active:scale-95"
+                className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/90 hover:bg-rose-500/25 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all active:scale-95 font-sans"
                 title="Dừng thao tác máy & Ẩn con trỏ chuột (ESC hoặc phím di chuyển WASD)"
               >
                 <Power className="w-3.5 h-3.5 text-rose-400" />
-                <span className="hidden sm:inline">Dừng dùng máy</span>
+                <span className="hidden sm:inline">Thoát</span>
                 <kbd className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-700 text-slate-400 font-mono">ESC</kbd>
               </button>
             </div>
           </div>
 
-          {/* Interactive Fault Injection Sliders */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* 1. Chiller Flow Slider */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
-              isFlowTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
-            }`}>
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
-                  <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Nước làm mát Chiller:</span>
-                </span>
-                <span className={`font-mono font-bold ${isFlowTripped ? 'text-rose-400' : 'text-cyan-300'}`}>
-                  {chillerFlowRate.toFixed(1)} L/min
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0.5"
-                max="6.0"
-                step="0.1"
-                value={chillerFlowRate}
-                onChange={(e) => setChillerFlowRate(parseFloat(e.target.value))}
-                className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-              />
-              <span className="text-[10px] mt-1.5 font-mono text-slate-400">
-                {isFlowTripped ? '⚠️ Dưới 2.0 L/min: Nguy cơ nổ bóng!' : '✓ Ngưỡng an toàn ≥ 2.0 L/min'}
-              </span>
-            </div>
-
-            {/* 2. Workpiece Temperature Slider */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
-              isTempTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
-            }`}>
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
-                  <Thermometer className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Nhiệt độ phôi cắt:</span>
-                </span>
-                <span className={`font-mono font-bold ${isTempTripped ? 'text-rose-400' : 'text-amber-300'}`}>
-                  {sampleTemperature.toFixed(0)} °C
-                </span>
-              </div>
-              <input
-                type="range"
-                min="20"
-                max="140"
-                step="1"
-                value={sampleTemperature}
-                onChange={(e) => setSampleTemperature(parseFloat(e.target.value))}
-                className="w-full accent-amber-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-              />
-              <span className="text-[10px] mt-1.5 font-mono text-slate-400">
-                {isTempTripped ? '⚠️ Trên 95°C: Nguy cơ bốc cháy!' : '✓ Ngưỡng an toàn ≤ 95°C'}
-              </span>
-            </div>
-
-            {/* 3. Optical Smoke Concentration Slider */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
-              isSmokeTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
-            }`}>
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
-                  <Wind className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Mật độ khói (Tyndall):</span>
-                </span>
-                <span className={`font-mono font-bold ${isSmokeTripped ? 'text-rose-400' : 'text-purple-300'}`}>
-                  {smokeDensity.toFixed(0)} ppm
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={smokeDensity}
-                onChange={(e) => setSmokeDensity(parseFloat(e.target.value))}
-                className="w-full accent-purple-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
-              />
-              <span className="text-[10px] mt-1.5 font-mono text-slate-400">
-                {isSmokeTripped ? '⚠️ Trên 60 ppm: Buồng quá nhiều khói!' : '✓ Quạt hút hoạt động tốt'}
-              </span>
-            </div>
+          {/* Stepper Progress Bar */}
+          <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-900/90 border border-slate-800">
+            {[
+              { step: 1, title: '1. Định Mức An Toàn', desc: hasAnyFault ? '⚠️ Có sự cố' : '✓ Định mức chuẩn' },
+              { step: 2, title: '2. Giả Lập Sự Cố', desc: 'Thử nghiệm Interlock' },
+              { step: 3, title: '3. Dừng E-STOP & Reset', desc: 'Quy trình phục hồi' },
+            ].map((s) => {
+              const isActive = sensorStep === s.step;
+              const isPast = sensorStep > s.step;
+              return (
+                <button
+                  key={s.step}
+                  onClick={() => setSensorStep(s.step as 1 | 2 | 3)}
+                  className={`flex flex-col text-left p-1.5 md:p-2 rounded-lg transition-all ${
+                    isActive
+                      ? 'bg-emerald-500/15 border border-emerald-400/60 text-emerald-200 shadow-md shadow-emerald-950/40 ring-1 ring-emerald-500/30'
+                      : isPast
+                      ? 'bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-slate-700'
+                      : 'bg-transparent border border-transparent text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-1.5 text-xs font-bold">
+                    {isPast ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                    ) : (
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono font-bold ${
+                        isActive ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {s.step}
+                      </span>
+                    )}
+                    <span className="truncate">{s.title}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono truncate hidden sm:inline pl-5">
+                    {s.desc}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Action Row: Emergency Stop Button + Reset Button */}
-          <div className="flex items-center space-x-2 pt-1 border-t border-slate-800/80">
-            <button
-              onClick={triggerEmergencyStop}
-              className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-700 to-red-600 hover:from-rose-600 hover:to-red-500 text-white font-bold text-xs flex items-center justify-center space-x-2 border border-rose-400 shadow-xl shadow-rose-950/60 active:scale-95 transition-all"
-              title="Kích hoạt ngắt khẩn cấp E-STOP toàn bộ hệ thống xưởng"
-            >
-              <AlertOctagon className="w-4 h-4 text-white fill-rose-900" />
-              <span>NÚT DỪNG KHẨN CẤP (EMERGENCY STOP)</span>
-            </button>
+          {/* STEP 1: NORMAL TELEMETRY MONITORING */}
+          {sensorStep === 1 && (
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+              <div className="p-2 px-3 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-xs text-emerald-200 flex items-center space-x-2">
+                <span className="font-bold text-emerald-400">💡 Hướng dẫn:</span>
+                <span>Bước 1/3: Giám sát 3 thông số định mức của cảm biến phần cứng để bảo đảm điều kiện vận hành an toàn.</span>
+              </div>
 
-            <button
-              onClick={resetSensors}
-              className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center space-x-1.5 border border-slate-700 transition-all active:scale-95"
-              title="Khôi phục trạng thái cảm biến về mức bình thường"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Reset Về Định Mức</span>
-            </button>
-          </div>
+              {/* 3 Telemetry Gauge Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Gauge 1: Chiller */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-between ${
+                  isFlowTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-950/80 border-slate-800'
+                }`}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                      <Droplets className="w-4 h-4 text-cyan-400" />
+                      <span>Lưu lượng Chiller (Q):</span>
+                    </span>
+                    <span className={`font-mono font-bold text-sm ${isFlowTripped ? 'text-rose-400' : 'text-cyan-300'}`}>
+                      {chillerFlowRate.toFixed(1)} L/min
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 my-2">
+                    <div
+                      className={`h-full rounded-full transition-all ${isFlowTripped ? 'bg-rose-500' : 'bg-cyan-400'}`}
+                      style={{ width: `${Math.min(100, (chillerFlowRate / 6.0) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                    <span>Định mức: ≥ 2.0 L/min</span>
+                    <b className={isFlowTripped ? 'text-rose-400' : 'text-emerald-400'}>
+                      {isFlowTripped ? '⚠️ Tụt áp' : '✓ An toàn'}
+                    </b>
+                  </span>
+                </div>
+
+                {/* Gauge 2: Workpiece Temperature */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-between ${
+                  isTempTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-950/80 border-slate-800'
+                }`}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                      <Thermometer className="w-4 h-4 text-amber-400" />
+                      <span>Nhiệt độ phôi cắt (T):</span>
+                    </span>
+                    <span className={`font-mono font-bold text-sm ${isTempTripped ? 'text-rose-400' : 'text-amber-300'}`}>
+                      {sampleTemperature.toFixed(0)} °C
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 my-2">
+                    <div
+                      className={`h-full rounded-full transition-all ${isTempTripped ? 'bg-rose-500' : 'bg-amber-400'}`}
+                      style={{ width: `${Math.min(100, (sampleTemperature / 140) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                    <span>Định mức: ≤ 95 °C</span>
+                    <b className={isTempTripped ? 'text-rose-400' : 'text-emerald-400'}>
+                      {isTempTripped ? '⚠️ Quá nhiệt' : '✓ An toàn'}
+                    </b>
+                  </span>
+                </div>
+
+                {/* Gauge 3: Smoke Concentration */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-between ${
+                  isSmokeTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-950/80 border-slate-800'
+                }`}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                      <Wind className="w-4 h-4 text-purple-400" />
+                      <span>Mật độ khói Tyndall (D):</span>
+                    </span>
+                    <span className={`font-mono font-bold text-sm ${isSmokeTripped ? 'text-rose-400' : 'text-purple-300'}`}>
+                      {smokeDensity.toFixed(0)} ppm
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 my-2">
+                    <div
+                      className={`h-full rounded-full transition-all ${isSmokeTripped ? 'bg-rose-500' : 'bg-purple-400'}`}
+                      style={{ width: `${Math.min(100, (smokeDensity / 100) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                    <span>Định mức: ≤ 60 ppm</span>
+                    <b className={isSmokeTripped ? 'text-rose-400' : 'text-emerald-400'}>
+                      {isSmokeTripped ? '⚠️ Nghẹt khói' : '✓ Thông thoáng'}
+                    </b>
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Banner */}
+              <div className={`p-2.5 rounded-xl border flex items-center justify-between text-xs ${
+                hasAnyFault
+                  ? 'bg-rose-950/40 border-rose-500/60 text-rose-300 animate-pulse'
+                  : 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
+              }`}>
+                <div className="flex items-center space-x-2">
+                  {hasAnyFault ? (
+                    <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                  ) : (
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  )}
+                  <span>
+                    {hasAnyFault
+                      ? 'CẢNH BÁO: Phát hiện sự cố vượt ngưỡng định mức! Interlock đã ngắt tia laser.'
+                      : 'HỆ THỐNG AN TOÀN: Tất cả cảm biến trong định mức · Khóa liên động Interlock sẵn sàng cấp điện.'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Step 1 Footer Navigation */}
+              <div className="flex items-center justify-end pt-1">
+                <button
+                  onClick={() => setSensorStep(2)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md shadow-emerald-950/40 active:scale-95"
+                >
+                  <span>Tiếp tục: Giả Lập Sự Cố</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: FAULT INJECTION SIMULATION */}
+          {sensorStep === 2 && (
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+              <div className="p-2 px-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center space-x-2">
+                <span className="font-bold text-cyan-400">💡 Hướng dẫn:</span>
+                <span>Bước 2/3: Thử kéo các thanh trượt bên dưới vượt ngưỡng để cố tình gây sự cố và quan sát phản ứng của rơ-le ngắt an toàn Interlock.</span>
+              </div>
+
+              {/* Sliders */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* 1. Chiller Flow Slider */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+                  isFlowTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
+                }`}>
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                      <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Lưu lượng nước Chiller:</span>
+                    </span>
+                    <span className={`font-mono font-bold ${isFlowTripped ? 'text-rose-400' : 'text-cyan-300'}`}>
+                      {chillerFlowRate.toFixed(1)} L/min
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="6.0"
+                    step="0.1"
+                    value={chillerFlowRate}
+                    onChange={(e) => setChillerFlowRate(parseFloat(e.target.value))}
+                    className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                  />
+                  <span className="text-[10px] mt-1.5 font-mono text-slate-400">
+                    {isFlowTripped ? '⚠️ Dưới 2.0 L/min: Nguy cơ nổ bóng laser!' : '✓ Ngưỡng an toàn ≥ 2.0 L/min'}
+                  </span>
+                </div>
+
+                {/* 2. Temperature Slider */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+                  isTempTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
+                }`}>
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                      <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Nhiệt độ phôi cắt:</span>
+                    </span>
+                    <span className={`font-mono font-bold ${isTempTripped ? 'text-rose-400' : 'text-amber-300'}`}>
+                      {sampleTemperature.toFixed(0)} °C
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="20"
+                    max="140"
+                    step="1"
+                    value={sampleTemperature}
+                    onChange={(e) => setSampleTemperature(parseFloat(e.target.value))}
+                    className="w-full accent-amber-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                  />
+                  <span className="text-[10px] mt-1.5 font-mono text-slate-400">
+                    {isTempTripped ? '⚠️ Trên 95°C: Nguy cơ bốc cháy!' : '✓ Ngưỡng an toàn ≤ 95°C'}
+                  </span>
+                </div>
+
+                {/* 3. Smoke Slider */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+                  isSmokeTripped ? 'bg-rose-950/40 border-rose-600/80' : 'bg-slate-900/60 border-slate-800'
+                }`}>
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="flex items-center space-x-1.5 text-slate-300 font-semibold">
+                      <Wind className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Mật độ khói (Tyndall):</span>
+                    </span>
+                    <span className={`font-mono font-bold ${isSmokeTripped ? 'text-rose-400' : 'text-purple-300'}`}>
+                      {smokeDensity.toFixed(0)} ppm
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={smokeDensity}
+                    onChange={(e) => setSmokeDensity(parseFloat(e.target.value))}
+                    className="w-full accent-purple-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                  />
+                  <span className="text-[10px] mt-1.5 font-mono text-slate-400">
+                    {isSmokeTripped ? '⚠️ Trên 60 ppm: Buồng quá nhiều khói!' : '✓ Quạt hút hoạt động tốt'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Dynamic Fault Banner */}
+              {hasAnyFault && (
+                <div className="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/70 text-rose-300 text-xs flex items-center justify-between animate-pulse">
+                  <div className="flex items-center space-x-2">
+                    <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                    <span><b>SỰ CỐ ĐÃ KÍCH HOẠT:</b> Còi báo động hú vang và rơ-le an toàn ngắt trực tiếp nguồn cao áp phát laser trong 20ms!</span>
+                  </div>
+                  <button
+                    onClick={resetSensors}
+                    className="underline font-bold text-white hover:text-cyan-300 flex-shrink-0 cursor-pointer"
+                  >
+                    Reset Nhanh
+                  </button>
+                </div>
+              )}
+
+              {/* Step 2 Footer Navigation */}
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                <button
+                  onClick={() => setSensorStep(1)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1 transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Quay lại: Giám Sát</span>
+                </button>
+
+                <button
+                  onClick={() => setSensorStep(3)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md shadow-emerald-950/40 active:scale-95"
+                >
+                  <span>Tiếp tục: Dừng E-STOP & Reset</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: EMERGENCY STOP & RECOVERY */}
+          {sensorStep === 3 && (
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+              <div className="p-2 px-3 rounded-lg bg-rose-950/30 border border-rose-800/40 text-xs text-rose-200 flex items-center space-x-2">
+                <span className="font-bold text-rose-400">💡 Hướng dẫn:</span>
+                <span>Bước 3/3: Thao tác nút Dừng Khẩn Cấp E-STOP khi có hỏa hoạn và thực hiện quy trình phục hồi hệ thống về trạng thái định mức.</span>
+              </div>
+
+              {/* Action Buttons Row */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  onClick={triggerEmergencyStop}
+                  className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-rose-700 to-red-600 hover:from-rose-600 hover:to-red-500 text-white font-bold text-xs flex items-center justify-center space-x-2 border border-rose-400 shadow-xl shadow-rose-950/60 active:scale-95 transition-all"
+                  title="Kích hoạt ngắt khẩn cấp E-STOP toàn bộ hệ thống xưởng"
+                >
+                  <AlertOctagon className="w-5 h-5 text-white fill-rose-900 animate-pulse" />
+                  <span>NÚT DỪNG KHẨN CẤP (EMERGENCY STOP)</span>
+                </button>
+
+                <button
+                  onClick={resetSensors}
+                  className="w-full sm:w-auto py-3 px-5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 font-bold text-xs flex items-center justify-center space-x-2 border border-emerald-500/60 shadow-lg transition-all active:scale-95"
+                  title="Khôi phục trạng thái cảm biến về mức bình thường"
+                >
+                  <RotateCcw className="w-4 h-4 text-emerald-400" />
+                  <span>Reset Cảm Biến Về Định Mức</span>
+                </button>
+              </div>
+
+              {/* Standard ISO/OSHA Recovery Protocol Steps */}
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-1.5 text-xs">
+                <span className="font-bold text-slate-200 flex items-center space-x-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Quy trình xử lý sự cố an toàn chuẩn ISO 11553-1:</span>
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1 text-[11px] text-slate-300">
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <b className="text-rose-400 block mb-0.5">1. Đập nút E-STOP</b>
+                    <span>Cắt đứt ngay lập tức đường cấp cao áp laser và khóa van khí hỗ trợ.</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <b className="text-amber-400 block mb-0.5">2. Kiểm tra hiện trường</b>
+                    <span>Chờ quạt hút thổi sạch khói, làm mát phôi và kiểm tra lưu thông đường nước.</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <b className="text-emerald-400 block mb-0.5">3. Reset & Tái cấp nguồn</b>
+                    <span>Bấm nút Reset cảm biến và xoay nhả nút E-STOP để sẵn sàng vận hành tiếp.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3 Footer Navigation */}
+              <div className="flex items-center justify-start pt-1 border-t border-slate-800/80">
+                <button
+                  onClick={() => setSensorStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1 transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Quay lại: Giả Lập Sự Cố</span>
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     );
   }
 
   // =========================================================================
-  // SPECIALIZED COATING & UV FINISHING DOCK
+  // SPECIALIZED COATING & UV FINISHING DOCK (STEP-BY-STEP WORKFLOW)
   // =========================================================================
   if (currentStationId === 'COATING_STATION') {
     const finishConfig = COATING_FINISHES[selectedCoatingFinish] || COATING_FINISHES.CLEAR_GLOSS;
@@ -426,10 +690,10 @@ export function MachineControlOverlay() {
             <div className="flex items-center space-x-2">
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
               <h3 className="text-xs md:text-sm font-bold tracking-wide text-white uppercase font-mono">
-                BUỒNG PHỦ SƠN TĨNH ĐIỆN & SẤY UV BỀ MẶT
+                BUỒNG PHỦ SƠN TĨNH ĐIỆN & SẤY QUANG HÓA UV
               </h3>
               <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-cyan-950/80 text-cyan-300 border border-cyan-800">
-                Sơn phủ & Sấy UV (395nm)
+                ELECTROSTATIC COATING & UV (395nm)
               </span>
             </div>
 
@@ -441,7 +705,7 @@ export function MachineControlOverlay() {
                 </b>
               </div>
               <div className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 flex items-center space-x-1.5">
-                <span className="text-slate-400">Độ khô UV:</span>
+                <span className="text-slate-400">Độ khô:</span>
                 <b className={curingProgress >= 100 ? 'text-purple-400' : 'text-slate-300'}>
                   {curingProgress.toFixed(0)}%
                 </b>
@@ -459,156 +723,370 @@ export function MachineControlOverlay() {
                 <Power className={`w-3.5 h-3.5 ${machinePower['COATING_STATION'] ? 'text-emerald-400' : 'text-rose-400'}`} />
                 <span>{machinePower['COATING_STATION'] ? 'Nguồn: BẬT' : 'Nguồn: TẮT'}</span>
               </button>
+
+              {activeStationId && (
+                <button
+                  onClick={toggleKnowledgePanelCollapsed}
+                  className={`flex items-center space-x-1 px-2.5 py-1 rounded-full border text-xs font-semibold transition-all active:scale-95 font-sans ${
+                    !isKnowledgePanelCollapsed
+                      ? 'bg-lab-cyan/20 border-lab-cyan/60 text-lab-cyan shadow-sm shadow-cyan-950/40'
+                      : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                  }`}
+                  title="Bật/Tắt bảng lý thuyết trạm [Phím Tab]"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Lý thuyết</span>
+                  <kbd className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-700">Tab</kbd>
+                </button>
+              )}
+
               <button
                 onClick={handleStopUsingMachine}
                 className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/90 hover:bg-rose-500/25 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 text-xs font-semibold transition-all active:scale-95 font-sans"
                 title="Dừng thao tác máy & Ẩn con trỏ chuột (ESC hoặc phím di chuyển WASD)"
               >
                 <Power className="w-3.5 h-3.5 text-rose-400" />
-                <span className="hidden sm:inline">Dừng dùng máy</span>
+                <span className="hidden sm:inline">Thoát</span>
                 <kbd className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-700 text-slate-400 font-mono">ESC</kbd>
               </button>
             </div>
           </div>
 
-          {/* Paint Swatches Row */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-              <span className="flex items-center space-x-1">
-                <Palette className="w-3 h-3 text-lab-cyan" />
-                <span>Chọn loại sơn & màng phủ công nghiệp:</span>
-              </span>
-              <span className="text-cyan-300 font-semibold">{finishConfig.name}</span>
-            </div>
-
-            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-thin">
-              {finishList.map((finish) => {
-                const isSelected = selectedCoatingFinish === finish.id;
-                return (
-                  <button
-                    key={finish.id}
-                    onClick={() => setSelectedCoatingFinish(finish.id)}
-                    className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all duration-150 border ${
-                      isSelected
-                        ? 'bg-lab-cyan/20 border-lab-cyan text-white shadow-lg shadow-lab-cyan/20 ring-1 ring-lab-cyan/40'
-                        : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
-                    }`}
-                  >
-                    <span
-                      className="w-3 h-3 rounded-full border border-black/40 flex-shrink-0"
-                      style={{ backgroundColor: finish.color }}
-                    />
-                    <span className="whitespace-nowrap">{finish.name.split(' (')[0]}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">({finish.glossUnit.split(' ')[0]})</span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Stepper Progress Bar */}
+          <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-slate-900/90 border border-slate-800">
+            {[
+              { step: 1, title: '1. Chọn Lớp Sơn', desc: finishConfig.name.split(' (')[0] },
+              { step: 2, title: '2. Phun Sơn Phủ', desc: `${coatingCoverage.toFixed(0)}% màng sơn` },
+              { step: 3, title: '3. Sấy Khô UV', desc: `${curingProgress.toFixed(0)}% đóng rắn` },
+              { step: 4, title: '4. Bàn Xoay 360°', desc: isTurntableRotating ? 'Đang xoay' : 'Hoàn thiện' },
+            ].map((s) => {
+              const isActive = coatingStep === s.step;
+              const isPast = coatingStep > s.step || (s.step === 2 && coatingCoverage >= 100) || (s.step === 3 && curingProgress >= 100);
+              return (
+                <button
+                  key={s.step}
+                  onClick={() => setCoatingStep(s.step as 1 | 2 | 3 | 4)}
+                  className={`flex flex-col text-left p-1.5 md:p-2 rounded-lg transition-all ${
+                    isActive
+                      ? 'bg-cyan-500/15 border border-cyan-400/60 text-cyan-200 shadow-md shadow-cyan-950/40 ring-1 ring-cyan-500/30'
+                      : isPast
+                      ? 'bg-slate-950/60 border border-slate-800 text-slate-300 hover:border-slate-700'
+                      : 'bg-transparent border border-transparent text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-1.5 text-xs font-bold">
+                    {isPast ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                    ) : (
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono font-bold ${
+                        isActive ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {s.step}
+                      </span>
+                    )}
+                    <span className="truncate">{s.title}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono truncate hidden sm:inline pl-5">
+                    {s.desc}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Action Buttons: Hold to Spray, Turn on Curing, Rotate Turntable, Reset */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center pt-1">
-            {/* Spray Trigger Button (Col 5) */}
-            <div className="sm:col-span-5 flex flex-col gap-1">
-              <button
-                onMouseDown={startSpraying}
-                onMouseUp={stopSpraying}
-                onMouseLeave={stopSpraying}
-                onTouchStart={startSpraying}
-                onTouchEnd={stopSpraying}
-                className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 transition-all duration-150 border shadow-lg select-none active:scale-95 ${
-                  isSpraying
-                    ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 border-cyan-300 shadow-cyan-900/50 animate-pulse'
-                    : coatingCoverage >= 100
-                    ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-300'
-                    : 'bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white border-cyan-400 shadow-cyan-950/50'
-                }`}
-                title="Nhấp giữ chuột để phun lớp sơn lên bề mặt chi tiết"
-              >
-                <Zap className="w-4 h-4 fill-current" />
-                <span>
-                  {isSpraying
-                    ? `Đang Phun Sơn... (${coatingCoverage.toFixed(0)}%)`
-                    : coatingCoverage >= 100
-                    ? '✓ Đã Phủ Kín 100% (Giữ để sơn thêm)'
-                    : 'Giữ Chuột Để Phun Sơn [🔫]'}
-                </span>
-              </button>
+          {/* STEP 1: SELECT COATING FINISH */}
+          {coatingStep === 1 && (
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+              <div className="p-2 px-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center space-x-2">
+                <span className="font-bold text-cyan-400">💡 Hướng dẫn:</span>
+                <span>Bước 1/4: Chọn loại sơn hoặc màng phủ bảo vệ phù hợp với yêu cầu cơ tính và thẩm mỹ của chi tiết.</span>
+              </div>
 
-              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-lab-cyan h-full transition-all duration-100 ease-linear"
-                  style={{ width: `${coatingCoverage}%` }}
-                />
+              {/* Swatches Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {finishList.map((finish) => {
+                  const isSelected = selectedCoatingFinish === finish.id;
+                  return (
+                    <button
+                      key={finish.id}
+                      onClick={() => setSelectedCoatingFinish(finish.id)}
+                      className={`p-2.5 rounded-xl border flex flex-col justify-between transition-all ${
+                        isSelected
+                          ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-400/50'
+                          : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span
+                          className="w-4 h-4 rounded-full border border-black/40 shadow-sm"
+                          style={{ backgroundColor: finish.color }}
+                        />
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                          {finish.glossUnit.split(' ')[0]}
+                        </span>
+                      </div>
+                      <div className="text-xs font-bold text-slate-100 truncate text-left">{finish.name.split(' (')[0]}</div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5 text-left">{finish.dryFilmThickness}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Selected Finish Spec Detail */}
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center space-x-2 text-slate-300">
+                  <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                  <span><b>Đặc tính kỹ thuật:</b> {finishConfig.description}</span>
+                </div>
+                <div className="flex items-center space-x-3 text-slate-400 font-mono text-[11px] flex-shrink-0">
+                  <span>Màng khô: <b className="text-white">{finishConfig.dryFilmThickness}</b></span>
+                  <span>•</span>
+                  <span>Độ bóng: <b className="text-white">{finishConfig.glossUnit}</b></span>
+                </div>
+              </div>
+
+              {/* Step 1 Footer Navigation */}
+              <div className="flex items-center justify-end pt-1">
+                <button
+                  onClick={() => setCoatingStep(2)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
+                >
+                  <span>Tiếp tục: Phun Sơn Tĩnh Điện</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
+          )}
 
-            {/* UV Curing Button (Col 3) */}
-            <div className="sm:col-span-3">
-              <button
-                onClick={() => {
-                  if (isCuring) stopCuring();
-                  else startCuring();
-                }}
-                disabled={coatingCoverage < 10}
-                className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 transition-all duration-200 border shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isCuring
-                    ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-400 shadow-purple-950/60 animate-pulse'
-                    : curingProgress >= 100
-                    ? 'bg-purple-950/40 border-purple-500/50 text-purple-300'
-                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-purple-300 hover:border-purple-500/50'
-                }`}
-                title="Bật dàn đèn sấy tia cực tím UV 395nm để đóng rắn màng sơn"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                <span>
-                  {isCuring
-                    ? `Đang Sấy UV (${curingProgress.toFixed(0)}%)...`
-                    : curingProgress >= 100
-                    ? '✓ Đã Đóng Rắn 100%'
-                    : 'Sấy UV Quang Hóa'}
-                </span>
-              </button>
-            </div>
+          {/* STEP 2: ELECTROSTATIC SPRAY COATING */}
+          {coatingStep === 2 && (
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+              <div className="p-2 px-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center space-x-2">
+                <span className="font-bold text-cyan-400">💡 Hướng dẫn:</span>
+                <span>Bước 2/4: Nhấp giữ nút xịt sơn để đầu béc tích điện áp âm hút đều hạt sơn bao bọc bề mặt phôi.</span>
+              </div>
 
-            {/* Turntable 360 & Reset Buttons (Col 4) */}
-            <div className="sm:col-span-4 flex items-center space-x-1.5">
-              <button
-                onClick={toggleTurntable}
-                className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1 border transition-all active:scale-95 ${
-                  isTurntableRotating
-                    ? 'bg-cyan-950/40 border-cyan-800 text-cyan-300'
-                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'
-                }`}
-                title="Bật / tắt quay bàn xoay 360 độ"
-              >
-                <RotateCcw className={`w-3.5 h-3.5 ${isTurntableRotating ? 'animate-spin' : ''}`} />
-                <span>{isTurntableRotating ? 'Đang Xoay' : 'Xoay Bàn'}</span>
-              </button>
+              {/* Spray Action Bar */}
+              <div className="flex flex-col gap-2 p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-semibold flex items-center space-x-1.5">
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                    <span>Tiến trình phủ sơn:</span>
+                  </span>
+                  <span className={`font-mono font-bold text-sm ${coatingCoverage >= 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {coatingCoverage.toFixed(0)}% {coatingCoverage >= 100 ? '(Đã phủ kín)' : ''}
+                  </span>
+                </div>
 
-              <button
-                onClick={resetCoating}
-                className="py-2.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 text-xs font-semibold border border-slate-700 flex items-center justify-center space-x-1 transition-all active:scale-95"
-                title="Tẩy sạch lớp sơn, đưa phôi trở về ban đầu"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Tẩy Sơn</span>
-              </button>
-            </div>
-          </div>
+                <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-100 ease-linear ${coatingCoverage >= 100 ? 'bg-emerald-400' : 'bg-cyan-400'}`}
+                    style={{ width: `${coatingCoverage}%` }}
+                  />
+                </div>
 
-          {/* Technical Specs Footer */}
-          <div className="text-[11px] text-slate-300 bg-slate-900/60 rounded-xl p-2 px-3 border border-slate-800/80 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="w-3.5 h-3.5 text-lab-cyan flex-shrink-0" />
-              <span className="line-clamp-1">{finishConfig.description}</span>
+                <button
+                  onMouseDown={startSpraying}
+                  onMouseUp={stopSpraying}
+                  onMouseLeave={stopSpraying}
+                  onTouchStart={startSpraying}
+                  onTouchEnd={stopSpraying}
+                  className={`w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 transition-all duration-150 border shadow-lg select-none active:scale-95 mt-1 ${
+                    isSpraying
+                      ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 border-cyan-300 shadow-cyan-900/50 animate-pulse'
+                      : coatingCoverage >= 100
+                      ? 'bg-emerald-600/30 border-emerald-500/50 text-emerald-300'
+                      : 'bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white border-cyan-400 shadow-cyan-950/50'
+                  }`}
+                  title="Nhấp giữ chuột để phun lớp sơn lên bề mặt chi tiết"
+                >
+                  <Zap className="w-4 h-4 fill-current" />
+                  <span>
+                    {isSpraying
+                      ? `Đang Phun Sơn... (${coatingCoverage.toFixed(0)}%)`
+                      : coatingCoverage >= 100
+                      ? '✓ Đã Phủ Kín 100% (Nhấp giữ để dặm thêm)'
+                      : 'Giữ Chuột Để Phun Sơn [🔫]'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Electrostatic Principle note */}
+              <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 font-mono flex items-center justify-between">
+                <span>Điện áp súng phun: V = -45.00 kV (Coulomb Wrap-Around)</span>
+                <span>Tỷ lệ bám dính: η ≥ 85.00% (17/20)</span>
+              </div>
+
+              {/* Step 2 Footer Navigation */}
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                <button
+                  onClick={() => setCoatingStep(1)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1 transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Quay lại: Chọn Sơn</span>
+                </button>
+
+                <button
+                  onClick={() => setCoatingStep(3)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
+                >
+                  <span>Tiếp tục: Sấy Khô UV</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-            <div className="hidden sm:flex items-center space-x-3 text-slate-400 font-mono text-[10px] pl-2 flex-shrink-0">
-              <span>Độ dày: <b className="text-white">{finishConfig.dryFilmThickness}</b></span>
-              <span>•</span>
-              <span>Độ bóng: <b className="text-white">{finishConfig.glossUnit}</b></span>
+          )}
+
+          {/* STEP 3: UV PHOTO-POLYMERIZATION CURING */}
+          {coatingStep === 3 && (
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+              <div className="p-2 px-3 rounded-lg bg-purple-950/30 border border-purple-800/40 text-xs text-purple-200 flex items-center space-x-2">
+                <span className="font-bold text-purple-400">💡 Hướng dẫn:</span>
+                <span>Bước 3/4: Bật dàn đèn cực tím UV 395nm để quang hóa đóng rắn màng sơn tức thì mà không làm nóng biến dạng phôi.</span>
+              </div>
+
+              {/* UV Curing Action Card */}
+              <div className="flex flex-col gap-2 p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-semibold flex items-center space-x-1.5">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <span>Tiến trình đóng rắn quang hóa (UV):</span>
+                  </span>
+                  <span className={`font-mono font-bold text-sm ${curingProgress >= 100 ? 'text-purple-400' : 'text-slate-300'}`}>
+                    {curingProgress.toFixed(0)}% {curingProgress >= 100 ? '(Đóng rắn 100%)' : ''}
+                  </span>
+                </div>
+
+                <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="h-full bg-purple-500 transition-all duration-100 ease-linear"
+                    style={{ width: `${curingProgress}%` }}
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (isCuring) stopCuring();
+                    else startCuring();
+                  }}
+                  disabled={coatingCoverage < 10}
+                  className={`w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 transition-all duration-200 border shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-1 ${
+                    isCuring
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-400 shadow-purple-950/60 animate-pulse'
+                      : curingProgress >= 100
+                      ? 'bg-purple-950/40 border-purple-500/50 text-purple-300'
+                      : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-purple-300 hover:border-purple-500/50'
+                  }`}
+                  title="Bật dàn đèn sấy tia cực tím UV 395nm để đóng rắn màng sơn"
+                >
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <span>
+                    {isCuring
+                      ? `Đang Sấy UV (${curingProgress.toFixed(0)}%)...`
+                      : curingProgress >= 100
+                      ? '✓ Đã Đóng Rắn 100% (Bấm để sấy lại)'
+                      : 'Bật Đèn Sấy UV 395nm'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Photochemistry Physics Note */}
+              <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 font-mono flex items-center justify-between">
+                <span>Photon tử ngoại: λ = 395.00 nm (hν = 3.139 eV)</span>
+                <span>Thời gian đóng rắn: t_curing = 3.50 s</span>
+              </div>
+
+              {/* Step 3 Footer Navigation */}
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                <button
+                  onClick={() => setCoatingStep(2)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1 transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Quay lại: Phun Sơn</span>
+                </button>
+
+                <button
+                  onClick={() => setCoatingStep(4)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/40 active:scale-95"
+                >
+                  <span>Tiếp tục: Bàn Xoay & Hoàn Thiện</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* STEP 4: TURNTABLE & INSPECTION */}
+          {coatingStep === 4 && (
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+              <div className="p-2 px-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center space-x-2">
+                <span className="font-bold text-cyan-400">💡 Hướng dẫn:</span>
+                <span>Bước 4/4: Bật bàn xoay để ngắm độ bóng phản chiếu từ mọi góc độ, hoặc nhấc phôi ra xem cận cảnh cầm tay.</span>
+              </div>
+
+              {/* Controls Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button
+                  onClick={toggleTurntable}
+                  className={`py-3 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 border transition-all active:scale-95 ${
+                    isTurntableRotating
+                      ? 'bg-cyan-950/50 border-cyan-500 text-cyan-300 shadow-md shadow-cyan-950/50'
+                      : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                  }`}
+                  title="Bật / tắt quay bàn xoay 360 độ"
+                >
+                  <RotateCcw className={`w-4 h-4 ${isTurntableRotating ? 'animate-spin' : ''}`} />
+                  <span>{isTurntableRotating ? 'Dừng Bàn Xoay' : 'Bật Bàn Xoay 360°'}</span>
+                </button>
+
+                <button
+                  onClick={openSpecimenModal}
+                  className="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold border border-slate-700 flex items-center justify-center space-x-2 transition-all active:scale-95"
+                  title="Nhấc phôi ra khỏi bàn gá để soi cận cảnh cầm tay [Phím G]"
+                >
+                  <Eye className="w-4 h-4 text-cyan-400" />
+                  <span>Soi Cận Cảnh [G]</span>
+                </button>
+
+                <button
+                  onClick={resetCoating}
+                  className="py-3 px-3 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 text-xs font-semibold border border-slate-700 hover:border-rose-700 flex items-center justify-center space-x-2 transition-all active:scale-95"
+                  title="Tẩy sạch lớp sơn, đưa phôi trở về ban đầu"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Tẩy Sơn Làm Lại</span>
+                </button>
+              </div>
+
+              {/* Quality Certificate Summary Card */}
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs font-mono">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span className="text-slate-200">
+                    Màng sơn <b>{finishConfig.name.split(' (')[0]}</b> đã đạt độ phủ <b>{coatingCoverage.toFixed(0)}%</b>
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2 text-slate-400 text-[11px]">
+                  <span>Độ dày: <b className="text-cyan-300">{finishConfig.dryFilmThickness}</b></span>
+                  <span>•</span>
+                  <span>{curingProgress >= 100 ? <b className="text-emerald-400">✓ Đã đóng rắn 100%</b> : <b className="text-amber-400">Chưa đóng rắn</b>}</span>
+                </div>
+              </div>
+
+              {/* Step 4 Footer Navigation */}
+              <div className="flex items-center justify-start pt-1 border-t border-slate-800/80">
+                <button
+                  onClick={() => setCoatingStep(3)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1 transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Quay lại: Sấy UV</span>
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     );
@@ -806,6 +1284,10 @@ export function MachineControlOverlay() {
             {/* STEP 1: MATERIAL & PROCESS MODE */}
             {laserStep === 1 && (
               <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+                <div className="p-2 px-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center space-x-2">
+                  <span className="font-bold text-cyan-400">💡 Hướng dẫn:</span>
+                  <span>Bước 1/4: Chọn vật liệu cần gia công và chế độ: <b>Cắt đứt phôi</b> (3mm) hoặc <b>Khắc bề mặt</b> (0.1mm) theo nhu cầu.</span>
+                </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
                   <div className="flex items-center space-x-2">
                     <Layers className="w-4 h-4 text-cyan-400" />
@@ -911,6 +1393,10 @@ export function MachineControlOverlay() {
             {/* STEP 2: DESIGN & FRAMING */}
             {laserStep === 2 && (
               <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+                <div className="p-2 px-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center space-x-2">
+                  <span className="font-bold text-cyan-400">💡 Hướng dẫn:</span>
+                  <span>Bước 2/4: Bàn làm việc 300 x 200 mm. Dùng nút <b>Quét Thử Khung Viền [F]</b> để đầu laser chạy thử quanh 4 mép phôi tránh lệch.</span>
+                </div>
                 <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
                   <div className="flex items-center space-x-2">
                     <PenTool className="w-4 h-4 text-cyan-400" />
@@ -1030,6 +1516,10 @@ export function MachineControlOverlay() {
             {/* STEP 3: PARAMETERS & PHYSICS */}
             {laserStep === 3 && (
               <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+                <div className="p-2 px-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 flex items-center space-x-2">
+                  <span className="font-bold text-cyan-400">💡 Hướng dẫn:</span>
+                  <span>Bước 3/4: Bấm <b>Áp Dụng Chuẩn AI</b> để máy tự thiết lập thông số P-v-f tối ưu cho vật liệu, hoặc kéo thanh trượt tùy ý.</span>
+                </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
                   <div className="flex items-center space-x-2">
                     <Sliders className="w-4 h-4 text-cyan-400" />
@@ -1233,6 +1723,10 @@ export function MachineControlOverlay() {
             {/* STEP 4: SAFETY CHECKLIST & EXECUTION */}
             {laserStep === 4 && (
               <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+                <div className="p-2 px-3 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-xs text-emerald-200 flex items-center space-x-2">
+                  <span className="font-bold text-emerald-400">💡 Hướng dẫn:</span>
+                  <span>Bước 4/4: Kiểm tra 3 điều kiện an toàn (Nguồn, Nắp máy, Quạt hút) rồi bấm <b>Bắt Đầu Cắt [Phím C]</b> để kích hoạt tia laser.</span>
+                </div>
                 <div className="flex items-center space-x-2 border-b border-slate-800/80 pb-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
                   <span className="text-xs font-bold text-white uppercase tracking-wider">

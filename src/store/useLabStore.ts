@@ -991,8 +991,8 @@ export const useLabStore = create<LabState>((set, get) => ({
   isCuring: false,
   isTurntableRotating: true,
 
-  // Knowledge Sidebar Panel Toggle State
-  isKnowledgePanelCollapsed: false,
+  // Knowledge Sidebar Panel Toggle State (Default collapsed to prevent information overload)
+  isKnowledgePanelCollapsed: true,
   toggleKnowledgePanelCollapsed: () => {
     sound.playClick();
     set((state) => ({ isKnowledgePanelCollapsed: !state.isKnowledgePanelCollapsed }));
@@ -1023,7 +1023,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       activeStationId: id,
       activeTab: 'PHYSICS_PRINCIPLE',
       isCuttingJob: false,
-      isKnowledgePanelCollapsed: false,
+      isKnowledgePanelCollapsed: true,
     });
   },
 
@@ -1038,7 +1038,7 @@ export const useLabStore = create<LabState>((set, get) => ({
       isDesignModalOpen: false,
       isXRayMode: false,
       hoveredComponentId: null,
-      isKnowledgePanelCollapsed: false,
+      isKnowledgePanelCollapsed: true,
     });
   },
 
