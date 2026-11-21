@@ -182,42 +182,66 @@ function DoraemonHand({
   // Natural walking swing and tap reach offset
   const walkBob = isMoving ? Math.sin(walkCycle * 2) * 0.006 : 0;
   const walkSway = isMoving ? Math.cos(walkCycle) * 0.008 * sign : 0;
-  const tapOffset = tapProgress * 0.06;
+  const tapOffset = tapProgress * 0.08;
+  const tapLift = tapProgress * 0.035;
 
   // Position hands naturally at lower corners of screen
-  const posX = sign * 0.22 + walkSway;
-  const posY = -0.25 + walkBob + tapProgress * 0.025;
-  const posZ = -0.36 - tapOffset;
+  const posX = sign * 0.23 + walkSway;
+  const posY = -0.24 + walkBob + tapLift;
+  const posZ = -0.38 - tapOffset;
 
   return (
     <group position={[posX, posY, posZ]} rotation={[0.22, -sign * 0.1, -sign * 0.06]}>
-      {/* Blue Sleeve (Ống tay áo xanh tròn) */}
-      <mesh position={[-sign * 0.025, -0.045, 0.05]} rotation={[0.32, 0, sign * 0.12]} castShadow>
-        <cylinderGeometry args={[0.044, 0.038, 0.11, 20]} />
-        <meshStandardMaterial color="#009fe8" roughness={0.35} />
+      {/* Upper Arm & Shoulder Extension: anchored continuously into bottom-side screen border */}
+      <mesh
+        position={[-sign * 0.12, -0.25, 0.32]}
+        rotation={[0.72, -sign * 0.18, sign * 0.32]}
+        castShadow
+      >
+        <cylinderGeometry args={[0.058, 0.075, 0.34, 24]} />
+        <meshStandardMaterial color="#009fe8" roughness={0.35} metalness={0.02} />
       </mesh>
 
-      {/* Red Wrist Trim Ring (Viền cổ tay màu đỏ đặc trưng) */}
-      <mesh position={[-sign * 0.01, -0.01, 0.025]} rotation={[0.32, 0, sign * 0.12]}>
-        <torusGeometry args={[0.042, 0.0055, 12, 24]} />
-        <meshStandardMaterial color="#dc2626" roughness={0.35} />
+      {/* Elbow Joint Sphere: smooth seamless anatomical transition */}
+      <mesh position={[-sign * 0.065, -0.135, 0.18]} castShadow>
+        <sphereGeometry args={[0.056, 20, 20]} />
+        <meshStandardMaterial color="#009fe8" roughness={0.35} metalness={0.02} />
+      </mesh>
+
+      {/* Forearm: Chubby blue arm extending towards wrist */}
+      <mesh
+        position={[-sign * 0.03, -0.065, 0.09]}
+        rotation={[0.48, -sign * 0.12, sign * 0.20]}
+        castShadow
+      >
+        <cylinderGeometry args={[0.052, 0.057, 0.18, 24]} />
+        <meshStandardMaterial color="#009fe8" roughness={0.35} metalness={0.02} />
+      </mesh>
+
+      {/* Wrist Cuff Trim Ring: Clean junction between blue arm and white spherical paw */}
+      <mesh
+        position={[-sign * 0.008, -0.012, 0.022]}
+        rotation={[0.42, 0, sign * 0.15]}
+      >
+        <torusGeometry args={[0.048, 0.0055, 14, 28]} />
+        <meshStandardMaterial color="#0284c7" roughness={0.3} metalness={0.05} />
       </mesh>
 
       {/* Iconic Spherical White Paw (Bàn tay tròn xoe màu trắng của Doraemon) */}
-      <mesh position={[0, 0.012, 0]} castShadow>
-        <sphereGeometry args={[0.05, 28, 28]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.25} metalness={0.02} />
+      <mesh position={[0, 0.012, -0.005]} castShadow>
+        <sphereGeometry args={[0.053, 32, 32]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.22} metalness={0.02} />
       </mesh>
 
       {/* Subtle Specular Glisten on Paw */}
-      <mesh position={[sign * 0.018, 0.04, 0.025]}>
+      <mesh position={[sign * 0.018, 0.042, 0.02]}>
         <sphereGeometry args={[0.007, 12, 12]} />
         <meshBasicMaterial color="#ffffff" />
       </mesh>
 
       {/* Held Lab Item on Right Hand */}
       {isRight && (
-        <group position={[0, 0.025, -0.015]} scale={[1.1, 1.1, 1.1]}>
+        <group position={[0, 0.035, -0.02]} scale={[1.15, 1.15, 1.15]}>
           {heldItem === 'WORKPIECE' && <HeldWorkpiece materialType={materialType} />}
           {heldItem === 'BEAKER' && <HeldBeaker />}
           {heldItem === 'TEST_TUBE' && <HeldTestTube />}
@@ -796,8 +820,8 @@ export function DoraemonPlayer() {
 
   return (
     <>
-      {/* 1. Full 3D Doraemon Character on Ground (Always active when walking, visible in Third-Person mode) */}
-      {isVisible && (
+      {/* 1. Full 3D Doraemon Character on Ground (Only active in Third-Person mode [Phím 9]) */}
+      {isVisible && isThirdPersonView && (
         <FullBodyDoraemon
           walkCycle={walkCycle.current}
           isMoving={isMoving}

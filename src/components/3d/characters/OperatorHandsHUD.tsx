@@ -173,8 +173,8 @@ export function OperatorHandsHUD() {
   useFrame((state, delta) => {
     if (!rootRef.current || !leftArmRef.current || !rightArmRef.current) return;
 
-    // Only render hands in WALKING mode or during inspection transitions
-    const isVisible = mode === 'WALKING' || isSpecimenModalOpen;
+    // Render hands during specimen inspection modal (WALKING mode uses DoraemonPlayer)
+    const isVisible = isSpecimenModalOpen;
     rootRef.current.visible = isVisible;
     if (!isVisible) return;
 
