@@ -1052,7 +1052,7 @@ export function MachineControlOverlay() {
                       className="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-mono font-bold flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-950/50 active:scale-95"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Áp Dụng Chuẩn AI ({recSettings.powerWatts}W • {recSettings.speedMmS}mm/s)</span>
+                      <span>Áp Dụng Chuẩn AI ({recSettings.powerWatts.toFixed(1)}W • {recSettings.speedMmS.toFixed(1)}mm/s • {recSettings.frequencyKhz.toFixed(1)}kHz)</span>
                     </button>
                   </div>
                 </div>
@@ -1063,7 +1063,7 @@ export function MachineControlOverlay() {
                   <div className="flex flex-col gap-1">
                     <div className="flex justify-between text-xs font-mono">
                       <span className="text-slate-400">Công suất (P):</span>
-                      <span className="text-amber-300 font-bold">{laserPowerWatts} W</span>
+                      <span className="text-amber-300 font-bold">{laserPowerWatts.toFixed(1)} W</span>
                     </div>
                     <input
                       type="range"
@@ -1080,7 +1080,7 @@ export function MachineControlOverlay() {
                   <div className="flex flex-col gap-1">
                     <div className="flex justify-between text-xs font-mono">
                       <span className="text-slate-400">Tốc độ quét (v):</span>
-                      <span className="text-cyan-300 font-bold">{scanSpeedMmS} mm/s</span>
+                      <span className="text-cyan-300 font-bold">{scanSpeedMmS.toFixed(1)} mm/s</span>
                     </div>
                     <input
                       type="range"
@@ -1097,7 +1097,7 @@ export function MachineControlOverlay() {
                   <div className="flex flex-col gap-1">
                     <div className="flex justify-between text-xs font-mono">
                       <span className="text-slate-400">Tần số xung (f):</span>
-                      <span className="text-emerald-300 font-bold">{pulseFrequencyKhz} kHz</span>
+                      <span className="text-emerald-300 font-bold">{pulseFrequencyKhz.toFixed(1)} kHz</span>
                     </div>
                     <input
                       type="range"
@@ -1108,6 +1108,33 @@ export function MachineControlOverlay() {
                       onChange={(e) => setPulseFrequencyKhz(parseInt(e.target.value))}
                       className="accent-emerald-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
                     />
+                  </div>
+                </div>
+
+                {/* Formula Ribbon with Fractions & Decimals */}
+                <div className="p-2.5 rounded-xl bg-slate-950/90 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-3 text-xs font-mono shadow-inner">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-slate-400">Năng lượng dài:</span>
+                    <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-amber-300">
+                      <span>E_line = </span>
+                      <span className="inline-flex flex-col text-center align-middle mx-1">
+                        <span className="border-b border-amber-400/50 pb-0.5 text-[10px] text-amber-200 font-bold">P ({laserPowerWatts.toFixed(1)} W)</span>
+                        <span className="pt-0.5 text-[10px] text-cyan-200 font-bold">v ({scanSpeedMmS.toFixed(1)} mm/s)</span>
+                      </span>
+                      <span className="font-bold text-amber-400 text-xs"> = {(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <span className="text-slate-400">Chồng lấp xung:</span>
+                    <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-emerald-300">
+                      <span>η = [ 1 − </span>
+                      <span className="inline-flex flex-col text-center align-middle mx-1">
+                        <span className="border-b border-emerald-400/50 pb-0.5 text-[10px] text-emerald-200 font-bold">v ({scanSpeedMmS.toFixed(1)})</span>
+                        <span className="pt-0.5 text-[10px] text-emerald-200 font-bold">2w₀·f ({(0.085 * pulseFrequencyKhz).toFixed(2)})</span>
+                      </span>
+                      <span> ] = <b className="text-emerald-400 font-bold">{liveSim.pulseOverlapPercent.toFixed(1)}%</b></span>
+                    </div>
                   </div>
                 </div>
 
@@ -1123,7 +1150,7 @@ export function MachineControlOverlay() {
                         ? 'text-rose-400 animate-pulse'
                         : 'text-cyan-300'
                     }`}>
-                      {liveSim.actualDepthMm}mm / {matPhys.plateThicknessMm}mm ({liveSim.cutThroughPercentage}%)
+                      {liveSim.actualDepthMm.toFixed(2)} mm / {matPhys.plateThicknessMm.toFixed(2)} mm ({liveSim.cutThroughPercentage.toFixed(1)}%)
                     </span>
                   </div>
 
@@ -1131,7 +1158,7 @@ export function MachineControlOverlay() {
                   <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex flex-col justify-between">
                     <span className="text-slate-400">Chồng lấp & Ra:</span>
                     <span className="font-bold text-slate-200 mt-1">
-                      η {liveSim.pulseOverlapPercent}% • Ra {liveSim.surfaceRoughnessRaUm}µm
+                      η {liveSim.pulseOverlapPercent.toFixed(1)}% • Ra {liveSim.surfaceRoughnessRaUm.toFixed(2)} µm
                     </span>
                   </div>
 
@@ -1139,7 +1166,7 @@ export function MachineControlOverlay() {
                   <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex flex-col justify-between">
                     <span className="text-slate-400">Rãnh Kerf & Năng lượng:</span>
                     <span className="font-bold text-amber-300 mt-1">
-                      {liveSim.kerfWidthMm}mm • {(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm
+                      {liveSim.kerfWidthMm.toFixed(3)} mm • {(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm
                     </span>
                   </div>
 
@@ -1156,11 +1183,11 @@ export function MachineControlOverlay() {
                         : 'text-cyan-300'
                     }`}>
                       {liveSim.qualityRating === 'PERFECT'
-                        ? '✓ Hoàn hảo'
+                        ? '✓ Hoàn hảo (100.0%)'
                         : liveSim.qualityRating === 'POOR_OVERBURNT'
-                        ? '⚠️ Quá nhiệt'
+                        ? '⚠️ Quá nhiệt (HAZ > 0.40mm)'
                         : liveSim.qualityRating === 'FAILED_UNCUT'
-                        ? '❌ Chưa đứt'
+                        ? `❌ Chưa đứt (d < ${matPhys.plateThicknessMm.toFixed(2)}mm)`
                         : '✓ Tối ưu'}
                     </span>
                   </div>
@@ -1171,7 +1198,7 @@ export function MachineControlOverlay() {
                   <div className="p-2 px-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-[11px] text-rose-300 flex items-center justify-between animate-pulse">
                     <div className="flex items-center space-x-2">
                       <AlertTriangle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-                      <span>CẢNH BÁO: Tia chỉ cắt sâu {liveSim.actualDepthMm}mm (chưa đứt phôi {matPhys.plateThicknessMm}mm).</span>
+                      <span>CẢNH BÁO: Tia chỉ cắt sâu {liveSim.actualDepthMm.toFixed(2)} mm (chưa đứt phôi {matPhys.plateThicknessMm.toFixed(2)} mm).</span>
                     </div>
                     <button
                       onClick={applyRecommendedParameters}
@@ -1487,7 +1514,7 @@ export function MachineControlOverlay() {
               <div className="flex items-center space-x-2">
                 <Sparkles className="w-4 h-4 text-cyan-400" />
                 <span className="font-mono text-white">
-                  Gợi ý: <b className="text-amber-300">{recSettings.powerWatts}W</b> • <b className="text-cyan-300">{recSettings.speedMmS}mm/s</b> • <b className="text-emerald-300">{recSettings.frequencyKhz}kHz</b>
+                  Gợi ý: <b className="text-amber-300">{recSettings.powerWatts.toFixed(1)}W</b> • <b className="text-cyan-300">{recSettings.speedMmS.toFixed(1)}mm/s</b> • <b className="text-emerald-300">{recSettings.frequencyKhz.toFixed(1)}kHz</b> • <b className="text-amber-400">E = {(recSettings.powerWatts / recSettings.speedMmS).toFixed(3)} J/mm</b>
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -1512,7 +1539,7 @@ export function MachineControlOverlay() {
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between text-[10px] font-mono">
                     <span className="text-slate-400">P:</span>
-                    <span className="text-amber-300 font-bold">{laserPowerWatts}W</span>
+                    <span className="text-amber-300 font-bold">{laserPowerWatts.toFixed(1)} W</span>
                   </div>
                   <input
                     type="range"
@@ -1527,7 +1554,7 @@ export function MachineControlOverlay() {
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between text-[10px] font-mono">
                     <span className="text-slate-400">v:</span>
-                    <span className="text-cyan-300 font-bold">{scanSpeedMmS}mm/s</span>
+                    <span className="text-cyan-300 font-bold">{scanSpeedMmS.toFixed(1)} mm/s</span>
                   </div>
                   <input
                     type="range"
@@ -1542,7 +1569,7 @@ export function MachineControlOverlay() {
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between text-[10px] font-mono">
                     <span className="text-slate-400">f:</span>
-                    <span className="text-emerald-300 font-bold">{pulseFrequencyKhz}kHz</span>
+                    <span className="text-emerald-300 font-bold">{pulseFrequencyKhz.toFixed(1)} kHz</span>
                   </div>
                   <input
                     type="range"
@@ -1560,20 +1587,20 @@ export function MachineControlOverlay() {
               <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-800 text-[10px] font-mono">
                 <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 block">Độ sâu:</span>
-                  <span className="font-bold text-cyan-300">{liveSim.actualDepthMm}mm ({liveSim.cutThroughPercentage}%)</span>
+                  <span className="font-bold text-cyan-300">{liveSim.actualDepthMm.toFixed(2)} mm ({liveSim.cutThroughPercentage.toFixed(1)}%)</span>
                 </div>
                 <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 block">Chồng lấp:</span>
-                  <span className="font-bold text-slate-200">η {liveSim.pulseOverlapPercent}%</span>
+                  <span className="font-bold text-slate-200">η {liveSim.pulseOverlapPercent.toFixed(1)}%</span>
                 </div>
                 <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 block">Kerf / E:</span>
-                  <span className="font-bold text-amber-300">{(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm</span>
+                  <span className="font-bold text-amber-300">{liveSim.kerfWidthMm.toFixed(3)} mm • {(laserPowerWatts / Math.max(1, scanSpeedMmS)).toFixed(3)} J/mm</span>
                 </div>
                 <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
                   <span className="text-slate-400 block">Chất lượng:</span>
                   <span className={`font-bold ${liveSim.isCutThrough ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {liveSim.qualityRating}
+                    {liveSim.qualityRating === 'PERFECT' ? '✓ Hoàn hảo' : liveSim.qualityRating}
                   </span>
                 </div>
               </div>

@@ -63,7 +63,7 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
     englishTitle: 'Carbon Dioxide Gas Laser Cutter',
     subtitle: 'Hệ thống laser khí phân tử công suất cao cho gia công phi kim',
     inventorInfo: 'Phát minh năm 1964 bởi Kumar Patel tại Bell Labs (Hoa Kỳ)',
-    wavelengthBadge: '10.6 µm · Hồng ngoại xa (Far-IR)',
+    wavelengthBadge: '10.60 µm · Hồng ngoại xa (Far-IR)',
     categoryBadge: 'Gia công nhiệt quang học (Thermal Ablation)',
     accentColor: '#06b6d4',
 
@@ -71,22 +71,22 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
       coreConcept:
         'Nguyên lý cốt lõi của laser CO2 dựa trên sự chuyển dời năng lượng giữa các mức dao động - quay (vibrational-rotational energy levels) của phân tử khí carbon dioxide (CO2), được hỗ trợ bởi các khí phụ trợ là Nitơ (N2) và Hê-li (He) trong chu trình 4 mức năng lượng.',
       gasMixtureOrMedium: {
-        title: 'Thành phần hỗn hợp khí trong ống phóng (Tỷ lệ điển hình CO2 : N2 : He ≈ 1 : 1 : 8)',
+        title: 'Thành phần hỗn hợp khí trong ống phóng (Tỷ lệ thể tích CO₂ : N₂ : He ≈ 1 : 1 : 8 = 1/10 : 1/10 : 8/10 = 0.10 : 0.10 : 0.80)',
         items: [
           {
             name: 'Khí CO2 (Khí hoạt tính)',
             role: 'Trực tiếp phát ra bức xạ laser chính thông qua quá trình kích thích dao động bất đối xứng.',
-            percentage: '10 - 15%',
+            percentage: '10.0 - 15.0% (1/10)',
           },
           {
             name: 'Khí N2 (Khí truyền năng lượng)',
             role: 'Hấp thụ năng lượng từ dòng phóng điện tử và truyền năng lượng cộng hưởng gần như hoàn hảo sang mức dao động của CO2.',
-            percentage: '15 - 20%',
+            percentage: '15.0 - 20.0% (1/6)',
           },
           {
             name: 'Khí He (Khí tản nhiệt & khử kích thích)',
             role: 'Có độ dẫn nhiệt cực cao, làm mát tâm ống phóng ra thành áo nước; đồng thời va chạm làm rỗng mức năng lượng dưới của CO2 để duy trì đảo lộn mật độ cư trú (Population Inversion).',
-            percentage: '65 - 75%',
+            percentage: '65.0 - 75.0% (7/10)',
           },
         ],
       },
@@ -95,29 +95,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Kích thích điện tử (Electron Impact)',
           description:
-            'Khi đặt điện áp cao (hàng chục kV) qua hai điện cực, các electron tự do được gia tốc mạnh trong điện trường và va chạm trực tiếp với các phân tử Nitơ (N₂). Phân tử N₂ chuyển lên trạng thái kích thích dao động v=1 có thời gian sống rất dài (trạng thái giả bền - metastable state).',
-          formula: 'e⁻ + N₂ → N₂* (v=1) + e⁻',
+            'Khi đặt điện áp cao (15.0 - 25.0 kV) qua hai điện cực, các electron tự do được gia tốc mạnh trong điện trường và va chạm trực tiếp với các phân tử Nitơ (N₂). Phân tử N₂ chuyển lên trạng thái kích thích dao động v = 1.0 có thời gian sống dài t_life ≈ 0.001 s (1/1000 s) (trạng thái giả bền - metastable state).',
+          formula: 'e⁻ + N₂ → N₂* (v = 1.0) + e⁻  (ΔE = 0.289 eV)',
         },
         {
           step: 2,
           name: 'Truyền năng lượng cộng hưởng (Resonant Energy Transfer)',
           description:
-            'Phân tử N₂ kích thích va chạm loại 2 với phân tử CO₂ ở trạng thái cơ bản. Vì mức năng lượng dao động v=1 của N₂ (2331 cm⁻¹) gần như trùng khít với mức dao động kéo giãn bất đối xứng (00⁰1, 2349 cm⁻¹) của CO₂, năng lượng được truyền qua gần như 100%.',
-          formula: 'N₂* (v=1) + CO₂ (00⁰0) → N₂ (v=0) + CO₂ (00⁰1) - ΔE',
+            'Phân tử N₂ kích thích va chạm loại 2 với phân tử CO₂ ở trạng thái cơ bản. Vì mức năng lượng dao động v = 1.0 của N₂ (2331.0 cm⁻¹) gần như trùng khít với mức dao động kéo giãn bất đối xứng (00⁰1, 2349.0 cm⁻¹) của CO₂ với độ chênh lệch chỉ ΔE = 18.00 cm⁻¹ (0.0022 eV), năng lượng được truyền qua với hiệu suất lượng tử η ≈ 99.2% (≈ 124/125).',
+          formula: 'N₂* (v = 1.0) + CO₂ (00⁰0) → N₂ (v = 0.0) + CO₂ (00⁰1) - ΔE  (ΔE = 18.00 cm⁻¹ = 0.0022 eV)',
         },
         {
           step: 3,
           name: 'Phát xạ cảm ứng (Stimulated Emission)',
           description:
-            'Phân tử CO₂ từ trạng thái 00⁰1 bị kích thích bởi một photon cùng pha để chuyển dời cưỡng bức xuống mức dao động kéo giãn đối xứng 10⁰0, giải phóng photon có bước sóng λ = 10.6 µm. Đây là bước sóng chiếm ưu thế quang học với tiết diện phát xạ lớn nhất.',
-          formula: 'CO₂* (00⁰1) + hν → CO₂ (10⁰0) + 2hν  (λ = 10.6 µm)',
+            'Phân tử CO₂ từ trạng thái 00⁰1 bị kích thích bởi một photon cùng pha để chuyển dời cưỡng bức xuống mức dao động kéo giãn đối xứng 10⁰0, giải phóng photon có bước sóng λ = 10.60 µm (hν = 0.117 eV). Hiệu suất lượng tử tối đa của quá trình là η = (2349.0 - 1388.0) / 2349.0 ≈ 40.9% (≈ 2/5). Đây là bước sóng chiếm ưu thế quang học với tiết diện phát xạ lớn nhất.',
+          formula: 'CO₂* (00⁰1) + hν → CO₂ (10⁰0) + 2hν  (λ = 10.60 µm, hν = 0.117 eV, η_lượng_tử ≈ 2/5 = 40.0%)',
         },
         {
           step: 4,
           name: 'Làm rỗng mức dưới & Tản nhiệt (De-excitation via Helium)',
           description:
-            'Từ mức 10⁰0, phân tử CO₂ va chạm liên tục với các nguyên tử Helium (He) nhẹ để khử kích thích nhanh chóng về mức cơ bản 00⁰0. Nhiệt năng sinh ra được He dẫn nhanh ra thành ống làm mát bằng nước tuần hoàn.',
-          formula: 'CO₂ (10⁰0) + He → CO₂ (00⁰0) + He + Nhiệt năng',
+            'Từ mức 10⁰0, phân tử CO₂ va chạm liên tục với các nguyên tử Helium (He) nhẹ để khử kích thích nhanh chóng về mức cơ bản 00⁰0 trong thời gian t < 0.0001 s (1/10000 s). Nhiệt năng sinh ra ΔE = 0.172 eV được He dẫn nhanh ra thành ống làm mát bằng nước tuần hoàn (lưu lượng Q = 4.00 - 6.00 L/min).',
+          formula: 'CO₂ (10⁰0) + He → CO₂ (00⁰0) + He + 0.172 eV (Nhiệt năng)',
         },
       ],
       wavelengthDetails:
@@ -235,7 +235,7 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
     englishTitle: 'Ultraviolet Cold Laser Marking System',
     subtitle: 'Công nghệ gia công lạnh quang hóa cho vật liệu siêu nhạy cảm và vi mạch',
     inventorInfo: 'Phát triển dựa trên công nghệ laser thể rắn bơm diode (DPSS) và tinh thể phi tuyến',
-    wavelengthBadge: '355 nm · Tử ngoại sóng ngắn (UV-A)',
+    wavelengthBadge: '355.00 nm (0.355 µm) · Tử ngoại cực ngắn (UV-DPSS)',
     categoryBadge: 'Gia công lạnh quang hóa (Photochemical Ablation)',
     accentColor: '#8b5cf6',
 
@@ -264,29 +264,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Bơm Diode & Phát xạ hồng ngoại gốc',
           description:
-            'Diode laser 808 nm bơm kích thích các ion Neodymium trong tinh thể Nd:YVO₄, tạo hiện tượng đảo lộn mật độ và phát xung laser ngắn ở bước sóng 1064 nm.',
-          formula: 'λ₀ = 1064 nm  (hν₀ ≈ 1.17 eV)',
+            'Diode laser 808.00 nm bơm kích thích các ion Neodymium trong tinh thể Nd:YVO₄, tạo hiện tượng đảo lộn mật độ và phát xung laser cực ngắn τ = 10.0 - 30.0 ns ở bước sóng gốc λ₀ = 1064.00 nm (1.064 µm) với năng lượng photon hν₀ = 1.165 eV.',
+          formula: 'λ₀ = 1064.00 nm = 1.064 µm  (hν₀ = 1.165 eV, P_peak = 15.0 - 50.0 kW)',
         },
         {
           step: 2,
           name: 'Nhân đôi tần số quang học (SHG - Second Harmonic)',
           description:
-            'Chùm tia 1064 nm đi qua tinh thể phi tuyến LBO được căn chỉnh góc pha chính xác, hai photon 1064 nm kết hợp thành một photon 532 nm (bước sóng giảm một nửa).',
-          formula: 'ω₁ = 2ω₀ → λ₁ = 532 nm  (hν₁ ≈ 2.33 eV)',
+            'Chùm tia 1064.00 nm đi qua tinh thể phi tuyến LBO bậc hai (SHG), hai photon 1064.00 nm kết hợp thành một photon 532.00 nm (bước sóng giảm một nửa = 1/2 = 0.50), năng lượng photon nhân đôi lên hν₁ = 2.331 eV (ánh sáng xanh lục).',
+          formula: 'ω₁ = 2ω₀ → λ₁ = λ₀ / 2 = 532.00 nm  (hν₁ = 2.331 eV, Tỷ lệ bước sóng = 1/2)',
         },
         {
           step: 3,
           name: 'Trộn tổng tần số (THG - Third Harmonic Generation)',
           description:
-            'Chùm tia 532 nm trộn pha với phần còn lại của chùm 1064 nm trong tinh thể phi tuyến thứ hai để sinh ra photon có năng lượng bằng tổng hai photon, tạo ra bước sóng 355 nm.',
-          formula: 'ω₂ = ω₀ + ω₁ → λ₂ = 355 nm  (hν₂ ≈ 3.49 eV)',
+            'Chùm tia 532.00 nm trộn pha với phần còn lại của chùm 1064.00 nm trong tinh thể phi tuyến thứ hai (THG) để sinh ra photon có năng lượng bằng tổng hai photon hν₂ = 1.165 + 2.331 = 3.493 eV, tạo ra bước sóng tử ngoại λ₂ = 355.00 nm (bằng 1/3 bước sóng gốc = 0.333).',
+          formula: 'ω₂ = ω₀ + ω₁ → λ₂ = λ₀ / 3 = 355.00 nm  (hν₂ = 3.493 eV, Tỷ lệ bước sóng = 1/3)',
         },
         {
           step: 4,
           name: 'Bẻ gãy liên kết phân tử lạnh (Photochemical Ablation)',
           description:
-            'Năng lượng photon 3.49 eV lớn hơn năng lượng liên kết của hầu hết các liên kết cộng hóa trị (C-C: 3.6 eV, C-H: 4.3 eV, C-O: 3.7 eV). Vật liệu bị phân ly trực tiếp thành các phân tử khí nhỏ mà không nung nóng chảy, vùng ảnh hưởng nhiệt (HAZ) gần như bằng không.',
-          formula: 'E_photon = 3.49 eV > E_liên_kết (C-C, C-H) → Bẻ gãy quang hóa (Cold Cut)',
+            'Năng lượng photon 3.493 eV (tương đương nhiệt độ photon T_equiv ≈ 40500.0 K) lớn hơn năng lượng liên kết của hầu hết các liên kết cộng hóa trị (C-C: 3.60 eV, C-H: 4.30 eV, C-O: 3.70 eV). Vật liệu bị phân ly trực tiếp thành các phân tử khí nhỏ với vùng ảnh hưởng nhiệt HAZ ≤ 0.005 mm (5.0 µm ≈ 1/200 mm).',
+          formula: 'E_photon = 3.493 eV > E_liên_kết (C-C: 3.60 eV, C-H: 4.30 eV) → Bẻ gãy quang hóa (Cold Cut)',
         },
       ],
       wavelengthDetails:
@@ -386,7 +386,7 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
     englishTitle: 'Ytterbium Fiber Laser Marking System',
     subtitle: 'Nguồn phát laser sợi quang học thế hệ mới chuyên trị kim loại và gia công tốc độ cao',
     inventorInfo: 'Công nghệ laser sợi quang phát triển mạnh mẽ từ những năm 1990 bởi IPG Photonics',
-    wavelengthBadge: '1064 nm · Cận hồng ngoại (Near-IR)',
+    wavelengthBadge: '1064.00 nm (1.064 µm) · Cận hồng ngoại (NIR)',
     categoryBadge: 'Quét chùm tia Galvo tốc độ cao (Galvanometer)',
     accentColor: '#f59e0b',
 
@@ -415,29 +415,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Bơm quang học từ Diode bán dẫn',
           description:
-            'Nhiều diode laser bán dẫn công suất cao phát bước sóng 976 nm bơm năng lượng vào vỏ sợi quang kép (Double-clad fiber). Ánh sáng bơm phản xạ toàn phần bên trong và cắt qua lõi pha tạp Ytterbium (Yb³⁺) nhiều lần.',
-          formula: 'P_bơm (976 nm) → Yb³⁺ (Kích thích mức ²F₅/₂)',
+            'Nhiều diode laser bán dẫn công suất cao phát bước sóng 976.00 nm bơm năng lượng vào vỏ sợi quang kép (Double-clad fiber). Ánh sáng bơm phản xạ toàn phần bên trong và cắt qua lõi pha tạp Ytterbium (Yb³⁺) với hiệu suất hấp thụ quang η_pump ≈ 0.80 (80.0% = 4/5).',
+          formula: 'P_bơm (976.00 nm) → Yb³⁺ (²F₅/₂), η_pump = 4/5 (80.00%)',
         },
         {
           step: 2,
           name: 'Khuếch đại photon trong lõi sợi quang (FBG Cavity)',
           description:
-            'Các ion Yb³⁺ bị kích thích chuyển dời năng lượng và phát ra photon 1064 nm. Cặp cách tử sợi quang FBG ở hai đầu phản hồi chùm photon qua lại hàng triệu lần trong lõi sợi, tạo hiện tượng khuếch đại ánh sáng cảm ứng.',
-          formula: 'Yb³⁺ (²F₅/₂) + hν → Yb³⁺ (²F₇/₂) + 2hν  (λ = 1064 nm)',
+            'Các ion Yb³⁺ bị kích thích chuyển dời năng lượng và phát ra photon 1064.00 nm (hν = 1.165 eV). Cặp cách tử sợi quang FBG ở hai đầu phản hồi chùm photon qua lại hàng triệu lần trong lõi sợi, tạo chùm tia chất lượng quang học gần lý tưởng M² ≤ 1.10.',
+          formula: 'Yb³⁺ (²F₅/₂) + hν → Yb³⁺ (²F₇/₂) + 2hν  (λ = 1064.00 nm = 1.064 µm, hν = 1.165 eV)',
         },
         {
           step: 3,
           name: 'Dẫn truyền qua cáp sợi quang mềm (Beam Delivery)',
           description:
-            'Chùm tia laser sau khi ra khỏi buồng cộng hưởng được dẫn trực tiếp qua cáp bọc thép quang học đến đầu khắc mà không cần hệ thống gương chuyển hướng cồng kềnh.',
-          formula: 'TEM₀₀ (M² < 1.1) → Dẫn truyền sợi quang không suy hao',
+            'Chùm tia laser sau khi ra khỏi buồng cộng hưởng được dẫn trực tiếp qua cáp bọc thép quang học đến đầu khắc mà không cần hệ thống gương chuyển hướng, với tỷ lệ tổn hao năng lượng cực thấp < 0.20 dB/km (dưới 0.0002 dB/m).',
+          formula: 'TEM₀₀ (M² ≤ 1.10) → Suy hao truyền dẫn α < 0.20 dB/km (0.0002 dB/m)',
         },
         {
           step: 4,
           name: 'Điều hướng bằng cặp gương Galvo điện động siêu tốc',
           description:
-            'Thay vì dùng cụm trục cơ khí XY nặng nề, chùm tia phản xạ qua 2 gương siêu nhẹ gắn trên trục động cơ servo độ chính xác cao. Chùm tia có thể vẽ ký tự, mã QR hoặc hình ảnh với tốc độ lên đến 7.000 - 12.000 mm/s.',
-          formula: 'v_quét = 7.000 - 12.000 mm/s  (Gương Galvo θ_x, θ_y)',
+            'Thay vì dùng cụm trục cơ khí XY nặng nề, chùm tia phản xạ qua 2 gương siêu nhẹ gắn trên trục động cơ servo độ chính xác cao. Chùm tia có thể vẽ ký tự, mã QR hoặc hình ảnh với tốc độ lên đến 7000.0 - 12000.0 mm/s và độ phân giải vị trí đạt 0.005 mm (1/200 mm).',
+          formula: 'v_quét = 7000.0 - 12000.0 mm/s  (Sai số vị trí δ ≤ ±0.005 mm = ±5.0 µm)',
         },
       ],
       wavelengthDetails:
@@ -474,7 +474,7 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           {
             name: 'Thấu kính F-Theta 1064 nm',
             englishName: 'F-Theta Scan Field Lens',
-            description: 'Biến đổi chuyển động quét góc θ của gương thành độ dịch chuyển tuyến tính phẳng $y = f \\cdot \\theta$ trên bàn làm việc.',
+            description: 'Biến đổi chuyển động quét góc θ của gương thành độ dịch chuyển tuyến tính phẳng y = f · θ trên bàn làm việc.',
             materialOrSpec: 'Vùng quét: 110x110mm hoặc 200x200mm, tiêu cự F=160mm',
           },
         ],
@@ -531,7 +531,7 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
     englishTitle: 'Industrial Laser Safety & Monitoring Sensors',
     subtitle: 'Hệ thống bảo vệ đa kênh: Quang học, Nhiệt độ bức xạ, Lưu lượng dòng chảy và Khí khói',
     inventorInfo: 'Tiêu chuẩn an toàn công nghiệp quốc tế ISO 11553 & ANSI Z136 cho gia công laser',
-    wavelengthBadge: 'Cảm biến đa kênh (Optical / IR / Hall / Photoelectric)',
+    wavelengthBadge: '5.50 - 14.00 µm · Cảm biến đa kênh (Optical / IR / Hall)',
     categoryBadge: 'Hệ thống an toàn & Khóa liên động (Interlock)',
     accentColor: '#10b981',
 
@@ -543,29 +543,29 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Đo nhiệt hồng ngoại không tiếp xúc (Định luật Stefan-Boltzmann)',
           description:
-            'Mọi vật thể tại nhiệt độ T phát ra bức xạ nhiệt theo định luật E = ε · σ · T⁴. Cảm biến nhiệt điện trở (Thermopile) thu nhận quang phổ hồng ngoại 5.5 - 14 µm từ điểm gia công và chuyển thành tín hiệu điện áp tỷ lệ với nhiệt độ thực tế mà không cần chạm vào vật.',
-          formula: 'E = ε · σ · T⁴  (σ = 5.67 × 10⁻⁸ W/m²K⁴)',
+            'Mọi vật thể tại nhiệt độ T phát ra bức xạ nhiệt theo định luật E = ε · σ · T⁴ với hằng số Stefan-Boltzmann σ = 5.670 × 10⁻⁸ W/(m²·K⁴). Cảm biến nhiệt điện trở (Thermopile) thu nhận quang phổ hồng ngoại 5.50 - 14.00 µm và chuyển thành tín hiệu điện áp với độ phân giải nhiệt độ 0.020 °C.',
+          formula: 'E = ε · σ · T⁴  (σ = 5.670 × 10⁻⁸ W/m²K⁴, ε = 0.900 ± 0.050)',
         },
         {
           step: 2,
           name: 'Giám sát lưu lượng nước giải nhiệt (Hiệu ứng Hall)',
           description:
-            'Nước làm mát từ Chiller chảy qua buồng cảm biến làm quay cánh quạt từ tính. Khi các cực từ quét qua chip bán dẫn Hall, điện áp Hall biến thiên sinh ra xung vuông số. Tần số xung tỉ lệ thuận với lưu lượng nước (Lít/phút).',
-          formula: 'V_H = (I · B) / (n · e · t) → f_xung ∝ Q_lưu_lượng',
+            'Nước làm mát từ Chiller chảy qua buồng cảm biến làm quay cánh quạt từ tính. Điện áp Hall biến thiên sinh ra xung vuông số với hệ số tỉ lệ k_flow = 4.50 Hz trên mỗi Lít/phút. Nếu lưu lượng tụt dưới ngưỡng an toàn Q < 2.00 L/min, tín hiệu ngắt bảo vệ được kích hoạt.',
+          formula: 'V_H = (I · B) / (n · e · t) → f_xung = 4.50 Hz / (L/min) · Q  (Q_min = 2.00 L/min)',
         },
         {
           step: 3,
           name: 'Phát hiện khói quang điện (Hiệu ứng tán xạ Tyndall)',
           description:
-            'Một diode phát hồng ngoại và một photodiode thu đặt lệch góc nhau 90 độ trong buồng tối chữ Mê cung (Labyrinth). Ở trạng thái bình thường, ánh sáng đi thẳng và không chạm photodiode. Khi có hạt khói/bụi lọt vào buồng, ánh sáng bị tán xạ đập vào photodiode, kích hoạt mạch ngắt khẩn cấp.',
-          formula: 'I_tán_xạ ∝ I₀ · (1 + cos²θ) / λ⁴  (Kích hoạt ngắt khẩn cấp)',
+            'Một diode phát hồng ngoại λ = 880.00 nm và một photodiode thu đặt lệch góc nhau 90.0° trong buồng tối chữ Mê cung (Labyrinth). Khi mật độ khói vượt ngưỡng an toàn D_smoke ≥ 15.00% (hoặc nhiệt độ tăng đột biến > 65.0 °C), mạch so sánh kích hoạt còi buzzer và ngắt khẩn cấp.',
+          formula: 'I_tán_xạ ∝ I₀ · (1 + cos²θ) / λ⁴  (λ = 880.00 nm = 0.880 µm, Ngưỡng khói = 15.00%)',
         },
         {
           step: 4,
           name: 'Khóa an toàn nắp máy quang học (Photo-Interrupter Switch)',
           description:
-            'Khi nắp bảo vệ máy bị mở, chùm quang hồng ngoại rãnh chữ U bị ngắt, rơ-le an toàn ngắt trực tiếp đường cấp cao áp của nguồn laser trong vòng 10 phần triệu giây (10 µs), ngăn tia laser phát ra khi người dùng đang thao tác tay.',
-          formula: 'Interlock = 0 (Nắp mở) → Ngắt nguồn cao áp Laser trong < 20 ms',
+            'Khi nắp bảo vệ máy bị mở, chùm quang hồng ngoại rãnh chữ U bị ngắt, rơ-le an toàn ngắt trực tiếp đường cấp cao áp của nguồn laser trong thời gian đáp ứng t_cut < 0.020 s (1/50 s = 20.0 ms, tương ứng tỷ lệ an toàn cấp độ SIL 3 / PL e).',
+          formula: 'Interlock = 0.00 (Nắp mở) → Thời gian ngắt t_cut < 0.020 s (1/50 s = 20.0 ms)',
         },
       ],
       wavelengthDetails:
@@ -668,7 +668,7 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
     englishTitle: 'Electrostatic Spray Coating & UV Curing Finishing Booth',
     subtitle: 'Hệ thống xử lý bề mặt, phủ màng bảo vệ và đóng rắn quang học cho thành phẩm sau gia công laser',
     inventorInfo: 'Công nghệ sơn tĩnh điện phát minh bởi Harold Ransburg (1940), kết hợp sấy quang hóa UV hiện đại',
-    wavelengthBadge: 'Sơn Phủ & Sấy UV (365 - 395 nm)',
+    wavelengthBadge: '395.00 nm (0.395 µm) · Sơn Phủ & Sấy UV',
     categoryBadge: 'Xử lý bề mặt & Đóng rắn quang học (Surface Finishing)',
     accentColor: '#38bdf8',
 
@@ -679,9 +679,9 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
         title: 'Thành phần hệ sơn & Khí nén mang hạt',
         items: [
           { name: 'Oligomer & Monomer đóng rắn quang học', role: 'Chuỗi mạch polyme cơ sở tạo độ cứng, độ bóng và độ bền va đập', percentage: '60 - 75%' },
-          { name: 'Chất kích hoạt quang (Photoinitiators)', role: 'Hấp thụ photon UV tạo gốc tự do (free radicals) khơi mào phản ứng trùng hợp tức thì', percentage: '3 - 8%' },
-          { name: 'Hạt nhũ & Bột màu nano (Pigments)', role: 'Tạo màu sắc, độ tương phản thẩm mỹ và hiệu ứng ánh kim kim loại', percentage: '15 - 25%' },
-          { name: 'Khí nén khô lọc dầu (Compressed Dry Air)', role: 'Môi chất phun sương áp suất 2 - 4 bar tạo hạt sương micro-droplet mịn', percentage: 'Áp suất làm việc' },
+          { name: 'Chất kích hoạt quang (Photoinitiators)', role: 'Hấp thụ photon UV tạo gốc tự do (free radicals) khơi mào phản ứng trùng hợp tức thì', percentage: '3.0 - 8.0% (1/25 - 2/25)' },
+          { name: 'Hạt nhũ & Bột màu nano (Pigments)', role: 'Tạo màu sắc, độ tương phản thẩm mỹ và hiệu ứng ánh kim kim loại', percentage: '15.0 - 25.0% (3/20 - 1/4)' },
+          { name: 'Khí nén khô lọc dầu (Compressed Dry Air)', role: 'Môi chất phun sương áp suất 2 - 4 bar tạo hạt sương micro-droplet mịn', percentage: '2.00 - 4.00 bar' },
         ],
       },
       energyCycleSteps: [
@@ -689,22 +689,22 @@ export const PHYSICS_DATA: Record<MachineId, MachineDetailedSpec> = {
           step: 1,
           name: 'Phun sương tĩnh điện & Hiệu ứng bao bọc (Electrostatic Wrap-Around)',
           description:
-            'Đầu béc súng phun tích điện áp âm (-30kV đến -60kV) vào các hạt sơn khi thoát ra khỏi vòi. Theo định luật Coulomb, các hạt sơn bị hút mãnh liệt về phía phôi nối đất, len lỏi vào cả các rãnh cắt laser và mặt sau mà không bị thất thoát ra không khí.',
-          formula: 'F = k · (|q₁ · q₂|) / r²  (Lực hút tĩnh điện Coulomb)',
+            'Đầu béc súng phun tích điện áp âm V = -30.00 kV đến -60.00 kV (trung bình -45.00 kV) vào các hạt sơn có đường kính micro d_giọt = 15.0 - 35.0 µm. Theo định luật Coulomb với hằng số k = 8.988 × 10⁹ N·m²/C², các hạt sơn bị hút mãnh liệt về phía phôi nối đất, đạt tỷ lệ bám dính hiệu dụng η_transfer ≥ 85.00% (17/20).',
+          formula: 'F = k · (|q₁ · q₂|) / r²  (k = 8.988 × 10⁹ N·m²/C², V_súng = -45.00 kV)',
         },
         {
           step: 2,
           name: 'Lực căng bề mặt & Thấm ướt rãnh cắt (Phương trình Young-Dupré)',
           description:
-            'Màng sơn ướt trải đều trên bề mặt phôi nhờ năng lượng tự do bề mặt. Độ thấm ướt tối ưu giúp sơn điền đầy các vi rãnh cắt nhiệt của laser CO₂ hoặc vi nứt oxit của laser Fiber mà không để lại bọt khí.',
-          formula: 'γ_SG = γ_SL + γ_LG · cosθ  (θ < 30°: Thấm ướt hoàn hảo)',
+            'Màng sơn ướt trải đều trên bề mặt phôi nhờ năng lượng tự do bề mặt. Với góc tiếp xúc thấm ướt nhỏ θ < 30.00° (cosθ > 0.866 ≈ √3/2), sơn điền đầy các vi rãnh cắt nhiệt của laser CO₂ (chiều sâu vi rãnh 0.050 - 0.200 mm) mà không để lại bọt khí.',
+          formula: 'γ_SG = γ_SL + γ_LG · cosθ  (cosθ ≥ 0.866, θ < 30.00°: Thấm ướt hoàn hảo)',
         },
         {
           step: 3,
           name: 'Đóng rắn tức thì bằng tia cực tím (UV Photo-Polymerization)',
           description:
-            'Photon tử ngoại có năng lượng cao E = h · ν bẻ gãy liên kết trong chất kích hoạt quang, tạo các gốc tự do kích hoạt phản ứng trùng hợp chuỗi monome thành mạng lưới polyme liên kết chéo 3 chiều. Màng sơn khô cứng hoàn toàn chỉ sau 3-5 giây mà không làm nóng cong vênh phôi.',
-          formula: 'E = h · ν = (h · c) / λ  (λ = 395 nm)',
+            'Photon tử ngoại bước sóng λ = 395.00 nm có năng lượng photon hν = 3.139 eV bẻ gãy liên kết trong chất kích hoạt quang, tạo phản ứng trùng hợp chuỗi monome thành màng polymer liên kết chéo 3 chiều. Màng sơn khô cứng hoàn toàn chỉ sau 3.00 - 5.00 giây (trung bình 3.50 s) với độ dày màng khô t_film = 0.025 - 0.040 mm (25.0 - 40.0 µm).',
+          formula: 'E = h · ν = (h · c) / λ  (λ = 395.00 nm = 0.395 µm, hν = 3.139 eV, t_curing = 3.50 s)',
         },
       ],
       wavelengthDetails:

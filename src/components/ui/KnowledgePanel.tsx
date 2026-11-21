@@ -38,6 +38,8 @@ function formatFormula(raw: string) {
     .replace(/\\xrightarrow\{([^\}]+)\}/g, ' ──[$1]──> ')
     .replace(/\\nu/g, 'ν')
     .replace(/\\lambda/g, 'λ')
+    .replace(/\\mu\s*m/g, 'µm')
+    .replace(/\\mum/g, 'µm')
     .replace(/\\mu/g, 'µ')
     .replace(/\\omega/g, 'ω')
     .replace(/\\Delta/g, 'Δ')
@@ -59,6 +61,9 @@ function formatFormula(raw: string) {
     .replace(/_0/g, '₀')
     .replace(/_1/g, '₁')
     .replace(/_3/g, '₃')
+    .replace(/00\^01/g, '00⁰1')
+    .replace(/10\^00/g, '10⁰0')
+    .replace(/00\^00/g, '00⁰0')
     .replace(/\^4/g, '⁴')
     .replace(/\^2/g, '²')
     .replace(/\^0/g, '⁰')
@@ -68,12 +73,10 @@ function formatFormula(raw: string) {
     .replace(/\^\{-1\}/g, '⁻¹')
     .replace(/\^-1/g, '⁻¹')
     .replace(/\^\*/g, '*')
-    .replace(/\(00\^01\)/g, '(00⁰1)')
-    .replace(/\(10\^00\)/g, '(10⁰0)')
-    .replace(/\(00\^00\)/g, '(00⁰0)')
     .replace(/CO_2/g, 'CO₂')
     .replace(/N_2/g, 'N₂')
     .replace(/e\^-/g, 'e⁻')
+    .replace(/\\/g, '')
     .replace(/\$/g, '');
 }
 
@@ -82,6 +85,7 @@ function formatPhysicsText(text: string) {
   return text
     .replace(/\\lambda/g, 'λ')
     .replace(/\\mu\s*m/g, 'µm')
+    .replace(/\\mum/g, 'µm')
     .replace(/\\mu/g, 'µ')
     .replace(/\\nu/g, 'ν')
     .replace(/\\rightarrow/g, '→')
@@ -93,8 +97,79 @@ function formatPhysicsText(text: string) {
     .replace(/cm\^-1/g, 'cm⁻¹')
     .replace(/T\^4/g, 'T⁴')
     .replace(/h\*nu/g, 'h·ν')
+    .replace(/\\cdot/g, '·')
     .replace(/\$([^\$]+)\$/g, '$1')
-    .replace(/\\cdot/g, '·');
+    .replace(/\\/g, '')
+    .replace(/\$/g, '');
+}
+
+function renderFractionFormula(raw: string): React.ReactNode {
+  const formatted = formatFormula(raw);
+  const fractionRegex = /(\([^)]+\)|[a-zA-Z0-9₀-₉_λh·q|]+)\s*\/\s*(\([^)]+\)|[a-zA-Z0-9₀-₉_λr²t⁴]+)/g;
+
+  if (!fractionRegex.test(formatted)) {
+    return <span className="font-semibold tracking-wide text-cyan-300">{formatted}</span>;
+  }
+
+  fractionRegex.lastIndex = 0;
+  const parts: React.ReactNode[] = [];
+  let lastIdx = 0;
+  let match: RegExpExecArray | null;
+  let keyIdx = 0;
+
+  while ((match = fractionRegex.exec(formatted)) !== null) {
+    if (match.index > lastIdx) {
+      parts.push(
+        <span key={`text-${keyIdx++}`}>
+          {formatted.substring(lastIdx, match.index)}
+        </span>
+      );
+    }
+
+    const num = match[1].replace(/^\((.*)\)$/, '$1').trim();
+    const den = match[2].replace(/^\((.*)\)$/, '$1').trim();
+
+    if (/^\d+\/\d+$/.test(match[0])) {
+      parts.push(
+        <span
+          key={`frac-pill-${keyIdx++}`}
+          className="inline-flex items-center px-1.5 py-0.5 mx-1 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold text-xs"
+        >
+          {match[0]}
+        </span>
+      );
+    } else {
+      parts.push(
+        <span
+          key={`frac-vert-${keyIdx++}`}
+          className="inline-flex flex-col text-center align-middle mx-1.5 font-mono"
+        >
+          <span className="border-b border-cyan-400/50 pb-0.5 text-xs text-amber-200 font-bold px-1">
+            {num}
+          </span>
+          <span className="pt-0.5 text-xs text-cyan-200 font-bold px-1">
+            {den}
+          </span>
+        </span>
+      );
+    }
+
+    lastIdx = fractionRegex.lastIndex;
+  }
+
+  if (lastIdx < formatted.length) {
+    parts.push(
+      <span key={`text-${keyIdx++}`}>
+        {formatted.substring(lastIdx)}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center flex-wrap gap-0.5 text-cyan-300 font-semibold">
+      {parts}
+    </span>
+  );
 }
 
 export function KnowledgePanel() {
@@ -390,8 +465,10 @@ export function KnowledgePanel() {
 
                     {step.formula && (
                       <div className="mt-2.5 ml-7 p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-xs text-lab-cyan/95 overflow-x-auto shadow-inner flex items-center">
-                        <span className="text-slate-500 select-none mr-2 font-bold">fx =</span>
-                        <code className="font-semibold tracking-wide text-cyan-300">{formatFormula(step.formula)}</code>
+                        <span className="text-slate-500 select-none mr-2 font-bold flex-shrink-0">fx =</span>
+                        <div className="overflow-x-auto py-1">
+                          {renderFractionFormula(step.formula)}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -483,14 +560,14 @@ export function KnowledgePanel() {
                         </div>
 
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          {part.description}
+                          {formatPhysicsText(part.description)}
                         </p>
 
                         <div className="pt-1.5 flex items-center justify-between text-[11px] font-mono border-t border-slate-800/60">
                           {part.materialOrSpec ? (
                             <div className="text-lab-cyan">
                               <span className="text-slate-400 font-sans">Quy cách: </span>
-                              <span>{part.materialOrSpec}</span>
+                              <span>{formatPhysicsText(part.materialOrSpec)}</span>
                             </div>
                           ) : (
                             <span />
@@ -536,7 +613,7 @@ export function KnowledgePanel() {
                   </h3>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    {item.features}
+                    {formatPhysicsText(item.features)}
                   </p>
 
                   <div className="grid sm:grid-cols-2 gap-3 pt-2">
@@ -548,7 +625,7 @@ export function KnowledgePanel() {
                       </span>
                       <ul className="text-[11px] text-emerald-200/90 space-y-1 list-disc list-inside">
                         {item.pros.map((pro, pIdx) => (
-                          <li key={pIdx}>{pro}</li>
+                          <li key={pIdx}>{formatPhysicsText(pro)}</li>
                         ))}
                       </ul>
                     </div>
@@ -561,7 +638,7 @@ export function KnowledgePanel() {
                       </span>
                       <ul className="text-[11px] text-rose-200/90 space-y-1 list-disc list-inside">
                         {item.cons.map((con, cIdx) => (
-                          <li key={cIdx}>{con}</li>
+                          <li key={cIdx}>{formatPhysicsText(con)}</li>
                         ))}
                       </ul>
                     </div>
@@ -733,7 +810,7 @@ export function KnowledgePanel() {
                   {data.materialsAndSafety.recommendedMaterials.map((mat, mIdx) => (
                     <li key={mIdx} className="flex items-center space-x-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span>{mat}</span>
+                      <span>{formatPhysicsText(mat)}</span>
                     </li>
                   ))}
                 </ul>
@@ -749,7 +826,7 @@ export function KnowledgePanel() {
                   {data.materialsAndSafety.restrictedMaterials.map((mat, rIdx) => (
                     <li key={rIdx} className="flex items-center space-x-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                      <span>{mat}</span>
+                      <span>{formatPhysicsText(mat)}</span>
                     </li>
                   ))}
                 </ul>
@@ -775,7 +852,7 @@ export function KnowledgePanel() {
                     <span className="font-mono text-rose-400 font-bold text-xs mt-0.5">
                       0{pIdx + 1}.
                     </span>
-                    <span>{protocol}</span>
+                    <span>{formatPhysicsText(protocol)}</span>
                   </div>
                 ))}
               </div>

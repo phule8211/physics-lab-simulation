@@ -151,21 +151,30 @@ export function ScientificRationaleModal() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] font-mono">
               <div className="p-3 rounded-lg bg-slate-900/80 border border-slate-800 space-y-1.5">
                 <span className="text-cyan-400 font-bold block">1. Độ sâu vết cắt d_cut (Cân bằng nhiệt động):</span>
-                <div className="p-2 rounded bg-slate-950 text-amber-200 text-center text-xs">
-                  d_cut = (A(λ) × P_avg) ÷ [ 2w₀ × v × ρ × (cp·ΔT + Lm + Lv) ]
+                <div className="p-2.5 rounded bg-slate-950 text-amber-200 text-center flex items-center justify-center text-xs">
+                  <span>d_cut = </span>
+                  <span className="inline-flex flex-col text-center align-middle mx-1.5">
+                    <span className="border-b border-amber-400/50 pb-0.5 text-xs text-amber-300 font-bold px-1">A(λ) · P_avg</span>
+                    <span className="pt-0.5 text-xs text-amber-100 font-bold px-1">2w₀ · v · ρ · (c_p·ΔT + L_m + L_v)</span>
+                  </span>
                 </div>
                 <p className="text-[10px] text-slate-400 font-sans">
-                  Quyết định độ sâu bóc tách vật liệu. Nếu P quá nhỏ hoặc v quá lớn, d_cut sẽ nhỏ hơn chiều dày phôi ({matPhysics.plateThicknessMm}mm) dẫn tới <strong>không đứt phôi</strong>.
+                  Quyết định độ sâu bóc tách vật liệu. Hiện tại: <strong className="text-cyan-300">d = {currentSim.actualDepthMm.toFixed(2)} mm</strong> / {matPhysics.plateThicknessMm.toFixed(2)} mm ({currentSim.cutThroughPercentage.toFixed(1)}%).
                 </p>
               </div>
 
               <div className="p-3 rounded-lg bg-slate-900/80 border border-slate-800 space-y-1.5">
                 <span className="text-emerald-400 font-bold block">2. Tỷ lệ chồng lấp xung η_overlap (Độ mịn / Nhám):</span>
-                <div className="p-2 rounded bg-slate-950 text-emerald-200 text-center text-xs">
-                  η_overlap = [ 1 − (v ÷ (2w₀ × f)) ] × 100%
+                <div className="p-2.5 rounded bg-slate-950 text-emerald-200 text-center flex items-center justify-center text-xs">
+                  <span>η_overlap = [ 1 − </span>
+                  <span className="inline-flex flex-col text-center align-middle mx-1.5">
+                    <span className="border-b border-emerald-400/50 pb-0.5 text-xs text-emerald-300 font-bold px-1">v</span>
+                    <span className="pt-0.5 text-xs text-emerald-100 font-bold px-1">2w₀ · f</span>
+                  </span>
+                  <span>] × 100% = <strong className="text-emerald-300 ml-1">{currentSim.pulseOverlapPercent.toFixed(1)}%</strong></span>
                 </div>
                 <p className="text-[10px] text-slate-400 font-sans">
-                  Khi η_overlap &gt; 75%: nhiệt tích lũy làm mịn bóng mép cắt (flame-polishing / dark annealing). Khi &lt; 30%: các hố vi mô tách rời làm bề mặt sần sùi bavia.
+                  Khi η &gt; 75.0% (3/4): mép cắt bóng gương mịn (Ra ≤ 0.80 µm). Khi &lt; 30.0% (3/10): hố vi mô tách rời bavia.
                 </p>
               </div>
             </div>
@@ -191,8 +200,8 @@ export function ScientificRationaleModal() {
                 <tbody className="divide-y divide-slate-800/60">
                   <tr>
                     <td className="py-2 px-2.5 text-slate-300 font-sans">Công suất (P):</td>
-                    <td className="py-2 px-2.5 font-bold text-amber-300">{laserPowerWatts} W</td>
-                    <td className="py-2 px-2.5 font-bold text-cyan-300">{rec.powerWatts} W</td>
+                    <td className="py-2 px-2.5 font-bold text-amber-300">{laserPowerWatts.toFixed(1)} W</td>
+                    <td className="py-2 px-2.5 font-bold text-cyan-300">{rec.powerWatts.toFixed(1)} W</td>
                     <td className="py-2 px-2.5 text-slate-400 font-sans">
                       {laserPowerWatts < rec.powerWatts * 0.7
                         ? '⚠️ Hơi thấp, có thể không đứt phôi'
@@ -204,8 +213,8 @@ export function ScientificRationaleModal() {
 
                   <tr>
                     <td className="py-2 px-2.5 text-slate-300 font-sans">Tốc độ quét (v):</td>
-                    <td className="py-2 px-2.5 font-bold text-amber-300">{scanSpeedMmS} mm/s</td>
-                    <td className="py-2 px-2.5 font-bold text-cyan-300">{rec.speedMmS} mm/s</td>
+                    <td className="py-2 px-2.5 font-bold text-amber-300">{scanSpeedMmS.toFixed(1)} mm/s</td>
+                    <td className="py-2 px-2.5 font-bold text-cyan-300">{rec.speedMmS.toFixed(1)} mm/s</td>
                     <td className="py-2 px-2.5 text-slate-400 font-sans">
                       {scanSpeedMmS > rec.speedMmS * 1.5
                         ? '⚠️ Quá nhanh, năng lượng không kịp truyền'
@@ -217,8 +226,8 @@ export function ScientificRationaleModal() {
 
                   <tr>
                     <td className="py-2 px-2.5 text-slate-300 font-sans">Tần số xung (f):</td>
-                    <td className="py-2 px-2.5 font-bold text-amber-300">{pulseFrequencyKhz} kHz</td>
-                    <td className="py-2 px-2.5 font-bold text-cyan-300">{rec.frequencyKhz} kHz</td>
+                    <td className="py-2 px-2.5 font-bold text-amber-300">{pulseFrequencyKhz.toFixed(1)} kHz</td>
+                    <td className="py-2 px-2.5 font-bold text-cyan-300">{rec.frequencyKhz.toFixed(1)} kHz</td>
                     <td className="py-2 px-2.5 text-slate-400 font-sans">
                       {pulseFrequencyKhz < 15
                         ? 'Xung tách rời, mép cắt sần sùi'
@@ -228,8 +237,12 @@ export function ScientificRationaleModal() {
 
                   <tr>
                     <td className="py-2 px-2.5 text-slate-300 font-sans">Năng lượng đường (E_line = P/v):</td>
-                    <td className="py-2 px-2.5 font-bold text-amber-300">{currentSim.energyDensityJPerMm} J/mm</td>
-                    <td className="py-2 px-2.5 font-bold text-cyan-300">{recSim.energyDensityJPerMm} J/mm</td>
+                    <td className="py-2 px-2.5 font-bold text-amber-300">
+                      {currentSim.energyDensityJPerMm.toFixed(3)} J/mm <span className="text-[10px] text-amber-400/80 font-normal">({laserPowerWatts.toFixed(1)}/{scanSpeedMmS.toFixed(1)})</span>
+                    </td>
+                    <td className="py-2 px-2.5 font-bold text-cyan-300">
+                      {recSim.energyDensityJPerMm.toFixed(3)} J/mm <span className="text-[10px] text-cyan-400/80 font-normal">({rec.powerWatts.toFixed(1)}/{rec.speedMmS.toFixed(1)})</span>
+                    </td>
                     <td className="py-2 px-2.5 text-slate-400 font-sans">
                       Mật độ năng lượng quyết định độ sâu & HAZ
                     </td>
@@ -238,10 +251,10 @@ export function ScientificRationaleModal() {
                   <tr>
                     <td className="py-2 px-2.5 text-slate-300 font-sans">Độ sâu dự kiến (d_cut):</td>
                     <td className={`py-2 px-2.5 font-bold ${currentSim.isCutThrough ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {currentSim.actualDepthMm} mm ({currentSim.cutThroughPercentage}%)
+                      {currentSim.actualDepthMm.toFixed(2)} mm ({currentSim.cutThroughPercentage.toFixed(1)}%)
                     </td>
                     <td className="py-2 px-2.5 font-bold text-cyan-300">
-                      {recSim.actualDepthMm} mm ({recSim.cutThroughPercentage}%)
+                      {recSim.actualDepthMm.toFixed(2)} mm ({recSim.cutThroughPercentage.toFixed(1)}%)
                     </td>
                     <td className="py-2 px-2.5 text-slate-400 font-sans">
                       {currentSim.isCutThrough ? (
@@ -256,8 +269,8 @@ export function ScientificRationaleModal() {
 
                   <tr>
                     <td className="py-2 px-2.5 text-slate-300 font-sans">Độ nhám rãnh cắt (Ra):</td>
-                    <td className="py-2 px-2.5 font-bold text-amber-300">{currentSim.surfaceRoughnessRaUm} µm</td>
-                    <td className="py-2 px-2.5 font-bold text-cyan-300">{recSim.surfaceRoughnessRaUm} µm</td>
+                    <td className="py-2 px-2.5 font-bold text-amber-300">{currentSim.surfaceRoughnessRaUm.toFixed(2)} µm</td>
+                    <td className="py-2 px-2.5 font-bold text-cyan-300">{recSim.surfaceRoughnessRaUm.toFixed(2)} µm</td>
                     <td className="py-2 px-2.5 text-slate-400 font-sans">
                       {currentSim.surfaceRoughnessRaUm <= 0.5 ? 'Bóng gương / Cực mịn' : 'Nhẵn tiêu chuẩn'}
                     </td>
@@ -265,8 +278,8 @@ export function ScientificRationaleModal() {
 
                   <tr>
                     <td className="py-2 px-2.5 text-slate-300 font-sans">Độ rộng rãnh cắt (Kerf):</td>
-                    <td className="py-2 px-2.5 font-bold text-amber-300">{currentSim.kerfWidthMm} mm</td>
-                    <td className="py-2 px-2.5 font-bold text-cyan-300">{recSim.kerfWidthMm} mm</td>
+                    <td className="py-2 px-2.5 font-bold text-amber-300">{currentSim.kerfWidthMm.toFixed(3)} mm</td>
+                    <td className="py-2 px-2.5 font-bold text-cyan-300">{recSim.kerfWidthMm.toFixed(3)} mm</td>
                     <td className="py-2 px-2.5 text-slate-400 font-sans">
                       Sai số đường cắt gia công
                     </td>
