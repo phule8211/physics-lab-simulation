@@ -2,3 +2,7 @@ node_modules
 .git
 .gemini
 *.log
+
+# Reference 3D assets & legacy docs
+model build lab/
+docsss/

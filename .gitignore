@@ -44,3 +44,7 @@ dist-ssr/
 !.github/
 skills-lock.json
 /data/
+
+# Reference 3D assets & legacy docs (not part of build/runtime)
+model build lab/
+docsss/
